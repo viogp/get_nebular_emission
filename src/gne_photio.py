@@ -178,6 +178,108 @@ def get_Zgrid(zgrid_str):
     return nz,zgrid,lzgrid
 
 
+def read_gutkin16_grids(xid_phot, co_phot, imf_cut_phot):
+    """
+    Read the photoionisation model tables from Gutkin+16
+    into matrices per each value of nH.
+    
+    Parameters
+    ----------
+    xid_phot : float
+       Dust-to-metal ratio
+    co_phot : float
+       C/O ratio
+    imf_cut_phot : float
+       Solar mass high limit for the IMF
+        
+    Returns
+    -------
+    emline_grid1 : matrix, shape (nZ_reduced,nU,nELines)
+        Grid for nH = 10
+    emline_grid2 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 100
+    emline_grid3 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 1000
+    emline_grid4 : matrix, shape (nZ_reduced,nU,nELines)
+        Grid for nH = 10000
+    """
+    
+    photmod = 'gutkin16'
+
+    # Read line names
+    line_names = c.line_names[photmod]
+    nemline = len(line_names)
+
+    # Read grid of Zs
+    zmet_str = c.zmet_str[photmod]
+    nzmet, zmets, zedges = get_Zgrid(zmet_str)
+
+    # Read reduced grid of Zs and map its indeces to the full grid
+    zmet_str_reduced = c.zmet_str_reduced[photmod]
+    nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
+    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
+
+    # Read grid of Us
+    uedges = c.lus_bins[photmod]
+    nu = len(uedges)
+    
+    # Read grid of nHs
+    nHbins = c.nH_bins[photmod]
+    nHedges = np.array([np.log10(val) for val in nHbins])
+    nnH = len(nHbins)
+
+    # Store the photoionisation model tables into matrices
+    emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
+    emline_grid2 = np.zeros((nzmet,nu,nemline))
+    emline_grid3 = np.zeros((nzmet,nu,nemline))
+    emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))    
+    for k, zname in enumerate(zmet_str):
+        infile = get_zfile(zname, photmod=photmod)
+        io.check_file(infile, verbose=True)
+        ih = io.get_nheader(infile)
+        
+        # Read all lines after header and extract columns
+        data = np.loadtxt(infile, skiprows=ih)
+        u = data[:, 0]          # log(Us)
+        xid = data[:, 1]        # xid
+        nH = data[:, 2]         # nh
+        co = data[:, 3]         # (C/O)/(C/O)sol
+        imf_cut = data[:, 4]    # mup
+        emission_lines = data[:, 5:]  # All emission line data
+        
+        # Create mask for matching conditions
+        mask = (xid == xid_phot) & (co == co_phot) & (imf_cut == imf_cut_phot)
+        filtered_indices = np.where(mask)[0]
+        
+        # Process filtered data
+        for idx in filtered_indices:
+            if nH[idx] not in nHbins:
+                continue
+                
+            # Find index for the read u value
+            l = np.where(uedges == u[idx])[0]
+            if len(l) == 0:
+                continue
+            l = l[0]
+            
+            # Get emission line values
+            em_values = emission_lines[idx]
+            
+            # Fill appropriate grid based on nH value
+            if nH[idx] == 10:
+                kred = k_to_kred.get(k)
+                emline_grid1[kred, l, :] = em_values
+            elif nH[idx] == 100:
+                emline_grid2[k, l, :] = em_values
+            elif nH[idx] == 1000:
+                emline_grid3[k, l, :] = em_values
+            elif nH[idx] == 10000:
+                kred = k_to_kred.get(k)
+                emline_grid4[kred, l, :] = em_values
+                
+    return emline_grid1, emline_grid2, emline_grid3, emline_grid4
+
+
 def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
                        co_phot=1,imf_cut_phot=100,verbose=True):
     '''
@@ -208,83 +310,28 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
        Line luminosity per component
        Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
     '''
-    
-    photmod = 'gutkin16'
 
-    # Read line names
-    line_names = c.line_names[photmod]
-    nemline = len(line_names)
+    photmod = 'gutkin16'
+    
+    emline_grid1, emline_grid2, \
+        emline_grid3, emline_grid4 = read_gutkin16_grids(
+            xid_phot, co_phot, imf_cut_phot)
 
     # Initialize the matrix to store the emission lines
     ndat = lu.shape[1]
     ncomp = lu.shape[0]
+    nemline = emline_grid1.shape[2]
     nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
 
-    # Read grid of Zs
+    # Edges of Z, U and nH grids
     zmet_str = c.zmet_str[photmod]
     nzmet, zmets, zedges = get_Zgrid(zmet_str)
-
-    # Read reduced grid of Zs and map its indeces to the full grid
     zmet_str_reduced = c.zmet_str_reduced[photmod]
     nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
-    k_to_kred = {0: 0, 4: 1, 9: 2, 12: 3}
-
-    # Read grid of Us
     uedges = c.lus_bins[photmod]
-    nu = len(uedges)
-    
-    # Read grid of nHs
     nHbins = c.nH_bins[photmod]
     nHedges = np.array([np.log10(val) for val in nHbins])
-    nnH = len(nHbins)
-        
-    # Store the photoionisation model tables into matrices
-    emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
-    emline_grid2 = np.zeros((nzmet,nu,nemline))
-    emline_grid3 = np.zeros((nzmet,nu,nemline))
-    emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
-    for k, zname in enumerate(zmet_str):
-        infile = get_zfile(zname,photmod=photmod)
-        io.check_file(infile,verbose=True)
-        ih = io.get_nheader(infile)
-
-        # Read all lines after header and extract columns
-        data = np.loadtxt(infile, skiprows=ih)
-        u = data[:, 0]          # log(Us)
-        xid = data[:, 1]        # xid
-        nH = data[:, 2]         # nh
-        co = data[:, 3]         # (C/O)/(C/O)sol
-        imf_cut = data[:, 4]    # mup
-        emission_lines = data[:, 5:]  # All emission line data
-
-        # Create mask for matching conditions
-        mask = (xid == xid_phot) & (co == co_phot) & (imf_cut == imf_cut_phot)
-        filtered_indices = np.where(mask)[0]
-
-        # Process filtered data
-        for idx in filtered_indices:
-            if nH[idx] not in nHbins: continue
-
-            # Find index for the read u value
-            l = np.where(uedges == u[idx])[0]
-            if len(l) == 0: continue
-            l = l[0] 
-            
-            # Get emission line values
-            em_values = emission_lines[idx]
-
-            # Determine grid and index based on nH value
-            if nH[idx] == 10:
-                kred = k_to_kred.get(k)
-                emline_grid1[kred, l, :] = em_values
-            elif nH[idx] == 100:
-                emline_grid2[k, l, :] = em_values
-            elif nH[idx] == 1000:
-                emline_grid3[k, l, :] = em_values
-            elif nH[idx] == 10000:
-                kred = k_to_kred.get(k)
-                emline_grid4[kred, l, :] = em_values
-
+    
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
         ucomp = lu[comp,:]; zcomp=lzgas[comp,:]; nHcomp = lnH[comp,:]

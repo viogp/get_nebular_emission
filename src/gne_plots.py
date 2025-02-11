@@ -23,19 +23,25 @@ plt.style.use(src.gne_style.style1)
 
 cmap = 'jet'
 
-
-def contour2Dsigma(n_levels=None):
-    levels=c.sigma_2Dprobs.copy()
+def contour2Dsigma(n_levels=None,color='darkgrey'):
+    '''
+    Get levels following the standard deviation numbers expected for
+    a 2D-Gaussian distribution. Generate colours varying in intensity.
+    '''
+    if n_levels is not None:
+        levels=c.sigma_2Dprobs[0:n_levels]
+    else:
+        levels=c.sigma_2Dprobs.copy()
+        
     nl = len(levels); levels.insert(0,0)
     alphas = np.linspace(0.2, 1, nl)[::-1].tolist()
-    colors = [(*mcol.to_rgba('darkgrey', alpha=a),)
+    colors = [(*mcol.to_rgba(color, alpha=a),)
               for a in alphas]
-    
+
     return levels,colors
 
 
 def lines_BPT(x, BPT, line):
-    
     '''
     
     Boundary lines for the distinction of ELG types in BPT diagrams.
@@ -83,6 +89,9 @@ def lines_BPT(x, BPT, line):
         return None
             
     return boundary
+
+
+
 
 
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
@@ -990,6 +999,83 @@ def get_obs_bpt(redshift,bpt):
     return xobs,yobs,obsdata
 
 
+def plot_model_bpt_grids(photmod='gutkin16',
+                         verbose=True):
+    ###here Need to add options for different values and phot:mod if nothing, plot all possibilities?
+    '''
+    Plot photoionisation grids on 2 BPT diagrams.
+    
+    Parameters
+    ----------
+    photmod : string
+       Name of the photoionisation model to be plotted
+    verbose : boolean
+       If True print out messages.
+
+    Return
+    ------
+    outpath : string
+       Name of output plot within output/photoio_grids
+    '''
+    # Prep plots
+    fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15),
+                                   layout='constrained')
+    ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
+    xmins = [-1.9,-1.9]
+    xmaxs = [0.8,0.9]
+    ymins = [-1.5,-2.1]
+    ymaxs = [1.5,1.6]
+    for ii, bpt in enumerate(['NII','SII']):
+        if bpt=='NII':
+            xtit = 'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)'
+            axn.set_xlim(xmins[ii], xmaxs[ii])
+            axn.set_ylim(ymins[ii], ymaxs[ii])
+            axn.set_xlabel(xtit); axn.set_ylabel(ytit)
+        elif bpt=='SII':
+            xtit = 'log$_{10}$([SII]$\\lambda$6584/H$\\alpha$)'
+            axs.set_xlim(xmins[ii], xmaxs[ii])
+            axs.set_ylim(ymins[ii], ymaxs[ii])
+            axs.set_xlabel(xtit); axs.set_ylabel(ytit)
+
+        xobs, yobs, obsdata = get_obs_bpt(0.,bpt)
+        if obsdata and bpt=='NII':
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
+            levels,colors= contour2Dsigma()
+            contour = axn.contourf(x, y, z, levels=levels,colors=colors)
+        elif obsdata and bpt=='SII':
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
+            levels,colors= contour2Dsigma()
+            contour = axs.contourf(x, y, z, levels=levels,colors=colors)
+
+    for ii, bpt in enumerate(['NII','SII']):
+        # Lines
+        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
+        if bpt=='NII':
+            yline = lines_BPT(xline,bpt,'Kauffmann2003')
+            axn.plot(xline,yline,'k.')
+
+            yline = lines_BPT(xline,bpt,'Kewley2001')
+            axn.plot(xline,yline,'k-')
+            
+        elif bpt=='SII':
+            yline = lines_BPT(xline,bpt,'Kewley2001')
+            axs.plot(xline,yline,'k-')
+
+            ylinel = lines_BPT(xline,bpt,'Kewley2006')
+            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k--')
+
+            
+    # Output
+    pltpath = 'output/plots/photoio_grids/'
+    io.create_dir(pltpath) 
+    bptnom = pltpath+'model_grid_bpts.pdf'
+    plt.savefig(bptnom)
+    if verbose:
+         print(f'* Photoionisation model grids on BPT plots: {bptnom}')
+    
+    return bptnom
+
+
 def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
@@ -1272,10 +1358,13 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
 
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
 
-    # Get output file for BPT plot
-    umz = plot_umz(root,subvols=subvols,verbose=verbose)
+    # Plot photoionisation grids
+    #grids = plot_model_bpt_grids(verbose=verbose) ###here
     
-    # Get output file for BPT plot
+    # U vs Z
+    #umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
+    
+    # Make NII and SII bpt plots
     bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
     
     return
