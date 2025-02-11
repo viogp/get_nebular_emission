@@ -378,40 +378,32 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     return nebline
 
 
-def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
-                     alpha_phot=-1.7,verbose=True):
-    '''
-    Get the interpolations for the emission lines,
-    using the tables from Feltre+2016 (https://arxiv.org/pdf/1511.08217)
+def read_feltre16_grids(xid_phot, alpha_phot):
+    """
+    Read the photoionisation model tables from Gutkin+16
+    into matrices per each value of nH.
     
-    lnH : floats
-     ne of the galaxies per component (cm^-3).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z))
+    Parameters
+    ----------
     xid_phot : float
      Dust-to-metal ratio for the Feltre et. al. photoionisation model.
     alpha_phot : float
      Alpha value for the Feltre et. al. photoionisation model.
-    verbose : boolean
-      If True print out messages
-      
+        
     Returns
     -------
-    nebline : array of floats
-       Line luminosities per galaxy component.
-       Units: Lsun for L_AGN = 10^45 erg/s
-    '''
-
+    emline_grid1 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 100
+    emline_grid2 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 1000
+    emline_grid3 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 10000
+    """
     photmod = 'feltre16'
     
     # Read line names
     line_names = c.line_names[photmod]
     nemline = len(line_names)
-
-    # Initialize the matrix to store the emission lines
-    ndat = lu.shape[1]
-    ncomp = lu.shape[0]
-    nebline = np.zeros((ncomp,nemline,ndat))
 
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
@@ -467,6 +459,49 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                 emline_grid2[k, l, :] = em_values
             elif nH[idx] == 10000:
                 emline_grid3[k, l, :] = em_values
+    return emline_grid1, emline_grid2, emline_grid3
+
+
+def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
+                     alpha_phot=-1.7,verbose=True):
+    '''
+    Get the interpolations for the emission lines,
+    using the tables from Feltre+2016 (https://arxiv.org/pdf/1511.08217)
+    
+    lnH : floats
+     ne of the galaxies per component (cm^-3).
+    lzgas : floats
+     Metallicity of the galaxies per component (log10(Z))
+    xid_phot : float
+     Dust-to-metal ratio for the Feltre et. al. photoionisation model.
+    alpha_phot : float
+     Alpha value for the Feltre et. al. photoionisation model.
+    verbose : boolean
+      If True print out messages
+      
+    Returns
+    -------
+    nebline : array of floats
+       Line luminosities per galaxy component.
+       Units: Lsun for L_AGN = 10^45 erg/s
+    '''
+    photmod = 'feltre16'
+    
+    emline_grid1, emline_grid2, emline_grid3 = read_feltre16_grids(
+            xid_phot, alpha_phot)
+
+    # Initialize the matrix to store the emission lines
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nemline = emline_grid1.shape[2]
+    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
+
+    # Edges of Z, U and nH grids
+    zmet_str = c.zmet_str[photmod]
+    nzmet, zmets, zedges = get_Zgrid(zmet_str)
+    uedges = c.lus_bins[photmod]
+    nHbins = c.nH_bins[photmod]
+    nHedges = np.array([np.log10(val) for val in nHbins])
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
