@@ -1052,7 +1052,7 @@ def plot_model_bpt_grids(photmod='gutkin16',
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
         if bpt=='NII':
             yline = lines_BPT(xline,bpt,'Kauffmann2003')
-            axn.plot(xline,yline,'k.')
+            axn.plot(xline,yline,'k--')
 
             yline = lines_BPT(xline,bpt,'Kewley2001')
             axn.plot(xline,yline,'k-')
@@ -1062,7 +1062,7 @@ def plot_model_bpt_grids(photmod='gutkin16',
             axs.plot(xline,yline,'k-')
 
             ylinel = lines_BPT(xline,bpt,'Kewley2006')
-            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k--')
+            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
             
     # Output
@@ -1316,7 +1316,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
         if bpt=='NII':
             yline = lines_BPT(xline,bpt,'Kauffmann2003')
-            axn.plot(xline,yline,'k.')
+            axn.plot(xline,yline,'k--')
 
             yline = lines_BPT(xline,bpt,'Kewley2001')
             axn.plot(xline,yline,'k-')
@@ -1326,7 +1326,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
             axs.plot(xline,yline,'k-')
 
             ylinel = lines_BPT(xline,bpt,'Kewley2006')
-            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k--')
+            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
     # Output
     pltpath = io.get_plotpath(root)
@@ -1359,12 +1359,12 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
 
     # Plot photoionisation grids
-    #grids = plot_model_bpt_grids(verbose=verbose) ###here
+    grids = plot_model_bpt_grids(verbose=verbose) ###here
     
     # U vs Z
     #umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
+    #bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
     
     return
