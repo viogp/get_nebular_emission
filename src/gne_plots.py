@@ -14,7 +14,7 @@ import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st 
 #from src.gne_io import get_nheader, check_file
-from src.gne_photio import get_limits #,get_lines_Gutkin
+from src.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
 #from numpy import random
 #from cosmology import logL2flux, set_cosmology
 from src.gne_cosmology import set_cosmology,emission_line_luminosity
@@ -999,9 +999,8 @@ def get_obs_bpt(redshift,bpt):
     return xobs,yobs,obsdata
 
 
-def plot_model_bpt_grids(photmod='gutkin16',
-                         verbose=True):
-    ###here Need to add options for different values and phot:mod if nothing, plot all possibilities?
+def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
+                         alpha=-1.7,verbose=True):
     '''
     Plot photoionisation grids on 2 BPT diagrams.
     
@@ -1032,7 +1031,7 @@ def plot_model_bpt_grids(photmod='gutkin16',
             axn.set_ylim(ymins[ii], ymaxs[ii])
             axn.set_xlabel(xtit); axn.set_ylabel(ytit)
         elif bpt=='SII':
-            xtit = 'log$_{10}$([SII]$\\lambda$6584/H$\\alpha$)'
+            xtit = 'log$_{10}$([SII]$\\lambda\\lambda$6717,6731/H$\\alpha$)'
             axs.set_xlim(xmins[ii], xmaxs[ii])
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
@@ -1064,11 +1063,77 @@ def plot_model_bpt_grids(photmod='gutkin16',
             ylinel = lines_BPT(xline,bpt,'Kewley2006')
             axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
-            
+
+    # Read grids of photoionisation models
+    if photmod == 'gutkin16':
+        grid1,grid2,grid3,grid4 = read_gutkin16_grids(xid, co, imf_cut)
+        grids = [grid1, grid2, grid3, grid4]
+        col_ha = 10
+        col_hb = 6 
+        col_o3 = 8     #[OIII]5007
+        col_n2 = 11    #[NII]6584
+        col_s2_a = 12  #[SII]6717
+        col_s2_b = 13  #[SII]6731
+        
+    elif photmod == 'feltre16':
+        grid1,grid2,grid3 = read_feltre16_grids(xid, alpha)
+        grids = [grid1, grid2, grid3]
+        col_ha = 10
+        col_hb = 5 
+        col_o3 = 7     #[OIII]5007
+        col_n2 = 11    #[NII]6584  
+        col_s2_a = 12  #[SII]6717
+        col_s2_b = 13  #[SII]6731
+        
+#    for i, grid in enumerate(grids):
+#        nz = grid.shape[0]
+#        nu = grid.shape[1]        
+#        for iz in range(nz):
+#            for iu in range(nu):
+#                el = grid[iz,iu,:]
+#                y = np.log10(el[col_o3]/el[col_hb])
+#                for ii, bpt in enumerate(['NII','SII']):
+#                    if bpt=='NII':
+#                        x = np.log10(el[col_n2]/el[col_ha])
+#                        axn.plot(x,y,'r.')
+#                    elif bpt=='SII':
+#                        s2 = el[col_s2_a] + el[col_s2_b]
+#                        x = np.log10(s2/el[col_ha])
+#                        axs.plot(x,y,'b.')
+    #for iz in range(grid2.shape[0]):
+    iz=0; iu=0;
+    for iu in range(grid1.shape[1]):
+        el = grid1[iz,iu,:]
+        print(el)
+        y = np.log10(el[col_o3]/el[col_hb])
+        for ii, bpt in enumerate(['NII','SII']):
+            if bpt=='NII':
+                x = np.log10(el[col_n2]/el[col_ha])
+                print(bpt,x,y)
+                axn.plot(x,y,'r.')
+            elif bpt=='SII':
+                s2 = el[col_s2_a] + el[col_s2_b]
+                x = np.log10(s2/el[col_ha])
+                print(s2,bpt,x,y)
+                axs.plot(x,y,'b.')
+                
+    # Add legend on model information
+    if photmod == 'gutkin16':
+        legend_model = (f'Gutkin+16\n'
+                        f'$\\xi_d$ = {xid}\n'
+                        f'C/O = {co} (C/O)$_\\odot$\n'
+                        f'M(IMF)$<{imf_cut}$ M$_\\odot$')
+    elif photmod == 'feltre16':
+        legend_model = (f'Feltre+16\n'
+                        f'$\\xi_d$ = {xid}\n'
+                        f'$\\alpha$ = {alpha}\n')
+    axn.text(0.05, 0.97, legend_model, transform=axn.transAxes,
+             verticalalignment='top')
+    
     # Output
     pltpath = 'output/plots/photoio_grids/'
     io.create_dir(pltpath) 
-    bptnom = pltpath+'model_grid_bpts.pdf'
+    bptnom = pltpath+photmod+'_xi'+str(xid)+'_bpts.pdf'
     plt.savefig(bptnom)
     if verbose:
          print(f'* Photoionisation model grids on BPT plots: {bptnom}')
@@ -1128,7 +1193,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
             axn.set_ylim(ymins[ii], ymaxs[ii])
             axn.set_xlabel(xtit); axn.set_ylabel(ytit)
         elif bpt=='SII':
-            xtit = 'log$_{10}$([SII]$\\lambda$6584/H$\\alpha$)'
+            xtit = 'log$_{10}$([SII]$\\lambda\\lambda$6717,6731/H$\\alpha$)'
             axs.set_xlim(xmins[ii], xmaxs[ii])
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
@@ -1338,6 +1403,28 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     return bptnom
 
 
+def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
+                   xid_agn=0.5,alpha_agn=-1.7,verbose=True):
+    '''
+    Make plots for photoionisation tables
+    
+    Parameters
+    ----------
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    # Plot photoionisation grids on BPT diagrams
+    #grids_sfr = plot_model_bpt_grids(photmod='gutkin16',xid=xid_sfr,
+    #                                 co=co_sfr,imf_cut=imf_cut_sfr,
+    #                                 verbose=verbose)
+    grids_agn = plot_model_bpt_grids(photmod='feltre16',
+                                     xid=xid_agn,alpha=alpha_agn,
+                                     verbose=verbose)
+    
+    return
+
+
 def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     '''
     Make test plots
@@ -1357,14 +1444,11 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     '''
 
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
-
-    # Plot photoionisation grids
-    grids = plot_model_bpt_grids(verbose=verbose) ###here
     
     # U vs Z
     #umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
     
     # Make NII and SII bpt plots
-    #bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
     
     return

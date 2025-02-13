@@ -816,7 +816,7 @@ def generate_header(infile,redshift,snap,
     return filenom
     
 
-def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
+def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
                nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
                extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
                verbose=True):
@@ -833,8 +833,8 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
      sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lu_sfr : floats
      U of the galaxies per component.
-    lne_sfr : floats
-     ne of the galaxies per component (cm^-3).
+    lnH_sfr : floats
+     nH of the galaxies per component (cm^-3).
     lzgas_sfr : floats
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_sfr : floats
@@ -879,8 +879,8 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
         hfdat.create_dataset('lu_sfr', data=lu_sfr, maxshape=(None,None))
         hfdat['lu_sfr'].dims[0].label = 'log10(U) (dimensionless)'
     
-        hfdat.create_dataset('lne_sfr',data=lne_sfr, maxshape=(None,None))
-        hfdat['lne_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
+        hfdat.create_dataset('lnH_sfr',data=lnH_sfr, maxshape=(None,None))
+        hfdat['lnH_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
     
         hfdat.create_dataset('lz_sfr', data=lzgas_sfr, maxshape=(None,None))
         hfdat['lz_sfr'].dims[0].label = 'log10(Z) (dimensionless)'
@@ -911,8 +911,9 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lne_sfr,lzgas_sfr,
     return 
 
 
-def write_agn_data(filenom,lu_agn,lne_agn,lzgas_agn,
-                   nebline_agn,nebline_agn_att=None,fluxes_agn=None,fluxes_agn_att=None,
+def write_agn_data(filenom,lu_agn,lnH_agn,lzgas_agn,
+                   nebline_agn,nebline_agn_att=None,
+                   fluxes_agn=None,fluxes_agn_att=None,
                    epsilon_agn=None,
                    ew_notatt=None,ew_att=None,
                    verbose=True):
@@ -925,7 +926,7 @@ def write_agn_data(filenom,lu_agn,lne_agn,lzgas_agn,
       Name of the output file.
     lu_agn : floats
      U of the galaxies per component.
-    lne_agn : floats
+    lnH_agn : floats
      ne of the galaxies per component (cm^-3).
     lzgas_agn : floats
      Metallicity of the galaxies per component (12+log(O/H))
@@ -948,8 +949,8 @@ def write_agn_data(filenom,lu_agn,lne_agn,lzgas_agn,
         hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
     
-        hfdat.create_dataset('lne_agn',data=lne_agn, maxshape=(None,None))
-        hfdat['lne_agn'].dims[0].label = 'log10(nH) (cm**-3)'
+        hfdat.create_dataset('lnH_agn',data=lnH_agn, maxshape=(None,None))
+        hfdat['lnH_agn'].dims[0].label = 'log10(nH) (cm**-3)'
     
         hfdat.create_dataset('lz_agn', data=lzgas_agn, maxshape=(None,None))
         hfdat['lz_agn'].dims[0].label = 'log10(Z)'

@@ -11,12 +11,13 @@ to also get the predicted attenuated luminosities.
 
 import src.gne_const as const
 from src.gne import gne
-from src.gne_plots import make_testplots
+from src.gne_plots import make_testplots, make_gridplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
-run_code = False
-make_plots = True
+run_code = True
+plot_tests = True # Plots to check the output
+plot_photo_grids = False  # Plots to explore the Photoionisation tables
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -255,6 +256,7 @@ maxcuts = [None]
 #############    Run the code and/or make plots   ################
 ##################################################################
 
+verbose = True
 for ivol in range(subvols):
     infile = root+str(ivol)+endf
 
@@ -280,8 +282,11 @@ for ivol in range(subvols):
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
-            testing=testing,verbose=True)
+            testing=testing,verbose=verbose)
 
-if make_plots:  # Make test plots
+if plot_tests:  # Make test plots
     make_testplots(root,snapshot,subvols=subvols,
-                   outpath=outpath,verbose=True)
+                   outpath=outpath,verbose=verbose)
+
+if plot_photo_grids:  # Make test plots
+    make_gridplots()
