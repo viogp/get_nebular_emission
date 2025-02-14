@@ -23,6 +23,14 @@ plot_photo_grids = False  # Plots to explore the Photoionisation tables
 AGN = True
 
 ###############################################################
+### OUTPUT FILES
+# OUTPUT PATH (Default: output/)
+outpath = None
+# Output information per component (True) or
+# add input information on different components and give global quantities
+output_per_component = True
+
+###############################################################
 ### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
@@ -44,9 +52,6 @@ mp     = 9.35e8
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
-
-### OUTPUT PATH (Default: output/)
-outpath = None  
 
 ### UNITS: 
 # units_h0=False if input units [Mass]=Msun, [Radius]=Mpc (default)
@@ -247,7 +252,7 @@ extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
 # The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
 cutcols = [7]
 # List of minimum values. None for no inferior limit.
-mincuts = [20*mp]
+mincuts = [21*mp]
 # List of maximum values. None for no superior limit.
 maxcuts = [None]
 
