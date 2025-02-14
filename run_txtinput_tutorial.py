@@ -26,9 +26,6 @@ AGN = True
 ### OUTPUT FILES
 # OUTPUT PATH (Default: output/)
 outpath = None
-# Output information per component (True) or
-# add input information on different components and give global quantities
-output_per_component = True
 
 ###############################################################
 ### INPUT FILES: given as a root, ending and number of subvolumes

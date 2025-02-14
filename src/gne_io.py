@@ -631,22 +631,17 @@ def get_sfrdata(infile,cols,selection=None,
         ind = np.where((sfr[comp,:] > 0.) & (lms[comp,:] > 0.))
         lssfr[comp,ind] = np.log10(sfr[comp,ind]) - lms[comp,ind]
     #print(lssfr.shape,sfr.shape,zgas.shape); exit() ###here
-    if ncomp!=1:
-        lssfr_tot = np.zeros(len(lssfr))
-        ssfr = np.zeros(lssfr.shape)
-        for comp in range(ncomp):
-            ind = np.where(lssfr[comp,:]!=c.notnum)
-            ssfr[comp,ind] = 10.**(lssfr[comp,ind])
-
-        ins = np.sum(ssfr,axis=1)
-        ind = np.where(ins>0)
-        lssfr_tot[ind] = np.log10(ins[ind])
+    #if ncomp!=1: #Total SFR
+    #    lssfr_tot = np.zeros(len(lssfr))
+    #    ssfr = np.zeros(lssfr.shape)
+    #    for comp in range(ncomp):
+    #        ind = np.where(lssfr[comp,:]!=c.notnum)
+    #        ssfr[comp,ind] = 10.**(lssfr[comp,ind])
+    #
+    #    ins = np.sum(ssfr,axis=1)
+    #    ind = np.where(ins>0)
+    #    lssfr_tot[ind] = np.log10(ins[ind])
             
-    #if ncomp!=1:
-    #    lsfr = lssfr_tot+lms_tot
-    #else:
-    #    lsfr = lssfr + lms
-
     # Obtain log10(Zgas=MZcold/Mcold)        
     lzgas = np.zeros(zgas.shape); lzgas.fill(c.notnum)
     if inoh: 
@@ -656,16 +651,16 @@ def get_sfrdata(infile,cols,selection=None,
         ind = np.where(zgas>0)
         lzgas[ind] = np.log10(zgas[ind])
 
-    if ncomp!=1:
-        oh12 = np.zeros(lzgas.shape)
-        lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(c.notnum)
-        for comp in range(ncomp):
-            ind = np.where(lzgas[comp,:] != c.notnum)
-            oh12[comp,ind] = 10. ** (lzgas[comp,ind])
-    
-        ins = np.sum(oh12,axis=1)
-        ind = np.where(ins>0)
-        lzgas_tot[ind] = np.log10(ins[ind])
+    #if ncomp!=1: #Total Z
+    #    oh12 = np.zeros(lzgas.shape)
+    #    lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(c.notnum)
+    #    for comp in range(ncomp):
+    #        ind = np.where(lzgas[comp,:] != c.notnum)
+    #        oh12[comp,ind] = 10. ** (lzgas[comp,ind])
+    #
+    #    ins = np.sum(oh12,axis=1)
+    #    ind = np.where(ins>0)
+    #    lzgas_tot[ind] = np.log10(ins[ind])
 
     return lms.T,lssfr.T,lzgas.T
 
