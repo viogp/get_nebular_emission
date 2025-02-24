@@ -717,6 +717,62 @@ def lines_BPT(x, BPT, line):
 #
 
 
+def plot_components(ax, lz, lu, n_comp, tots, ins, cm=plt.cm.tab20):
+    """
+    Plot components as a contour or scatter plot,
+    on given axis and return legend elements.
+    
+    Parameters:
+    -----------
+    ax : matplotlib axis
+        Axis to plot on
+    lz : ndarray
+        Z values for each component
+    lu : ndarray
+        U values for each component
+    n_comp : int
+        Number of components
+    tots : ndarray
+        Total values for each component
+    ins : ndarray
+        In values for each component
+    cm : matplotlib colormap, optional
+        Colormap to use
+        
+    Returns:
+    --------
+    proxies : list
+        List of proxy artists for legend
+    labels : list
+        List of labels for legend
+    """
+    proxies = []
+    labels = []
+    
+    for i in range(n_comp):
+        ind = np.where((lz[:, i] > c.notnum) & (lu[:, i] > c.notnum))[0]
+        if len(ind) > 0:
+            x = lz[ind, i]
+            y = lu[ind, i]
+            col = np.array([cm(float(i) / n_comp)])
+            
+            if len(ind) > c.n4contour:
+                xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=100)
+                levels, colors = contour2Dsigma(color=col)
+                contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
+                proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
+            else:
+                scatter = ax.scatter(x, y, c=col)
+                proxies.append(scatter)
+            
+            leg = "{} component {} ({:.1f}% in)".format(
+                int(tots[i]), i, ins[i] * 100. / tots[i]
+            )
+            labels.append(leg)
+    
+    return proxies, labels
+
+
 def plot_umz(root, subvols=1, outpath=None, verbose=True):
     '''
     Make plots of the ionizing parameter versus Zgas,
@@ -857,50 +913,63 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                 ina[i] = ina[i] + np.shape(ind)[1]
 
     # Plot per component U versus Z
-    proxies = []; labels = []
-    for i in range(ncomp):
-        ind = np.where((lzsfr[:,i]>c.notnum) & (lusfr[:,i]>c.notnum))[0]
-        if (len(ind)>0):
-            x = lzsfr[ind,i]
-            y = lusfr[ind,i]
-            col = np.array([plt.cm.tab20(float(i)/ncomp)])    
-            if (len(ind)>c.n4contour):
-                xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
-                levels,colors= contour2Dsigma(color=col)
-                contour = axu.contourf(xc,yc,zc,levels=levels,colors=colors)
-                proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
-            else:
-                scatter = axu.scatter(x,y,c=col,label=leg)
-                proxies.append(scatter)
-            leg = "{} component {} ({:.1f}% in)".format(int(tots[i]),i,
-                                                        ins[i]*100./tots[i])
-            labels.append(leg)
-
+    proxies, labels = plot_components(axu, lzsfr, lusfr,
+                                      ncomp, tots, ins)
     if AGN:
-        aproxies = []; alabels = []
-        for i in range(nacomp):
-            ind = np.where((lzagn[:,i]>c.notnum) & (luagn[:,i]>c.notnum))[0]
-            if (len(ind)>0):
-                x = lzagn[ind,i]
-                y = luagn[ind,i]
-                col = np.array([plt.cm.tab20(float(i)/nacomp)])    
-                if (len(ind)>c.n4contour):
-                    xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
-                    levels,colors= contour2Dsigma(color=col)
-                    contour = axu.contourf(xc,yc,zc,levels=levels,
-                                           colors=colors)
-                    aproxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
-                else:
-                    scatter = axua.scatter(x,y,c=col)
-                    aproxies.append(scatter)
-                leg = "{} component {} ({:.1f}% in)".format(int(tota[i]),i,
-                                                        ina[i]*100./tota[i])
-                alabels.append(leg)
+        aproxies, alabels = plot_components(axua, lzagn, luagn,
+                                            nacomp, tota, ina)
 
     # Legend for U vs Z
-    leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
+    leg = axu.legend(proxies, labels, loc=0)
+    leg.draw_frame(False)
+
     if AGN:
-        leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
+        leg = axua.legend(aproxies, alabels, loc=0)
+        leg.draw_frame(False)
+    #proxies = []; labels = []
+    #for i in range(ncomp):
+    #    ind = np.where((lzsfr[:,i]>c.notnum) & (lusfr[:,i]>c.notnum))[0]
+    #    if (len(ind)>0):
+    #        x = lzsfr[ind,i]
+    #        y = lusfr[ind,i]
+    #        col = np.array([plt.cm.tab20(float(i)/ncomp)])    
+    #        if (len(ind)>c.n4contour):
+    #            xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
+    #            levels,colors= contour2Dsigma(color=col)
+    #            contour = axu.contourf(xc,yc,zc,levels=levels,colors=colors)
+    #            proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
+    #        else:
+    #            scatter = axu.scatter(x,y,c=col,label=leg)
+    #            proxies.append(scatter)
+    #        leg = "{} component {} ({:.1f}% in)".format(int(tots[i]),i,
+    #                                                    ins[i]*100./tots[i])
+    #        labels.append(leg)
+    #
+    #if AGN:
+    #    aproxies = []; alabels = []
+    #    for i in range(nacomp):
+    #        ind = np.where((lzagn[:,i]>c.notnum) & (luagn[:,i]>c.notnum))[0]
+    #        if (len(ind)>0):
+    #            x = lzagn[ind,i]
+    #            y = luagn[ind,i]
+    #            col = np.array([plt.cm.tab20(float(i)/nacomp)])    
+    #            if (len(ind)>c.n4contour):
+    #                xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
+    #                levels,colors= contour2Dsigma(color=col)
+    #                contour = axu.contourf(xc,yc,zc,levels=levels,
+    #                                       colors=colors)
+    #                aproxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
+    #            else:
+    #                scatter = axua.scatter(x,y,c=col)
+    #                aproxies.append(scatter)
+    #            leg = "{} component {} ({:.1f}% in)".format(int(tota[i]),i,
+    #                                                    ina[i]*100./tota[i])
+    #            alabels.append(leg)
+    #
+    ## Legend for U vs Z
+    #leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
+    #if AGN:
+    #    leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
 
                 
     # nH vs M* (or Lagn)
