@@ -22,6 +22,11 @@ import src.gne_style
 plt.style.use(src.gne_style.style1)
 
 cmap = 'jet'
+n4contour = 1000
+min_Lbol = 42 # Based on Griffin+2020, fig 14
+max_Lbol = 50
+min_Ms = 8    # To be obtained from sim. res. ###here
+max_Ms = 12   # To be obtained from sim. res. ###here
 
 def contour2Dsigma(n_levels=None,color='darkgrey'):
     '''
@@ -89,8 +94,6 @@ def lines_BPT(x, BPT, line):
         return None
             
     return boundary
-
-
 
 
 
@@ -717,7 +720,7 @@ def lines_BPT(x, BPT, line):
 #
 
 
-def plot_components(ax, lz, lu, n_comp, tots, ins, cm=plt.cm.tab20):
+def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
     """
     Plot components as a contour or scatter plot,
     on given axis and return legend elements.
@@ -726,16 +729,14 @@ def plot_components(ax, lz, lu, n_comp, tots, ins, cm=plt.cm.tab20):
     -----------
     ax : matplotlib axis
         Axis to plot on
-    lz : ndarray
-        Z values for each component
-    lu : ndarray
-        U values for each component
-    n_comp : int
-        Number of components
+    xx : ndarray
+        X vayyes for each component
+    yy : ndarray
+        Y vayyes for each component
     tots : ndarray
-        Total values for each component
+        Total number of elements for each component
     ins : ndarray
-        In values for each component
+        Number within limits for each component
     cm : matplotlib colormap, optional
         Colormap to use
         
@@ -748,15 +749,16 @@ def plot_components(ax, lz, lu, n_comp, tots, ins, cm=plt.cm.tab20):
     """
     proxies = []
     labels = []
-    
+
+    n_comp = np.shape(xx)[1]
     for i in range(n_comp):
-        ind = np.where((lz[:, i] > c.notnum) & (lu[:, i] > c.notnum))[0]
+        ind = np.where((xx[:, i] > c.notnum) & (yy[:, i] > c.notnum))[0]
         if len(ind) > 0:
-            x = lz[ind, i]
-            y = lu[ind, i]
+            x = xx[ind, i]
+            y = yy[ind, i]
             col = np.array([cm(float(i) / n_comp)])
             
-            if len(ind) > c.n4contour:
+            if len(ind) > n4contour:
                 xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=100)
                 levels, colors = contour2Dsigma(color=col)
                 contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
@@ -771,6 +773,55 @@ def plot_components(ax, lz, lu, n_comp, tots, ins, cm=plt.cm.tab20):
             labels.append(leg)
     
     return proxies, labels
+
+
+def plot_comp_quartiles(ax, xx, yy, xmin, xmax, cm=plt.cm.tab20):
+    """
+    Plot quartiles for components and return legend elements.
+    
+    Parameters:
+    -----------
+    ax : matplotlib axis
+        Axis to plot on
+    xin : ndarray
+        X values for each component
+    yin : ndarray
+        Y values for each component
+    n_comp : int
+        Number of components
+    xmin, xmax: float
+        Limits for the x-axis
+    cm : matplotlib colormap, optional
+        Colormap to use
+        
+    Returns:
+    --------
+    labels : list
+        List of labels for legend
+    """
+    dx = 0.2    
+    xbins = np.arange(xmin,xmax + dx, dx)
+    xhist = xbins + dx * 0.5
+    ax.set_xlim(xmin, xmax)
+
+    n_comp = np.shape(xx)[1]
+    for i in range(n_comp):
+        ind = np.where((xx[:, i] > c.notnum) & (yy[:, i] > c.notnum))[0]
+        if len(ind) > 0:
+            x = xx[ind, i]
+            y = yy[ind, i]
+            col = np.array([cm(float(i) / n_comp)])
+
+            med = st.perc_2arrays(xbins, x, y, 0.5)        
+            upq = st.perc_2arrays(xbins, x, y, 0.84)
+            low = st.perc_2arrays(xbins, x, y, 0.16)
+            jnd = np.where(med>c.notnum)
+            if (np.shape(jnd)[1]>1):
+                el = med[jnd] - low[jnd]
+                eh = upq[jnd] - med[jnd]
+                ax.errorbar(xhist[jnd],med[jnd],
+                            yerr=[el,eh],c=col,label=f'Component {i}')
+    return 
 
 
 def plot_umz(root, subvols=1, outpath=None, verbose=True):
@@ -792,7 +843,7 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
     '''
 
     # Get redshift and model information from data
-    filenom = root+'0.hdf5'
+    filenom = root+'0.hdf5'    
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -830,7 +881,7 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         axua.set_ylabel('log$_{10}U_{\\rm AGN}$')
         axua.set_xlabel('log$_{10}(Z_{\\rm gas})$')
         axna.set_ylabel('log$_{10}(n_{H, \\rm AGN})$')
-        axna.set_xlabel('log$_{10}(L_{\\rm AGN})$')    
+        axna.set_xlabel('log$_{10}(L_{\\rm AGN/erg/s})$')    
     
     # Read limits for photoionisation models
     pad = 0.5
@@ -875,18 +926,21 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         f.close()
     
         if ivol == 0:
-            lms = lms1; lusfr = lusfr1; lzsfr = lzsfr1
+            lusfr = lusfr1; lzsfr = lzsfr1
+            lnsfr = lnsfr1; lms = lms1
             if AGN:
-                lagn = lagn1; luagn = luagn1; lzagn = lzagn1
+                luagn = luagn1; lzagn = lzagn1
+                lnagn = lnagn1; lagn = lagn1
         else:
-            lms = np.append(lms,lms1,axis=0)
             lusfr = np.append(lusfr,lusfr1,axis=0)
-            lzsfr = np.append(lzsfr,lzsfr1,axis=0)            
+            lzsfr = np.append(lzsfr,lzsfr1,axis=0)
+            lnsfr = np.append(lnsfr,lnsfr1,axis=0)
+            lms = np.append(lms,lms1,axis=0)
             if AGN:
-                lagn = np.append(lagn,lagn1,axis=0)
                 luagn = np.append(luagn,luagn1,axis=0)
-                lzagn = np.append(lzagn,lzagn1,axis=0)            
-            
+                lzagn = np.append(lzagn,lzagn1,axis=0)
+                lnagn = np.append(lnagn,lnagn1,axis=0)
+                lagn = np.append(lagn,lagn1,axis=0)
         # Check number of galaxies within model limits
         if (len(lusfr) != len(lzsfr)):
             print('WARNING plots.umz, SFR: different length arrays U and Z')
@@ -913,11 +967,9 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                 ina[i] = ina[i] + np.shape(ind)[1]
 
     # Plot per component U versus Z
-    proxies, labels = plot_components(axu, lzsfr, lusfr,
-                                      ncomp, tots, ins)
+    proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
     if AGN:
-        aproxies, alabels = plot_components(axua, lzagn, luagn,
-                                            nacomp, tota, ina)
+        aproxies, alabels = plot_comp_contour(axua, lzagn, luagn, tota, ina)
 
     # Legend for U vs Z
     leg = axu.legend(proxies, labels, loc=0)
@@ -927,76 +979,10 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         leg = axua.legend(aproxies, alabels, loc=0)
         leg.draw_frame(False)
                 
-    ## nH vs M* (or Lagn)
-    #dx = 0.2
-    #
-    #xx = lms
-    #xbins = np.arange(min(xx), (max(xx) + dx), dx)
-    #xhist = xbins + dx * 0.5
-    #print(xhist)
-    #
-    #mmin = max(np.log10(mp),np.min(lms[lms>0]))
-    #mmax = np.max(lms[lms>0])
-    #mbins = np.arange(mmin, (mmax + dx), dx)
-    #mhist = mbins + dx * 0.5
-    #axam.set_xlim(mmin, mmax)
-    #
-    ## Find percentages within photoionisation model limits
-    #for i in range(ncomp):
-    #    m = lms[:,i]
-    #    u = lusfr[:,i]
-    #    z = lzsfr[:,i]
-    #
-    #    ind = np.where((u>c.notnum) & (z>c.notnum))
-    #    if (np.shape(ind)[1]>len(zbins)):
-    #        for isub in range(2):
-    #            arr = z[ind]
-    #            if isub == 1: arr = m[ind]
-    #
-    #            med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
-    #            upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
-    #            low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
-    #            jnd = np.where(med>c.notnum)
-    #            if (np.shape(jnd)[1]>1):
-    #                el = med[jnd] - low[jnd]
-    #                eh = upq[jnd] - med[jnd]
-    #                if isub == 0:
-    #                    axsz.errorbar(zhist[jnd],med[jnd],
-    #                                  yerr=[el,eh],c=col,label=leg)
-    #                elif isub == 1:
-    #                    axsm.errorbar(mhist[jnd],med[jnd],yerr=[el,eh],c=col)
-    #    else:
-    #        axsz.scatter(z[ind],u[ind],c=col,label=leg)
-    #        axsm.scatter(m[ind],u[ind],c=col)                
-    #        
-    #    if AGN:
-    #        leg = "{} components {}, {:.1f}% in".format(int(tota[i]),i,
-    #                                                 ina[i]*100./tota[i])
-    #        u = luagn[:,i]
-    #        z = lzagn[:,i]
-    #
-    #        ind = np.where((u>c.notnum) & (z>c.notnum))
-    #        if (np.shape(ind)[1]>len(zbins)):
-    #            for isub in range(2):
-    #                arr = z[ind]
-    #                if isub == 1: arr = m[ind]
-    #
-    #                med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
-    #                upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
-    #                low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
-    #                jnd = np.where(med>c.notnum)
-    #                if (np.shape(jnd)[1]>1):
-    #                    el = med[jnd] - low[jnd]
-    #                    eh = upq[jnd] - med[jnd]
-    #                    if isub == 0:
-    #                        axaz.errorbar(zhist[jnd],med[jnd],
-    #                                      yerr=[el,eh],c=col,label=leg)
-    #                    elif isub == 1:
-    #                        axam.errorbar(mhist[jnd],med[jnd],
-    #                                      yerr=[el,eh],c=col)
-    #        else:
-    #            axaz.scatter(z[ind],u[ind],c=col,label=leg)
-    #            axam.scatter(m[ind],u[ind],c=col)                        
+    # Plot per component nH versus M* (or Lagn)
+    plot_comp_quartiles(axn, lms, lnsfr, min_Ms, max_Ms)
+    if AGN:
+        plot_comp_quartiles(axna, np.log10(lagn), lnagn, min_Lbol, max_Lbol)
        
     # Output
     pltpath = io.get_plotpath(root)

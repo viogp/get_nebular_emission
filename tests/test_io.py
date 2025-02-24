@@ -10,7 +10,7 @@ txtfile = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.txt'
 hf5file = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.hdf5'
 
 class TestStringMethods(unittest.TestCase):
-
+    
     def test_outroot(self):
         expath = 'output/a'
         self.assertEqual(io.get_outroot('a/example.txt',100),

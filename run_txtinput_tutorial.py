@@ -15,12 +15,12 @@ from src.gne_plots import make_testplots, make_gridplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
-run_code = False
+run_code = True
 plot_tests = True # Plots to check the output
 plot_photo_grids = False  # Plots to explore the Photoionisation tables
 
 # Calculate emission from AGNs: AGN = True
-AGN = True
+AGN = False
 
 ###############################################################
 ### OUTPUT FILES
@@ -135,7 +135,7 @@ une_agn_U    = 'panuzzo03'
 # Z_central=False indicates that the given Zgas is not central,
 #           Z-gradients from the literature (f(M*_gal)) are used to estimate
 #           the Zgas at the galactic center
-Z_central=True
+Z_central = False
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
