@@ -1,7 +1,8 @@
 import numpy as np
 
-notnum = -999.
+notnum    = -999.
 testlimit = 50
+n4contour = 1000
 
 mp   = 1.67e-27            # Proton mass, kg
 c    = 2.998e8             # Light velocity, m/s

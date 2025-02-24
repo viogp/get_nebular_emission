@@ -221,7 +221,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                   epsilon_param_z0=epsilon_param_z0,
                                   IMF=IMF,une_sfr_nH=une_sfr_nH,
                                   une_sfr_U=une_sfr_U,verbose=verbose)
-    
     if verbose:
         print('SF:')
         print(' U and nH calculated.')

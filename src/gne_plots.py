@@ -719,13 +719,14 @@ def lines_BPT(x, BPT, line):
 
 def plot_umz(root, subvols=1, outpath=None, verbose=True):
     '''
-    Make plots of the ionizing parameter versus stellar mass and Zgas,
-    for SF regions and AGNs.
+    Make plots of the ionizing parameter versus Zgas,
+    and electron density as a function of stellar mass,
+    for SF regions and NLR AGNs, if calculated.
     
     Parameters
     ----------
     root : string
-       Path to input files. 
+       Path to files with calculated data (lines, etc)
     subvols: integer
         Number of subvolumes to be considered
     outpath : string
@@ -742,80 +743,91 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
     photmod_sfr = header.attrs['photmod_sfr']
     photmod_agn = header.attrs['photmod_agn']
     mp = header.attrs['mp_Msun']
-    lms = f['data/lms'][:,:]
-    f.close()
+    lu = f['sfr_data/lu_sfr'][:]
+    # Read AGN information if it exists
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        lua = f['agn_data/lu_agn'][:]
 
     # Get number of components
-    ncomp = np.shape(lms)[1]
-    
+    ncomp = np.shape(lu)[1]
+    if AGN:
+        nacomp = np.shape(lua)[1]
+
     # Prep plots
-    fig = plt.figure(figsize=(30, 30))
-    gs = fig.add_gridspec(2, 2, hspace=0, wspace=0)
-    (axsz, axsm), (axaz, axam) = gs.subplots(sharex='col', sharey='row')
+    side = 15
+    if AGN:
+        fig, ((axu,axn),(axua,axna)) = plt.subplots(2, 2,
+                                                    figsize=(2*side, 2*side),
+                                                    layout='constrained')
+    else:
+        fig, (axu,axn) = plt.subplots(1, 2, figsize=(2*side, side),
+                                 layout='constrained')
+
+    axu.set_ylabel('log$_{10}U_{\\rm SF}$')
+    axu.set_xlabel('log$_{10}(Z_{\\rm gas})$')
+    axn.set_ylabel('log$_{10}(n_{H, \\rm SFR})$')
+    axn.set_xlabel('log$_{10}(M_{*})$')    
+    if AGN:
+        axua.set_ylabel('log$_{10}U_{\\rm AGN}$')
+        axua.set_xlabel('log$_{10}(Z_{\\rm gas})$')
+        axna.set_ylabel('log$_{10}(n_{H, \\rm AGN})$')
+        axna.set_xlabel('log$_{10}(L_{\\rm AGN})$')    
     
-    # Read limits for properties and photoionisation models
-    minUs, maxUs = get_limits(propname='logUs', photmod=photmod_sfr)
-    umins = minUs - 0.5; umaxs = maxUs +0.5
-    minZs1, maxZs1 = get_limits(propname='Z', photmod=photmod_sfr)
-    minZs = np.log10(minZs1); maxZs = np.log10(maxZs1);
+    # Read limits for photoionisation models
+    pad = 0.5
+    umin, umax = get_limits(propname='logUs', photmod=photmod_sfr)
+    axu.set_ylim(umin-pad, umax+pad)
     
-    minUa, maxUa = get_limits(propname='logUs', photmod=photmod_agn)
-    umina = minUa - 0.5; umaxa = maxUa +0.5
-    minZa1, maxZa1 = get_limits(propname='Z', photmod=photmod_agn)
-    minZa = np.log10(minZa1); maxZa = np.log10(maxZa1);
+    zmin, zmax = np.log10(get_limits(propname='Z', photmod=photmod_sfr))
+    axu.set_xlim(zmin-pad, zmax+pad)
 
-    zmin = min(minZs,minZa)-0.5
-    zmax = max(maxZs,maxZa)+0.5
+    axu.add_patch(plt.Rectangle((zmin, umin), zmax-zmin,umax-umin,
+                                ec="gray",ls='--',lw=10,fc="none"))    
+    if AGN:
+        uamin, uamax = get_limits(propname='logUs', photmod=photmod_agn)
+        axua.set_ylim(uamin-pad, uamax+pad)
     
-    xtit = 'log$_{10}(Z)$'
-    axaz.set_xlabel(xtit)
-    ytit = 'log$_{10}U_{\\rm AGN}$'
-    axaz.set_ylabel(ytit)
-    axaz.set_xlim(zmin, zmax)
-    axaz.set_ylim(umina, umaxa)
+        zamin, zamax = np.log10(get_limits(propname='Z', photmod=photmod_agn))
+        axua.set_xlim(zamin-pad, zamax+pad)
 
-    ytit = 'log$_{10}U_{\\rm SF}$'
-    axsz.set_ylabel(ytit)
-    axsz.set_ylim(umins, umaxs)
-
-    xtit = 'log$_{10}(M_*/M_{\\odot})$'
-    axam.set_xlabel(xtit)
-
-    # Squares with limits
-    axsz.add_patch(plt.Rectangle((minZs, minUs), maxZs-minZs,
-                                 maxUs-minUs,ec="r",fc="none"))
-    axaz.add_patch(plt.Rectangle((minZa, minUa), maxZa-minZa,
-                                 maxUa-minUa,ec="r",fc="none"))
+        axua.add_patch(plt.Rectangle((zamin, uamin), zamax-zamin,uamax-uamin,
+                                     ec="gray",ls='--',lw=10,fc="none"))
 
     # Initialise counters per component
-    tots, tota, ina, ins = [np.zeros(ncomp) for i in range(4)]
-    
+    tots, ins = [np.zeros(ncomp) for i in range(2)]
+    if AGN:
+        tota, ina = [np.zeros(nacomp) for i in range(2)]
+
     # Read data in each subvolume
     for ivol in range(subvols):
         filenom = root+str(ivol)+'.hdf5' #; print(filenom); exit()
         f = h5py.File(filenom, 'r')
-        lms1 = f['data/lms'][:]
-
+    
         # Read SF information from file
-        lusfr1 = f['sfr_data/lu_sfr'][:]
+        lms1 = f['data/lms'][:]
         lzsfr1 = f['sfr_data/lz_sfr'][:]
-
-        # Read AGN information if it exists
-        AGN = True
-        if 'agn_data' not in f.keys(): AGN = False
-        if AGN: 
-            luagn1 = f['agn_data/lu_agn'][:]
+        lusfr1 = f['sfr_data/lu_sfr'][:]
+        lnsfr1 = f['sfr_data/lnH_sfr'][:]
+        if AGN:
+            lagn1 = f['data/Lagn'][:]
             lzagn1 = f['agn_data/lz_agn'][:]
+            luagn1 = f['agn_data/lu_agn'][:]
+            lnagn1 = f['agn_data/lnH_agn'][:]
         f.close()
-
+    
         if ivol == 0:
             lms = lms1; lusfr = lusfr1; lzsfr = lzsfr1
-            if AGN: luagn = luagn1; lzagn = lzagn1
+            if AGN:
+                lagn = lagn1; luagn = luagn1; lzagn = lzagn1
         else:
             lms = np.append(lms,lms1,axis=0)
             lusfr = np.append(lusfr,lusfr1,axis=0)
             lzsfr = np.append(lzsfr,lzsfr1,axis=0)            
             if AGN:
+                lagn = np.append(lagn,lagn1,axis=0)
                 luagn = np.append(luagn,luagn1,axis=0)
                 lzagn = np.append(lzagn,lzagn1,axis=0)            
             
@@ -825,104 +837,143 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         if AGN:
             if (len(luagn) != len(lzagn)):
                 print('WARNING plots.umz, AGN: different length arrays U and Z')
-
-        # Loop over components 
+    
+        # Count parameters within the limits of photoionising models
         for i in range(ncomp):
             u = lusfr[:,i]
             z = lzsfr[:,i]
             tots[i] = tots[i] + len(u)
-            ind = np.where((u>=minUs) & (u<=maxUs) &
-                           (z>=minZs) & (z<=maxZs))
-            ins[i] = ins[i] + np.shape(ind)[1]
-            
-            if AGN:
+            ind = np.where((u>=umin) & (u<=umax) &
+                           (z>=zmin) & (z<=zmax))
+            ins[i] = ins[i] + np.shape(ind)[1]        
+
+        if AGN:
+            for i in range(nacomp):
                 u = luagn[:,i]
                 z = lzagn[:,i]
                 tota[i] = tota[i] + len(u)
-                ind = np.where((u>=minUa) & (u<=maxUa) &
-                               (z>=minZa) & (z<=maxZa))
+                ind = np.where((u>=uamin) & (u<=uamax) &
+                               (z>=zamin) & (z<=zamax))
                 ina[i] = ina[i] + np.shape(ind)[1]
 
-    # Set limits for the mass
-    
-    # Bins for percentiles
+    # Plot per component U versus Z
+    proxies = []; labels = []
+    for i in range(ncomp):
+        ind = np.where((lzsfr[:,i]>c.notnum) & (lusfr[:,i]>c.notnum))[0]
+        if (len(ind)>0):
+            x = lzsfr[ind,i]
+            y = lusfr[ind,i]
+            col = np.array([plt.cm.tab20(float(i)/ncomp)])    
+            if (len(ind)>c.n4contour):
+                xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
+                levels,colors= contour2Dsigma(color=col)
+                contour = axu.contourf(xc,yc,zc,levels=levels,colors=colors)
+                proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
+            else:
+                scatter = axu.scatter(x,y,c=col,label=leg)
+                proxies.append(scatter)
+            leg = "{} component {} ({:.1f}% in)".format(int(tots[i]),i,
+                                                        ins[i]*100./tots[i])
+            labels.append(leg)
+
+    if AGN:
+        aproxies = []; alabels = []
+        for i in range(nacomp):
+            ind = np.where((lzagn[:,i]>c.notnum) & (luagn[:,i]>c.notnum))[0]
+            if (len(ind)>0):
+                x = lzagn[ind,i]
+                y = luagn[ind,i]
+                col = np.array([plt.cm.tab20(float(i)/nacomp)])    
+                if (len(ind)>c.n4contour):
+                    xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
+                    levels,colors= contour2Dsigma(color=col)
+                    contour = axu.contourf(xc,yc,zc,levels=levels,
+                                           colors=colors)
+                    aproxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
+                else:
+                    scatter = axua.scatter(x,y,c=col)
+                    aproxies.append(scatter)
+                leg = "{} component {} ({:.1f}% in)".format(int(tota[i]),i,
+                                                        ina[i]*100./tota[i])
+                alabels.append(leg)
+
+    # Legend for U vs Z
+    leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
+    if AGN:
+        leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
+
+                
+    # nH vs M* (or Lagn)
     dx = 0.2
 
-    zbins = np.arange(zmin, (zmax + dx), dx)
-    zhist = zbins + dx * 0.5
-
-    mmin = max(np.log10(mp),np.min(lms[lms>0]))
-    mmax = np.max(lms[lms>0])
-    mbins = np.arange(mmin, (mmax + dx), dx)
-    mhist = mbins + dx * 0.5
-    axam.set_xlim(mmin, mmax)
-    
-    # Find percentages within photoionisation model limits
-    for i in range(ncomp):
-        col = np.array([plt.cm.tab20(float(i)/ncomp)])
-        
-        leg = "{} components {}, {:.1f}% in".format(int(tots[i]),i,
-                                                 ins[i]*100./tots[i])
-        m = lms[:,i]
-        u = lusfr[:,i]
-        z = lzsfr[:,i]
-
-        ind = np.where((u>c.notnum) & (z>c.notnum))
-        if (np.shape(ind)[1]>len(zbins)):
-            for isub in range(2):
-                arr = z[ind]
-                if isub == 1: arr = m[ind]
-
-                med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
-                upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
-                low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
-                jnd = np.where(med>c.notnum)
-                if (np.shape(jnd)[1]>1):
-                    el = med[jnd] - low[jnd]
-                    eh = upq[jnd] - med[jnd]
-                    if isub == 0:
-                        axsz.errorbar(zhist[jnd],med[jnd],
-                                      yerr=[el,eh],c=col,label=leg)
-                    elif isub == 1:
-                        axsm.errorbar(mhist[jnd],med[jnd],yerr=[el,eh],c=col)
-        else:
-            axsz.scatter(z[ind],u[ind],c=col,label=leg)
-            axsm.scatter(m[ind],u[ind],c=col)                
-            
-        if AGN:
-            leg = "{} components {}, {:.1f}% in".format(int(tota[i]),i,
-                                                     ina[i]*100./tota[i])
-            u = luagn[:,i]
-            z = lzagn[:,i]
-
-            ind = np.where((u>c.notnum) & (z>c.notnum))
-            if (np.shape(ind)[1]>len(zbins)):
-                for isub in range(2):
-                    arr = z[ind]
-                    if isub == 1: arr = m[ind]
-
-                    med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
-                    upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
-                    low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
-                    jnd = np.where(med>c.notnum)
-                    if (np.shape(jnd)[1]>1):
-                        el = med[jnd] - low[jnd]
-                        eh = upq[jnd] - med[jnd]
-                        if isub == 0:
-                            axaz.errorbar(zhist[jnd],med[jnd],
-                                          yerr=[el,eh],c=col,label=leg)
-                        elif isub == 1:
-                            axam.errorbar(mhist[jnd],med[jnd],
-                                          yerr=[el,eh],c=col)
-            else:
-                axaz.scatter(z[ind],u[ind],c=col,label=leg)
-                axam.scatter(m[ind],u[ind],c=col)                
-            
-
-    # Legend
-    leg = axsz.legend(loc=1); leg.draw_frame(False)
-    leg = axaz.legend(loc=1); leg.draw_frame(False)
-   
+    xx = lms
+    xbins = np.arange(min(xx), (max(xx) + dx), dx)
+    xhist = xbins + dx * 0.5
+    print(xhist)
+    #
+    #mmin = max(np.log10(mp),np.min(lms[lms>0]))
+    #mmax = np.max(lms[lms>0])
+    #mbins = np.arange(mmin, (mmax + dx), dx)
+    #mhist = mbins + dx * 0.5
+    #axam.set_xlim(mmin, mmax)
+    #
+    ## Find percentages within photoionisation model limits
+    #for i in range(ncomp):
+    #    m = lms[:,i]
+    #    u = lusfr[:,i]
+    #    z = lzsfr[:,i]
+    #
+    #    ind = np.where((u>c.notnum) & (z>c.notnum))
+    #    if (np.shape(ind)[1]>len(zbins)):
+    #        for isub in range(2):
+    #            arr = z[ind]
+    #            if isub == 1: arr = m[ind]
+    #
+    #            med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
+    #            upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
+    #            low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
+    #            jnd = np.where(med>c.notnum)
+    #            if (np.shape(jnd)[1]>1):
+    #                el = med[jnd] - low[jnd]
+    #                eh = upq[jnd] - med[jnd]
+    #                if isub == 0:
+    #                    axsz.errorbar(zhist[jnd],med[jnd],
+    #                                  yerr=[el,eh],c=col,label=leg)
+    #                elif isub == 1:
+    #                    axsm.errorbar(mhist[jnd],med[jnd],yerr=[el,eh],c=col)
+    #    else:
+    #        axsz.scatter(z[ind],u[ind],c=col,label=leg)
+    #        axsm.scatter(m[ind],u[ind],c=col)                
+    #        
+    #    if AGN:
+    #        leg = "{} components {}, {:.1f}% in".format(int(tota[i]),i,
+    #                                                 ina[i]*100./tota[i])
+    #        u = luagn[:,i]
+    #        z = lzagn[:,i]
+    #
+    #        ind = np.where((u>c.notnum) & (z>c.notnum))
+    #        if (np.shape(ind)[1]>len(zbins)):
+    #            for isub in range(2):
+    #                arr = z[ind]
+    #                if isub == 1: arr = m[ind]
+    #
+    #                med = st.perc_2arrays(zbins, arr, u[ind], 0.5)        
+    #                upq = st.perc_2arrays(zbins, arr, u[ind], 0.84)
+    #                low = st.perc_2arrays(zbins, arr, u[ind], 0.16)
+    #                jnd = np.where(med>c.notnum)
+    #                if (np.shape(jnd)[1]>1):
+    #                    el = med[jnd] - low[jnd]
+    #                    eh = upq[jnd] - med[jnd]
+    #                    if isub == 0:
+    #                        axaz.errorbar(zhist[jnd],med[jnd],
+    #                                      yerr=[el,eh],c=col,label=leg)
+    #                    elif isub == 1:
+    #                        axam.errorbar(mhist[jnd],med[jnd],
+    #                                      yerr=[el,eh],c=col)
+    #        else:
+    #            axaz.scatter(z[ind],u[ind],c=col,label=leg)
+    #            axam.scatter(m[ind],u[ind],c=col)                        
+       
     # Output
     pltpath = io.get_plotpath(root)
     plotnom = pltpath+'umz.pdf'
@@ -1432,7 +1483,7 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     Parameters
     ----------
     rootf : string
-       Path and root to input files
+       Path to files with calculated data (lines, etc)
     snap: integer
         Simulation snapshot number
     subvols: integer
@@ -1446,9 +1497,9 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
     
     # U vs Z
-    #umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
+    umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
+    #bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
     
     return

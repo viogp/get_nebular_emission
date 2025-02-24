@@ -619,12 +619,6 @@ def get_sfrdata(infile,cols,selection=None,
         #    lssfr[ind] = c.notnum ; lzgas[ind] = c.notnum
         # np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
 
-    # Get the total sSFR
-    #sfr_tot = ssfr[0,:]/ ####here what do I want????
-    #if ncomp!=1:
-    #    # Add mass from components if above 0
-    #    ms_tot = np.sum(np.where(ms > 0, ms, 0), axis=0)
-
     # Obtain log10(sSFR) in 1/yr
     lssfr = np.zeros(np.shape(sfr)); lssfr.fill(c.notnum)
     for comp in range(ncomp):
@@ -650,7 +644,6 @@ def get_sfrdata(infile,cols,selection=None,
     else: 
         ind = np.where(zgas>0)
         lzgas[ind] = np.log10(zgas[ind])
-
     #if ncomp!=1: #Total Z
     #    oh12 = np.zeros(lzgas.shape)
     #    lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(c.notnum)
