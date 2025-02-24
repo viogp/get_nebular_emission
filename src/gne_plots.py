@@ -926,59 +926,14 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
     if AGN:
         leg = axua.legend(aproxies, alabels, loc=0)
         leg.draw_frame(False)
-    #proxies = []; labels = []
-    #for i in range(ncomp):
-    #    ind = np.where((lzsfr[:,i]>c.notnum) & (lusfr[:,i]>c.notnum))[0]
-    #    if (len(ind)>0):
-    #        x = lzsfr[ind,i]
-    #        y = lusfr[ind,i]
-    #        col = np.array([plt.cm.tab20(float(i)/ncomp)])    
-    #        if (len(ind)>c.n4contour):
-    #            xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
-    #            levels,colors= contour2Dsigma(color=col)
-    #            contour = axu.contourf(xc,yc,zc,levels=levels,colors=colors)
-    #            proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
-    #        else:
-    #            scatter = axu.scatter(x,y,c=col,label=leg)
-    #            proxies.append(scatter)
-    #        leg = "{} component {} ({:.1f}% in)".format(int(tots[i]),i,
-    #                                                    ins[i]*100./tots[i])
-    #        labels.append(leg)
-    #
-    #if AGN:
-    #    aproxies = []; alabels = []
-    #    for i in range(nacomp):
-    #        ind = np.where((lzagn[:,i]>c.notnum) & (luagn[:,i]>c.notnum))[0]
-    #        if (len(ind)>0):
-    #            x = lzagn[ind,i]
-    #            y = luagn[ind,i]
-    #            col = np.array([plt.cm.tab20(float(i)/nacomp)])    
-    #            if (len(ind)>c.n4contour):
-    #                xc,yc,zc = st.get_cumulative_2Ddensity(x,y,n_grid=100)
-    #                levels,colors= contour2Dsigma(color=col)
-    #                contour = axu.contourf(xc,yc,zc,levels=levels,
-    #                                       colors=colors)
-    #                aproxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
-    #            else:
-    #                scatter = axua.scatter(x,y,c=col)
-    #                aproxies.append(scatter)
-    #            leg = "{} component {} ({:.1f}% in)".format(int(tota[i]),i,
-    #                                                    ina[i]*100./tota[i])
-    #            alabels.append(leg)
-    #
-    ## Legend for U vs Z
-    #leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
-    #if AGN:
-    #    leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
-
                 
-    # nH vs M* (or Lagn)
-    dx = 0.2
-
-    xx = lms
-    xbins = np.arange(min(xx), (max(xx) + dx), dx)
-    xhist = xbins + dx * 0.5
-    print(xhist)
+    ## nH vs M* (or Lagn)
+    #dx = 0.2
+    #
+    #xx = lms
+    #xbins = np.arange(min(xx), (max(xx) + dx), dx)
+    #xhist = xbins + dx * 0.5
+    #print(xhist)
     #
     #mmin = max(np.log10(mp),np.min(lms[lms>0]))
     #mmax = np.max(lms[lms>0])
