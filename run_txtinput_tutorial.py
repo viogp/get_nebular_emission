@@ -15,9 +15,9 @@ from src.gne_plots import make_testplots, make_gridplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
-run_code = True
-plot_tests = True # Plots to check the output
-plot_photo_grids = False  # Plots to explore the Photoionisation tables
+run_code = False
+plot_tests = False # Plots to check the output
+plot_photo_grids = True  # Plots to explore the Photoionisation tables
 
 # Calculate emission from AGNs: AGN = True
 AGN = True

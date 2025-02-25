@@ -10,13 +10,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import colors as mcol
 from matplotlib.pyplot import cm
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
+import matplotlib.offsetbox as moffbox
 import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st 
-#from src.gne_io import get_nheader, check_file
 from src.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
-#from numpy import random
-#from cosmology import logL2flux, set_cosmology
 from src.gne_cosmology import set_cosmology,emission_line_luminosity
 import src.gne_style
 plt.style.use(src.gne_style.style1)
@@ -27,6 +27,8 @@ min_Lbol = 42 # Based on Griffin+2020, fig 14
 max_Lbol = 50
 min_Ms = 8    # To be obtained from sim. res. ###here
 max_Ms = 12   # To be obtained from sim. res. ###here
+
+markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '_']
 
 def contour2Dsigma(n_levels=None,color='darkgrey'):
     '''
@@ -1125,8 +1127,9 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
        Name of output plot within output/photoio_grids
     '''
     # Prep plots
-    fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15),
+    fig, (axn, axs) = plt.subplots(1, 2, figsize=(32, 17),
                                    layout='constrained')
+    #plt.subplots_adjust(right=0.85, top=0.9) 
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
     xmaxs = [0.8,0.9]
@@ -1176,55 +1179,85 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
     if photmod == 'gutkin16':
         grid1,grid2,grid3,grid4 = read_gutkin16_grids(xid, co, imf_cut)
         grids = [grid1, grid2, grid3, grid4]
-        col_ha = 10
-        col_hb = 6 
-        col_o3 = 8     #[OIII]5007
-        col_n2 = 11    #[NII]6584
-        col_s2_a = 12  #[SII]6717
-        col_s2_b = 13  #[SII]6731
-        
+        nl = 5
+        col_ha = 10-nl
+        col_hb = 6-nl 
+        col_o3 = 8-nl     #[OIII]5007
+        col_n2 = 11-nl    #[NII]6584
+        col_s2_a = 12-nl  #[SII]6717
+        col_s2_b = 13-nl  #[SII]6731        
     elif photmod == 'feltre16':
         grid1,grid2,grid3 = read_feltre16_grids(xid, alpha)
         grids = [grid1, grid2, grid3]
-        col_ha = 10
-        col_hb = 5 
-        col_o3 = 7     #[OIII]5007
-        col_n2 = 11    #[NII]6584  
-        col_s2_a = 12  #[SII]6717
-        col_s2_b = 13  #[SII]6731
-        
-#    for i, grid in enumerate(grids):
-#        nz = grid.shape[0]
-#        nu = grid.shape[1]        
-#        for iz in range(nz):
-#            for iu in range(nu):
-#                el = grid[iz,iu,:]
-#                y = np.log10(el[col_o3]/el[col_hb])
-#                for ii, bpt in enumerate(['NII','SII']):
-#                    if bpt=='NII':
-#                        x = np.log10(el[col_n2]/el[col_ha])
-#                        axn.plot(x,y,'r.')
-#                    elif bpt=='SII':
-#                        s2 = el[col_s2_a] + el[col_s2_b]
-#                        x = np.log10(s2/el[col_ha])
-#                        axs.plot(x,y,'b.')
-    #for iz in range(grid2.shape[0]):
-    iz=0; iu=0;
-    for iu in range(grid1.shape[1]):
-        el = grid1[iz,iu,:]
-        print(el)
-        y = np.log10(el[col_o3]/el[col_hb])
-        for ii, bpt in enumerate(['NII','SII']):
-            if bpt=='NII':
-                x = np.log10(el[col_n2]/el[col_ha])
-                print(bpt,x,y)
-                axn.plot(x,y,'r.')
-            elif bpt=='SII':
-                s2 = el[col_s2_a] + el[col_s2_b]
-                x = np.log10(s2/el[col_ha])
-                print(s2,bpt,x,y)
-                axs.plot(x,y,'b.')
+        nl = 4
+        col_ha = 10-nl
+        col_hb = 5-nl 
+        col_o3 = 7-nl     #[OIII]5007
+        col_n2 = 11-nl    #[NII]6584  
+        col_s2_a = 12-nl  #[SII]6717
+        col_s2_b = 13-nl  #[SII]6731
+
+    for i, grid in enumerate(grids):
+        nz = grid.shape[0]
+        nu = grid.shape[1]
+
+        size = 100 + i * 30
+        for iz in range(nz):
+            color = cm.tab20(iz % 20)
+            
+            for iu in range(nu):
+                marker = markers[iu % len(markers)]
                 
+                el = grid[iz,iu,:]
+                y = np.log10(el[col_o3]/el[col_hb])
+                for ii, bpt in enumerate(['NII','SII']):
+                    if bpt=='NII':
+                        x = np.log10(el[col_n2]/el[col_ha])
+                        axn.scatter(x,y,s=size,c=[color],marker=marker)
+                    elif bpt=='SII':
+                        s2 = el[col_s2_a] + el[col_s2_b]
+                        x = np.log10(s2/el[col_ha])
+                        axs.scatter(x,y,s=size,c=[color],marker=marker)
+
+    # Add legend on Z values
+    zvals = c.zmet_str[photmod]
+    z_handles = []
+    for iz, z_val in enumerate(zvals):
+        color = cm.tab20(iz % 20)
+        z_handle = mpatches.Patch(color=color, label=f'0.{z_val}')
+        z_handles.append(z_handle)
+    legend1 = fig.legend(handles=z_handles, loc='center left',
+                         bbox_to_anchor=(1.02, 0.5), 
+                         title="Z$_{gas}$", frameon=False)
+    fig.add_artist(legend1)
+
+    # Add legend on U values
+    uvals = c.lus_bins[photmod]
+    u_handles = []
+    for iu, u_val in enumerate(uvals):
+        marker = markers[iu % len(markers)]
+        u_handle = mlines.Line2D([], [], color='black',
+                                 marker=marker, ls='None',
+                                 markersize=10, label=f'{u_val}')
+        u_handles.append(u_handle)
+    legend2 = fig.legend(handles=u_handles, 
+                         loc='upper center',
+                         bbox_to_anchor=(0.5, 1.1),
+                         title='log$_{10}$ U',
+                         ncol=min(5, len(u_handles)),
+                         frameon=False)
+    legend2._legend_box.align = "left"
+    legend2._legend_box.sep = 7 
+    plt.setp(legend2.get_title(), ha='right')
+    legend2._legend_box = moffbox.VPacker(
+        pad=0, sep=0, align="left",
+        children=[
+            moffbox.HPacker(
+                pad=0, sep=5, align="center",
+                children=[legend2._legend_box.get_children()[0],
+                          legend2._legend_box.get_children()[1]])])
+    fig.add_artist(legend2)
+    
     # Add legend on model information
     if photmod == 'gutkin16':
         legend_model = (f'Gutkin+16\n'
@@ -1237,11 +1270,15 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
                         f'$\\alpha$ = {alpha}\n')
     axn.text(0.05, 0.97, legend_model, transform=axn.transAxes,
              verticalalignment='top')
-    
+
     # Output
     pltpath = 'output/plots/photoio_grids/'
-    io.create_dir(pltpath) 
-    bptnom = pltpath+photmod+'_xi'+str(xid)+'_bpts.pdf'
+    io.create_dir(pltpath)
+    if (photmod == 'gutkin16'):
+        bptnom = pltpath+photmod+'_xi'+str(xid)+'_bpts.pdf'
+    elif (photmod == 'feltre16'):
+        bptnom = pltpath+photmod+'_alpha'+str(abs(alpha))+'_bpts.pdf'
+
     plt.savefig(bptnom)
     if verbose:
          print(f'* Photoionisation model grids on BPT plots: {bptnom}')
