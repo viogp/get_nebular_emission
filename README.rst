@@ -62,12 +62,10 @@ The example code make selections within the data, calculate emission line lumino
 
 Citing
 -----------------------
-As you use get_emission_lines, cite at least the first of the following papers:
+As you use get_emission_lines, cite the following paper:
 
-* [Expósito-Márquez et al 2024a](in prep)
-* [Expósito-Márquez et al 2024b](in prep)
 * [Baugh et al. 2022](https://arxiv.org/abs/2112.00129)
-  ```
+  <details>```bibtex
   @ARTICLE{2022MNRAS.510.1880B,
        author = {{Baugh}, C.~M. and {Lacey}, Cedric G. and {Gonzalez-Perez}, Violeta and {Manzoni}, Giorgio},
         title = "{Modelling emission lines in star-forming galaxies}",
@@ -84,8 +82,7 @@ archivePrefix = {arXiv},
  primaryClass = {astro-ph.GA},
        adsurl = {https://ui.adsabs.harvard.edu/abs/2022MNRAS.510.1880B},
       adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-}
-  ```	
+}```</details>
 
 .. _pyversion: https://uk.mathworks.com/help/matlab/getting-started-with-python.html
 
