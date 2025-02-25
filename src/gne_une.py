@@ -413,7 +413,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_AGN,
+def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_agn,
                       profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
@@ -917,7 +917,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
         if origin=='agn':
-            lnH[ind] = 3
+            lnH[ind] = np.log10(c.nH_agn)
             lzgas[ind] = lzgas_all[ind]
             
             for comp in range(len(Q[0])):
@@ -936,7 +936,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     return lu, lnH, lzgas
 
 
-def get_une_sfr(lms, lssfr, lzgas,filenom,
+def get_une_sfr(lms, lssfr, lzgas, filenom,
                 q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3, T=10000,
                 ng_ratio=None, epsilon_param=[None], epsilon_param_z0=[None],epsilon=0.01,
                 IMF=['Kroupa','Kroupa'],
@@ -1031,9 +1031,9 @@ def get_une_sfr(lms, lssfr, lzgas,filenom,
     return lu, lnH # epsilon, ng_ratio
 
 
-def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
+def get_une_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
                 Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
-                T=10000, agn_nH_param=None, epsilon_param_z0=[None],
+                T=10000, epsilon_param_z0=[None],
                 une_agn_nH=None,une_agn_spec='feltre16',
                 une_agn_U='panuzzo03', verbose=True):
     '''
@@ -1084,7 +1084,7 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o,filenom,
     epsilon = np.full(np.shape(lzgas_o)[0],c.eNGC1976)
     if une_agn_nH is not None:
         epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
-                                    filenom,nH=c.nH_AGN,
+                                    filenom,nH=c.nH_agn,
                                     profile=une_agn_nH,verbose=verbose)
 
     if une_agn_U not in c.une_agn_U:

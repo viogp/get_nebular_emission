@@ -185,7 +185,7 @@ kagn_exp = 0.597
 # Lacey et. al 2016
 epsilon_heat = 0.02 # BH heating efficienty 
 
-nH_AGN = 1000 # cm^-3
+nH_agn = 1000 # cm^-3
 radius_NLR = 0.001 # Mpc
 
 # From Osterbrock and Ferland: typical filling factor for NLR AGN
