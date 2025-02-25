@@ -747,8 +747,7 @@ def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
     labels : list
         List of labels for legend
     """
-    proxies = []
-    labels = []
+    proxies = []; labels = []
 
     n_comp = np.shape(xx)[1]
     for i in range(n_comp):
@@ -768,14 +767,13 @@ def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
                 proxies.append(scatter)
             
             leg = "{} component {} ({:.1f}% in)".format(
-                int(tots[i]), i, ins[i] * 100. / tots[i]
-            )
+                int(tots[i]), i, ins[i]*100./tots[i])
             labels.append(leg)
     
     return proxies, labels
 
 
-def plot_comp_quartiles(ax, xx, yy, xmin, xmax, cm=plt.cm.tab20):
+def plot_comp_quartiles(ax, xx, yy, xmin, xmax, tots, ins, cm=plt.cm.tab20):
     """
     Plot quartiles for components and return legend elements.
     
@@ -791,14 +789,22 @@ def plot_comp_quartiles(ax, xx, yy, xmin, xmax, cm=plt.cm.tab20):
         Number of components
     xmin, xmax: float
         Limits for the x-axis
+    tots : ndarray
+        Total number of elements for each component
+    ins : ndarray
+        Number within limits for each component
     cm : matplotlib colormap, optional
         Colormap to use
         
     Returns:
     --------
+    proxies : list
+        List of proxy artists for legend
     labels : list
         List of labels for legend
     """
+    proxies = []; labels = []
+    
     dx = 0.2    
     xbins = np.arange(xmin,xmax + dx, dx)
     xhist = xbins + dx * 0.5
@@ -819,12 +825,17 @@ def plot_comp_quartiles(ax, xx, yy, xmin, xmax, cm=plt.cm.tab20):
             if (np.shape(jnd)[1]>1):
                 el = med[jnd] - low[jnd]
                 eh = upq[jnd] - med[jnd]
-                ax.errorbar(xhist[jnd],med[jnd],
-                            yerr=[el,eh],c=col,label=f'Component {i}')
-    return 
+                quart = ax.errorbar(xhist[jnd],med[jnd],yerr=[el,eh],c=col)
+                proxies.append(quart)
+                
+                leg = "{} component {} ({:.1f}% in)".format(
+                    int(tots[i]), i, ins[i]*100./tots[i])
+                labels.append(leg)
+                
+    return proxies, labels
 
 
-def plot_umz(root, subvols=1, outpath=None, verbose=True):
+def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     '''
     Make plots of the ionizing parameter versus Zgas,
     and electron density as a function of stellar mass,
@@ -881,7 +892,7 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         axua.set_ylabel('log$_{10}U_{\\rm AGN}$')
         axua.set_xlabel('log$_{10}(Z_{\\rm gas})$')
         axna.set_ylabel('log$_{10}(n_{H, \\rm AGN})$')
-        axna.set_xlabel('log$_{10}(L_{\\rm AGN/erg/s})$')    
+        axna.set_xlabel('log$_{10}(L_{\\rm AGN}/{\\rm erg/s})$')    
     
     # Read limits for photoionisation models
     pad = 0.5
@@ -892,7 +903,15 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
     axu.set_xlim(zmin-pad, zmax+pad)
 
     axu.add_patch(plt.Rectangle((zmin, umin), zmax-zmin,umax-umin,
-                                ec="gray",ls='--',lw=10,fc="none"))    
+                                ec="gray",ls='--',lw=10,fc="none"))
+
+    nmin, nmax = np.log10(get_limits(propname='nH', photmod=photmod_sfr))
+    axn.set_ylim(nmin-pad, nmax+pad)
+
+    mmin = min_Ms-pad; mmax = max_Ms+pad 
+    axn.plot([mmin, mmax], [nmin, nmin], 'gray', ls='--', lw=10)
+    axn.plot([mmin, mmax], [nmax, nmax], 'gray', ls='--', lw=10)
+
     if AGN:
         uamin, uamax = get_limits(propname='logUs', photmod=photmod_agn)
         axua.set_ylim(uamin-pad, uamax+pad)
@@ -903,10 +922,17 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         axua.add_patch(plt.Rectangle((zamin, uamin), zamax-zamin,uamax-uamin,
                                      ec="gray",ls='--',lw=10,fc="none"))
 
+        namin, namax = np.log10(get_limits(propname='nH', photmod=photmod_agn))
+        axna.set_ylim(namin-pad, namax+pad)
+
+        mmin = min_Lbol-pad; mmax = max_Lbol+pad 
+        axna.plot([mmin, mmax], [namin, namin], 'gray', ls='--', lw=10)
+        axna.plot([mmin, mmax], [namax, namax], 'gray', ls='--', lw=10)
+
     # Initialise counters per component
-    tots, ins = [np.zeros(ncomp) for i in range(2)]
+    tots, ins, inns = [np.zeros(ncomp) for i in range(3)]
     if AGN:
-        tota, ina = [np.zeros(nacomp) for i in range(2)]
+        tota, ina, inna = [np.zeros(nacomp) for i in range(3)]
 
     # Read data in each subvolume
     for ivol in range(subvols):
@@ -943,10 +969,10 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                 Lagn = np.append(Lagn,Lagn1,axis=0)
         # Check number of galaxies within model limits
         if (len(lusfr) != len(lzsfr)):
-            print('WARNING plots.umz, SFR: different length arrays U and Z')
+            print('WARNING plots.uzn, SFR: different length arrays U and Z')
         if AGN:
             if (len(luagn) != len(lzagn)):
-                print('WARNING plots.umz, AGN: different length arrays U and Z')
+                print('WARNING plots.uzn, AGN: different length arrays U and Z')
     
         # Count parameters within the limits of photoionising models
         for i in range(ncomp):
@@ -958,6 +984,11 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                            (z>=zmin) & (z<=zmax))
             ins[i] = ins[i] + np.shape(ind)[1]        
 
+            mask = (lnsfr[:,i] > c.notnum)
+            nn = lnsfr[mask,i]            
+            ind = np.where((nn>=nmin) & (nn<=nmax))
+            inns[i] = inns[i] + np.shape(ind)[1]        
+
         if AGN:
             for i in range(nacomp):
                 mask = (luagn[:,i] > c.notnum) & (lzagn[:,i] > c.notnum)
@@ -967,33 +998,42 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                 ind = np.where((u>=uamin) & (u<=uamax) &
                                (z>=zamin) & (z<=zamax))
                 ina[i] = ina[i] + np.shape(ind)[1]
-                
+
+                mask = (lnagn[:,i] > c.notnum)
+                nn = lnagn[mask,i]            
+                ind = np.where((nn>=nmin) & (nn<=nmax))
+                inna[i] = inna[i] + np.shape(ind)[1]        
+
     # Plot per component U versus Z
     proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
     if AGN:
         aproxies, alabels = plot_comp_contour(axua, lzagn, luagn, tota, ina)
 
     # Legend for U vs Z
-    leg = axu.legend(proxies, labels, loc=0)
-    leg.draw_frame(False)
-
+    leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
     if AGN:
-        leg = axua.legend(aproxies, alabels, loc=0)
-        leg.draw_frame(False)
+        leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
                 
     # Plot per component nH versus M* (or Lagn)
-    plot_comp_quartiles(axn, lms, lnsfr, min_Ms, max_Ms)
+    proxies, labels = plot_comp_quartiles(axn, lms, lnsfr,
+                                          min_Ms, max_Ms, tots, inns)
     if AGN:
         col = np.zeros(Lagn[:,0].shape); col.fill(c.notnum)
         mask = Lagn[:,0] > 0
         col[mask] = np.log10(Lagn[mask,0])
         lLagn = np.repeat(col[:, np.newaxis], nacomp, axis=1)
 
-        plot_comp_quartiles(axna, lLagn, lnagn, min_Lbol, max_Lbol)
-       
+        aproxies, alabels = plot_comp_quartiles(axna, lLagn, lnagn,
+                                                min_Lbol, max_Lbol, tota, inna)
+
+    # Legend for nH plots
+    leg = axn.legend(proxies,labels, loc=0); leg.draw_frame(False)
+    if AGN:
+        leg = axna.legend(aproxies,alabels, loc=0); leg.draw_frame(False)
+        
     # Output
     pltpath = io.get_plotpath(root)
-    plotnom = pltpath+'umz.pdf'
+    plotnom = pltpath+'uzn.pdf'
     plt.savefig(plotnom)
     if verbose:
          print(f'* U plots: {plotnom}')
@@ -1514,7 +1554,7 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
     
     # U vs Z
-    umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
+    uzn = plot_uzn(root,subvols=subvols,verbose=verbose) ###here
     
     # Make NII and SII bpt plots
     bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
