@@ -28,7 +28,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
-        Z_central=True,zeq=None,
+        Z_correct_grad=False,zeq=None,
         infile_z0=None,
         att=False,attmod='cardelli89',
         att_params=[None], att_ratio_lines=[None],
@@ -100,7 +100,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Inputs for AGN's bolometric luminosity calculations.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    Z_centralrection : boolean
+    Z_correct_gradrection : boolean
      If False, the code supposes the central metallicity of the galaxy to be the mean one.
      If True, the code estimates the central metallicity of the galaxy from the mean one.
     agn_nH_params : list
@@ -303,10 +303,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
         ###here to be removed until here (affecting to tremonti aprox)
-        if Z_central:
-            lzgas_agn = np.copy(lzgas)
-        else:
+        if Z_correct_grad:
             lzgas_agn = correct_Zagn(lms,lzgas)
+        else:
+            lzgas_agn = np.copy(lzgas)
 
         agn_nH_param = None
         if une_agn_nH is not None:

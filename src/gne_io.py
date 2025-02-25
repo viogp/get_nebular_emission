@@ -513,7 +513,9 @@ def get_sfrdata(infile,cols,selection=None,
                 inoh = False, LC2sfr=False, mtot2mdisk=True, 
                 inputformat='hdf5',testing=False,verbose=False):
     '''
-    Get Mstars, sSFR and Z in the adecuate units.
+    Get stellar mass as log10(M/Msun),
+    sSFR as log10(SFR/M/yr) and
+    gas metallicity as log10(Zgas=MZcold/Mcold)
 
     Parameters
     ----------
@@ -619,7 +621,7 @@ def get_sfrdata(infile,cols,selection=None,
         #    lssfr[ind] = c.notnum ; lzgas[ind] = c.notnum
         # np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
 
-    # Obtain log10(sSFR) in 1/yr
+    # Obtain log10(sSFR/yr)
     lssfr = np.zeros(np.shape(sfr)); lssfr.fill(c.notnum)
     for comp in range(ncomp):
         ind = np.where((sfr[comp,:] > 0.) & (lms[comp,:] > 0.))
@@ -865,7 +867,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
         hfdat['lnH_sfr'].dims[0].label = 'log10(nH) (cm**-3)'
     
         hfdat.create_dataset('lz_sfr', data=lzgas_sfr, maxshape=(None,None))
-        hfdat['lz_sfr'].dims[0].label = 'log10(Z) (dimensionless)'
+        hfdat['lz_sfr'].dims[0].label = 'log10(Z_cold_gas) (dimensionless)'
 
         for i in range(len(c.line_names[photmod_sfr])):           
             hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr', 

@@ -1510,6 +1510,6 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     umz = plot_umz(root,subvols=subvols,verbose=verbose) ###here
     
     # Make NII and SII bpt plots
-    #bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
     
     return

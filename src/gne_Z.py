@@ -5,16 +5,16 @@
 import numpy as np
 import src.gne_const as c
 
-def correct_Zagn(logMin,logz):
+def correct_Zagn(lm,lzgas):
     '''
-    Estimates the metallicity of the AGN from the global metallicity.
+    Estimates the metallicity of the AGN from the global gas metallicity.
 
     Parameters
     ----------
-    logMin : array of floats
-       Stellar mass of the galaxy or its components (log10(M*/Msun ???? )).
-    logz : array of floats
-       Cold gas metallicity (log10(Z)).
+    lm : array of floats
+       Stellar mass of the galaxy or its components (log10(M*/Msun)).
+    lzgas : array of floats
+       Cold gas metallicity, log10(Z_gas).
      
     Returns
     -------
@@ -22,30 +22,26 @@ def correct_Zagn(logMin,logz):
         Metallicity of the AGN
     '''
 
-    rows = logMin.shape[0]
-    logM = np.zeros(shape=rows)
-    lzagn = np.zeros(shape=rows)
-    
-    if logz.shape[1] >= 2:
-        ind = np.where(logz[:,1]>c.notnum)
-        lzagn[ind] = np.copy(logz[ind,1])
-    
-        Ms = 10**logMin
-        Ms = np.sum(Ms,axis=1)
-        ind = np.where(Ms>0)
-        logM[ind] = np.log10(Ms[ind])
+    lzout = np.copy(lzgas)
 
+    n_comp = lzout.shape[1]
+    if n_comp > 1:
+        ms = 10**lm
+        lm_tot = np.log10(np.sum(ms,axis=1))
     else:
-        logM = logMin
+        lm_tot = np.copy(lm)
 
-    ###here where is this justified?
-    lzagn[(logM>9.5) & (logM<=10)] = lzagn[(logM>9.5) & (logM<=10)] + 0.1
-    lzagn[(logM>10)  & (logM<=10.5)] = lzagn[(logM>10)  & (logM<=10.5)] + 0.3
-    lzagn[(logM>10.5)& (logM<=11)] = lzagn[(logM>10.5)& (logM<=11)] + 0.1
 
-    ###here input should directly be zbuldge and M* total
-    lzout = np.zeros(shape=(np.shape(logz))); lzout.fill(c.notnum)
-    lzout[:,0] = lzagn
+    for ii in range(n_comp):
+        lz = lzgas[:,ii]
+
+        # Numbers approximated from Fig. 3 in
+        # Belfiore+2017 (https://arxiv.org/pdf/1703.03813)
+        mask = (lm_tot>9.5) & (lm_tot<=10) & (lz>c.notnum)
+        lzout[mask,ii] = lzout[mask,ii] + 0.1
+
+        mask = (lm_tot>10.) & (lm_tot<=11) & (lz>c.notnum)
+        lzout[mask,ii] = lzout[mask,ii] + 0.2
 
     return lzout
 

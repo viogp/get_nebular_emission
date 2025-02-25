@@ -20,7 +20,7 @@ plot_tests = True # Plots to check the output
 plot_photo_grids = False  # Plots to explore the Photoionisation tables
 
 # Calculate emission from AGNs: AGN = True
-AGN = False
+AGN = True
 
 ###############################################################
 ### OUTPUT FILES
@@ -130,12 +130,10 @@ une_agn_spec = 'feltre16'
 # U: model to calculate the ionising parameter
 une_agn_U    = 'panuzzo03'
 
-# Z_central=True indicates that the given Zgas is that for the NLR or
-#                at the center of the gal.
-# Z_central=False indicates that the given Zgas is not central,
-#           Z-gradients from the literature (f(M*_gal)) are used to estimate
-#           the Zgas at the galactic center
-Z_central = False
+# Z_correct_grad = True
+#    to correct Zgas by local metallicity gradients (Belfiore+2017)
+# Z_correct_grad = False (default)
+Z_correct_grad = False
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
@@ -278,7 +276,7 @@ for ivol in range(subvols):
             une_agn_U=une_agn_U,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_central=Z_central,
+            Z_correct_grad=Z_correct_grad,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,
