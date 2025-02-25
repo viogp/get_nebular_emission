@@ -919,7 +919,7 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
         lusfr1 = f['sfr_data/lu_sfr'][:]
         lnsfr1 = f['sfr_data/lnH_sfr'][:]
         if AGN:
-            lagn1 = f['data/Lagn'][:]
+            Lagn1 = f['data/Lagn'][:]
             lzagn1 = f['agn_data/lz_agn'][:]
             luagn1 = f['agn_data/lu_agn'][:]
             lnagn1 = f['agn_data/lnH_agn'][:]
@@ -930,7 +930,7 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
             lnsfr = lnsfr1; lms = lms1
             if AGN:
                 luagn = luagn1; lzagn = lzagn1
-                lnagn = lnagn1; lagn = lagn1
+                lnagn = lnagn1; Lagn = Lagn1
         else:
             lusfr = np.append(lusfr,lusfr1,axis=0)
             lzsfr = np.append(lzsfr,lzsfr1,axis=0)
@@ -940,7 +940,7 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
                 luagn = np.append(luagn,luagn1,axis=0)
                 lzagn = np.append(lzagn,lzagn1,axis=0)
                 lnagn = np.append(lnagn,lnagn1,axis=0)
-                lagn = np.append(lagn,lagn1,axis=0)
+                Lagn = np.append(Lagn,Lagn1,axis=0)
         # Check number of galaxies within model limits
         if (len(lusfr) != len(lzsfr)):
             print('WARNING plots.umz, SFR: different length arrays U and Z')
@@ -950,8 +950,9 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
     
         # Count parameters within the limits of photoionising models
         for i in range(ncomp):
-            u = lusfr[:,i]
-            z = lzsfr[:,i]
+            mask = (lusfr[:,i] > c.notnum) & (lzsfr[:,i] > c.notnum)
+            u = lusfr[mask,i]
+            z = lzsfr[mask,i]
             tots[i] = tots[i] + len(u)
             ind = np.where((u>=umin) & (u<=umax) &
                            (z>=zmin) & (z<=zmax))
@@ -959,13 +960,14 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
 
         if AGN:
             for i in range(nacomp):
-                u = luagn[:,i]
-                z = lzagn[:,i]
+                mask = (luagn[:,i] > c.notnum) & (lzagn[:,i] > c.notnum)
+                u = luagn[mask,i]
+                z = lzagn[mask,i]
                 tota[i] = tota[i] + len(u)
                 ind = np.where((u>=uamin) & (u<=uamax) &
                                (z>=zamin) & (z<=zamax))
                 ina[i] = ina[i] + np.shape(ind)[1]
-
+                
     # Plot per component U versus Z
     proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
     if AGN:
@@ -982,7 +984,12 @@ def plot_umz(root, subvols=1, outpath=None, verbose=True):
     # Plot per component nH versus M* (or Lagn)
     plot_comp_quartiles(axn, lms, lnsfr, min_Ms, max_Ms)
     if AGN:
-        plot_comp_quartiles(axna, np.log10(lagn), lnagn, min_Lbol, max_Lbol)
+        col = np.zeros(Lagn[:,0].shape); col.fill(c.notnum)
+        mask = Lagn[:,0] > 0
+        col[mask] = np.log10(Lagn[mask,0])
+        lLagn = np.repeat(col[:, np.newaxis], nacomp, axis=1)
+
+        plot_comp_quartiles(axna, lLagn, lnagn, min_Lbol, max_Lbol)
        
     # Output
     pltpath = io.get_plotpath(root)
