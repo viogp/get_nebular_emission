@@ -93,6 +93,18 @@ IMF = ['Kennicut','Kennicut']
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
+# PHOTOIONIZATION model for AGN NLR to get line luminosities
+photmod_agn = 'feltre16'
+
+# Columns to read either the central or global metallicity 
+Zgas_NLR = [4,5]
+# Z_correct_grad = False (default)
+#    if the central gas metallicity has been provided
+# Z_correct_grad = True
+#    to correct a global metallicity with the gradients from Belfiore+2017
+Z_correct_grad = True
+
+# Connecting global properties to AGN NLR characteristics:
 # nH: number density calculated assuming a profile for the gas ('exponential')
 #     and given a radius for the component.
 #     This is used to calculate the filling factor, using agn_nH_params.
@@ -104,15 +116,11 @@ une_agn_nH   = ['exponential','reff']
 # If une_age_nH is not None, agn_nH_params should specify
 # the location of the cold gas mass (Mg) and a radius.
 # agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
-agn_nH_params = ['data/mgas_disk','data/rhm_disk',
-          'data/mgas_bulge','data/rhm_bulge']
+agn_nH_params = [6,11,19,12]
 # spec: model for the spectral distribution of the AGN
 une_agn_spec = 'feltre16'
 # U: model to calculate the ionising parameter
 une_agn_U    = 'panuzzo03'
-
-# PHOTOIONIZATION model for AGN regions to get line luminosities
-photmod_agn = 'feltre16'
     
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
@@ -252,7 +260,7 @@ for ivol in range(subvols):
             une_agn_U=une_agn_U,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_central=Z_central,
+            Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,

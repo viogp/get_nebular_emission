@@ -854,7 +854,6 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     verbose : boolean
        If True print out messages.
     '''
-
     # Get redshift and model information from data
     filenom = root+'0.hdf5'    
     f = h5py.File(filenom, 'r') 
@@ -895,7 +894,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
         axua.set_xlabel('log$_{10}(Z_{\\rm gas})$')
         axna.set_ylabel('log$_{10}(n_{H, \\rm AGN})$')
         axna.set_xlabel('log$_{10}(L_{\\rm AGN}/{\\rm erg/s})$')    
-    
+
     # Read limits for photoionisation models
     pad = 0.5
     umin, umax = get_limits(propname='logUs', photmod=photmod_sfr)
@@ -1560,9 +1559,9 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
     '''
 
     # Plot photoionisation grids on BPT diagrams
-    #grids_sfr = plot_model_bpt_grids(photmod='gutkin16',xid=xid_sfr,
-    #                                 co=co_sfr,imf_cut=imf_cut_sfr,
-    #                                 verbose=verbose)
+    grids_sfr = plot_model_bpt_grids(photmod='gutkin16',xid=xid_sfr,
+                                     co=co_sfr,imf_cut=imf_cut_sfr,
+                                     verbose=verbose)
     grids_agn = plot_model_bpt_grids(photmod='feltre16',
                                      xid=xid_agn,alpha=alpha_agn,
                                      verbose=verbose)
@@ -1570,7 +1569,8 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
     return
 
 
-def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
+def make_testplots(rootf,snap,subvols=1,gridplots=False,
+                   outpath=None,verbose=True):
     '''
     Make test plots
     
@@ -1589,11 +1589,14 @@ def make_testplots(rootf,snap,subvols=1,outpath=None,verbose=True):
     '''
 
     root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
-    
+
     # U vs Z
-    uzn = plot_uzn(root,subvols=subvols,verbose=verbose) ###here
+    uzn = plot_uzn(root,subvols=subvols,verbose=verbose) 
     
     # Make NII and SII bpt plots
     bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
+
+    if gridplots:
+        make_gridplots()
     
     return
