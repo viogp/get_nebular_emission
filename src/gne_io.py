@@ -713,7 +713,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
     return 
 
 
-def write_agn_data(filenom,lu_agn,lnH_agn,lzgas_agn,
+def write_agn_data(filenom,Lagn,lu_agn,lnH_agn,lzgas_agn,
                    nebline_agn,nebline_agn_att=None,
                    fluxes_agn=None,fluxes_agn_att=None,
                    epsilon_agn=None,
@@ -726,6 +726,8 @@ def write_agn_data(filenom,lu_agn,lnH_agn,lzgas_agn,
     ----------
     filenom : string
       Name of the output file.
+    Lagn : numpy array
+        Bolometric luminosity (erg/s)
     lu_agn : floats
      U of the galaxies per component.
     lnH_agn : floats
@@ -747,6 +749,9 @@ def write_agn_data(filenom,lu_agn,lnH_agn,lzgas_agn,
     with h5py.File(filenom,'a') as hf:
         # AGN data
         hfdat = hf.create_group('agn_data')
+
+        hfdat.create_dataset('Lagn', data=lu_agn, maxshape=(None,None))
+        hfdat['Lagn'].dims[0].label = 'L_bol (erg/s)'
         
         hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'

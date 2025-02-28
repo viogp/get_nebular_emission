@@ -16,7 +16,7 @@ from src.gne_plots import make_testplots
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
 run_code = True
-plot_tests = False
+plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True

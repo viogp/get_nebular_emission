@@ -946,7 +946,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
         lusfr1 = f['sfr_data/lu_sfr'][:]
         lnsfr1 = f['sfr_data/lnH_sfr'][:]
         if AGN:
-            Lagn1 = f['data/Lagn'][:]
+            Lagn1  = f['agn_data/Lagn'][:]
             lzagn1 = f['agn_data/lz_agn'][:]
             luagn1 = f['agn_data/lu_agn'][:]
             lnagn1 = f['agn_data/lnH_agn'][:]

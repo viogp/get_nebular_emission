@@ -296,23 +296,20 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     #----------------NLR AGN calculation------------------------
     if AGN:
-        ###here to be removed from here
-        Lagn_param = io.read_data(infile,cut,
-                                  inputformat=inputformat,
-                                  params=Lagn_params,
-                                  testing=testing,
-                                  verbose=verbose)        
-        if ncomp>1:
-            bursttobulge(lms, Lagn_param)
-        ###here to be removed until here (affecting to tremonti aprox)
-        
+        # Get total mass for Z corrections ###here to be properly tested
+        lm_tot = np.copy(lms[:,0])
+        if ncomp > 1:
+            ms_tot = np.zeros(lms.shape[0])
+            for ii in range(ncomp):
+                ms = np.copy(lms[:,ii])
+                mask = ms>c.notnum
+                ms_tot[mask] = ms_tot[mask] + 10**ms[mask]
+
+            mask = ms_tot>0
+            lm_tot[mask] = np.log10(ms_tot[mask])
+
         # Get the central metallicity
         if Z_correct_grad:
-            if ncomp > 1:
-                ms = 10**lms
-                lm_tot = np.log10(np.sum(ms,axis=1))
-            else:
-                lm_tot = np.copy(lms)
             lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
                                     Z_correct_grad=True,lm_tot=lm_tot,
                                     inputformat=inputformat,
@@ -325,6 +322,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         ###here Duplicate lzgas_agn to the SFR components at the moment
         lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
         ###here to be removed once the NLR is consistently done on 1 component
+        ####here to be removed from here
+        #Lagn_param = io.read_data(infile,cut,
+        #                          inputformat=inputformat,
+        #                          params=Lagn_params,
+        #                          testing=testing,
+        #                          verbose=verbose)        
+        #if ncomp>1:
+        #    bursttobulge(lms, Lagn_param)
+        ####here to be removed until here (affecting to tremonti aprox)
+        
         
         agn_nH_param = None
         if une_agn_nH is not None:
@@ -387,7 +394,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn = np.array(None)
             fluxes_agn_att = np.array(None)
 
-        io.write_agn_data(outfile,lu_o_agn,lnH_o_agn,lzgas_o_agn,
+        io.write_agn_data(outfile,Lagn,
+                          lu_o_agn,lnH_o_agn,lzgas_o_agn,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn,
