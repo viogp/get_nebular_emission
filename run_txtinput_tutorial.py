@@ -15,16 +15,14 @@ from src.gne_plots import make_testplots, make_gridplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
-run_code = False
-plot_tests = False # Plots to check the output
-plot_photo_grids = True  # Plots to explore the Photoionisation tables
+run_code = True
+plot_tests = True  # Plots to check the output
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
 
 ###############################################################
-### OUTPUT FILES
-# OUTPUT PATH (Default: output/)
+### OUTPUT FILES: Default output path is output/
 outpath = None
 
 ###############################################################
@@ -112,6 +110,14 @@ IMF = ['Kennicut','Kennicut']
 # PHOTOIONIZATION model for AGN NLR to get line luminosities
 photmod_agn = 'feltre16'
 
+# Columns to read either the central or global metallicity 
+Zgas_NLR = [4,5]
+# Z_correct_grad = False (default)
+#    if the central gas metallicity has been provided
+# Z_correct_grad = True
+#    to correct a global metallicity with the gradients from Belfiore+2017
+Z_correct_grad = True
+
 # Connecting global properties to AGN NLR characteristics:
 # nH: number density calculated assuming a profile for the gas ('exponential')
 #     and given a radius for the component.
@@ -129,11 +135,6 @@ agn_nH_params = [6,11,19,12]
 une_agn_spec = 'feltre16'
 # U: model to calculate the ionising parameter
 une_agn_U    = 'panuzzo03'
-
-# Z_correct_grad = True
-#    to correct Zgas by local metallicity gradients (Belfiore+2017)
-# Z_correct_grad = False (default)
-Z_correct_grad = False
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
@@ -275,8 +276,8 @@ for ivol in range(subvols):
             AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
             une_agn_U=une_agn_U,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
-            AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_correct_grad=Z_correct_grad,
+            AGNinputs=AGNinputs, Lagn_params=Lagn_params,            
+            Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,
@@ -287,6 +288,3 @@ for ivol in range(subvols):
 if plot_tests:  # Make test plots
     make_testplots(root,snapshot,subvols=subvols,
                    outpath=outpath,verbose=verbose)
-
-if plot_photo_grids:  # Make test plots
-    make_gridplots()

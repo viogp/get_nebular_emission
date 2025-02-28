@@ -8,8 +8,8 @@ import sys
 import os
 import numpy as np
 import src.gne_const as c
-import math
-
+from src.gne_sfr import get_ncomponents
+#import math
 
 def stop_if_no_file(infile):
     '''
@@ -256,35 +256,6 @@ def get_nheader(infile,firstchar=None):
         
 
 
-def get_ncomponents(cols):
-    '''
-    Get the number of components to estimate the emission lines from
-
-    Parameters
-    ----------
-    cols : list
-      List of columns with properties per components
-
-    Returns
-    -------
-    ncomp : integer
-      Number of components (for example 2 for bulge and disk)
-    '''
-    
-    ncomp = 1
-
-    try:
-        dum = np.shape(cols)[1]
-        ncomp = np.shape(cols)[0]
-    except:
-        ncomp = 1
-        print('STOP (gne_io.get_ncomponents): ',
-              'Columns should be given as m_sfr_z=[[0,1,2]]')
-        sys.exit()
-        
-    return ncomp
-
-
 def get_selection(infile, outfile, inputformat='hdf5',
                   cutcols=None, mincuts=[None], maxcuts=[None],
                   testing=False,verbose=False):
@@ -371,7 +342,6 @@ def get_selection(infile, outfile, inputformat='hdf5',
         sys.exit()
 
     return selection
-
 
 def read_data(infile, cut, inputformat='hdf5', params=[None],
               testing=False, verbose=True):    
@@ -506,158 +476,6 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
 
     return outms, outssfr, outzgas        
 
-
-
-def get_sfrdata(infile,cols,selection=None,
-                h0=None,units_h0=False, units_Gyr=False,
-                inoh = False, LC2sfr=False, mtot2mdisk=True, 
-                inputformat='hdf5',testing=False,verbose=False):
-    '''
-    Get stellar mass as log10(M/Msun),
-    sSFR as log10(SFR/M/yr) and
-    gas metallicity as log10(Zgas=MZcold/Mcold)
-
-    Parameters
-    ----------
-    infile : strings
-     List with the name of the input files. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    inputformat : string
-     Format of the input file.
-    cols : list
-     - [[component1_stellar_mass,sfr,Z],[component2_stellar_mass,sfr,Z],...]
-     - Expected : component1 = total or disk, component2 = bulge
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    cutcols : list
-     Parameters to look for cutting the data.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    mincuts : strings
-     Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
-    maxcuts : strings
-     Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
-    attmod : string
-     Attenuation model.
-    inoh : boolean
-       If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
-    units_h0 : bool
-    LC2sfr : boolean
-      If True magnitude of Lyman Continuum photons expected as input for SFR.
-    mtot2mdisk : boolean
-      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
-    verbose : boolean
-      If True print out messages
-    testing : boolean
-      If True only run over few entries for testing purposes
-
-    Returns
-    -------
-    lms, lssfr, lzgas : array of floats
-    '''
-    ncomp = get_ncomponents(cols)
-
-    ms,sfr,zgas = read_sfrdata(infile, cols, selection,
-                               inputformat=inputformat, 
-                               testing=testing, verbose=verbose)
-
-    # Change units if needed
-    if units_h0:
-        ms = ms/h0
-        sfr = sfr/h0
-    if units_Gyr:
-        sfr = sfr/1e9
-
-    # Set to a default value if negative stellar masses
-    for comp in range(ncomp):
-        ind = np.where((ms[comp,:]<=0.) | (sfr[comp,:]<=0) | (zgas[comp,:]<=0))
-        ms[comp,ind] = c.notnum
-        sfr[comp,ind] = c.notnum
-        zgas[comp,ind] = c.notnum
-
-    # Calculate the disk mass if we have only the total and bulge mass
-    ms_tot = ms[0,:]
-    if mtot2mdisk:
-        if ncomp!=2:
-            if verbose:
-                print('STOP (gne_io.get_data): ',
-                      'mtot2mdisk can only be True with two components.')
-            sys.exit()
-        # Calculate the disk mass and store it as the first component
-        msdisk = ms[0,:] - ms[1,:]
-        ms[0,:] = msdisk
-    else:
-        if ncomp!=1:
-            # Add mass from components if above 0
-            ms_tot = np.sum(np.where(ms > 0, ms, 0), axis=0)
-
-    # Take the log of the total stellar mass:
-    lms_tot = np.zeros(len(ms_tot)); lms_tot.fill(c.notnum)
-    ind = np.where(ms_tot > 0.)
-    lms_tot[ind] = np.log10(ms_tot[ind])
-
-    # Take the log of the stellar masses:
-    lms = np.zeros(ms.shape); lms.fill(c.notnum)
-    for comp in range(ncomp):
-        ind = np.where(ms[comp,:] > 0.)
-        lms[comp,ind] = np.log10(ms[comp,ind])
-
-    # Calculate SFR from LC photons if necessary
-    if LC2sfr:
-        for comp in range(ncomp):
-            ins = np.zeros(len(sfr))
-            ind = np.where(sfr[:, comp] != c.notnum)
-            ins[ind] = 1.02*(10.**(-0.4*sfr[ind,comp]-4.))
-
-            ind = np.where(ins > 0)
-            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp]
-    
-            ind = np.where(lssfr[:, comp] == c.notnum)
-            lssfr[ind,comp] = c.notnum
-        ####here is this correct? does not seem to make sense
-        # Avoid positive magnitudes of LC photons
-        #    ind = np.where(lssfr>0)
-        #    lssfr[ind] = c.notnum ; lzgas[ind] = c.notnum
-        # np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
-
-    # Obtain log10(sSFR/yr)
-    lssfr = np.zeros(np.shape(sfr)); lssfr.fill(c.notnum)
-    for comp in range(ncomp):
-        ind = np.where((sfr[comp,:] > 0.) & (lms[comp,:] > 0.))
-        lssfr[comp,ind] = np.log10(sfr[comp,ind]) - lms[comp,ind]
-    #print(lssfr.shape,sfr.shape,zgas.shape); exit() ###here
-    #if ncomp!=1: #Total SFR
-    #    lssfr_tot = np.zeros(len(lssfr))
-    #    ssfr = np.zeros(lssfr.shape)
-    #    for comp in range(ncomp):
-    #        ind = np.where(lssfr[comp,:]!=c.notnum)
-    #        ssfr[comp,ind] = 10.**(lssfr[comp,ind])
-    #
-    #    ins = np.sum(ssfr,axis=1)
-    #    ind = np.where(ins>0)
-    #    lssfr_tot[ind] = np.log10(ins[ind])
-            
-    # Obtain log10(Zgas=MZcold/Mcold)        
-    lzgas = np.zeros(zgas.shape); lzgas.fill(c.notnum)
-    if inoh: 
-        # Obtain log10(Zgas) from an input of 12+log10(O/H)
-        lzgas = np.log10(c.zsun) - c.ohsun + zgas
-    else: 
-        ind = np.where(zgas>0)
-        lzgas[ind] = np.log10(zgas[ind])
-    #if ncomp!=1: #Total Z
-    #    oh12 = np.zeros(lzgas.shape)
-    #    lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(c.notnum)
-    #    for comp in range(ncomp):
-    #        ind = np.where(lzgas[comp,:] != c.notnum)
-    #        oh12[comp,ind] = 10. ** (lzgas[comp,ind])
-    #
-    #    ins = np.sum(oh12,axis=1)
-    #    ind = np.where(ins>0)
-    #    lzgas_tot[ind] = np.log10(ins[ind])
-
-    return lms.T,lssfr.T,lzgas.T
 
 
 def get_data_agnnH(infile,rtype,cols,selection=None,

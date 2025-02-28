@@ -7,7 +7,8 @@ import time
 import numpy as np
 import src.gne_io as io
 from src.gne_une import get_une_sfr, get_une_agn
-from src.gne_Z import correct_Z, correct_Zagn
+from src.gne_Z import correct_Z,get_zgasagn
+from src.gne_sfr import get_sfrdata
 from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as c
 from src.gne_photio import get_lines, get_limits, calculate_flux
@@ -28,8 +29,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         une_agn_U='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
-        Z_correct_grad=False,zeq=None,
-        infile_z0=None,
+        Zgas_NLR=None,Z_correct_grad=False,
+        zeq=None,infile_z0=None,
         att=False,attmod='cardelli89',
         att_params=[None], att_ratio_lines=[None],
         flux=False,
@@ -52,7 +53,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
     inputformat : string
-     Format of the input file.
+        Format of the input file: 'hdf5' or 'txt'.
     infile_z0 : strings
      List with the name of the input files with the galaxies at redshift 0. 
      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
@@ -100,9 +101,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Inputs for AGN's bolometric luminosity calculations.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
+    Zgas_NLR : list of integer (text file) or strings (hdf5 file)
+        Location of the central metallicity in input files
     Z_correct_gradrection : boolean
-     If False, the code supposes the central metallicity of the galaxy to be the mean one.
-     If True, the code estimates the central metallicity of the galaxy from the mean one.
+        If True, corrects Zgas_NLR using gradients from the literature
     agn_nH_params : list
      Inputs for the calculation of the volume-filling factor.
      - For text or csv files: list of integers with column position.
@@ -193,13 +195,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                            testing=testing,verbose=verbose)
 
     # Read the input data and correct it to the adequate units, etc.
-    lms, lssfr, lzgas = io.get_sfrdata(infile,m_sfr_z,selection=cut,
-                                       h0=h0,units_h0=units_h0,
-                                       units_Gyr=units_Gyr,
-                                       inoh = inoh,LC2sfr=LC2sfr,
-                                       mtot2mdisk=mtot2mdisk,
-                                       inputformat=inputformat,
-                                       testing=testing,verbose=verbose)
+    lms, lssfr, lzgas = get_sfrdata(infile,m_sfr_z,selection=cut,
+                                    h0=h0,units_h0=units_h0,
+                                    units_Gyr=units_Gyr,
+                                    inoh = inoh,LC2sfr=LC2sfr,
+                                    mtot2mdisk=mtot2mdisk,
+                                    inputformat=inputformat,
+                                    testing=testing,verbose=verbose)
 
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
@@ -303,11 +305,27 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if ncomp>1:
             bursttobulge(lms, Lagn_param)
         ###here to be removed until here (affecting to tremonti aprox)
+        
+        # Get the central metallicity
         if Z_correct_grad:
-            lzgas_agn = correct_Zagn(lms,lzgas)
+            if ncomp > 1:
+                ms = 10**lms
+                lm_tot = np.log10(np.sum(ms,axis=1))
+            else:
+                lm_tot = np.copy(lms)
+            lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
+                                    Z_correct_grad=True,lm_tot=lm_tot,
+                                    inputformat=inputformat,
+                                    testing=testing,verbose=verbose)
         else:
-            lzgas_agn = np.copy(lzgas)
+            lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,
+                                    inoh=inoh,inputformat=inputformat,
+                                    testing=testing,verbose=verbose)
 
+        ###here Duplicate lzgas_agn to the SFR components at the moment
+        lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
+        ###here to be removed once the NLR is consistently done on 1 component
+        
         agn_nH_param = None
         if une_agn_nH is not None:
             agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
