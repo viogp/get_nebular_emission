@@ -747,7 +747,7 @@ def write_agn_data(filenom,lu_agn,lnH_agn,lzgas_agn,
     with h5py.File(filenom,'a') as hf:
         # AGN data
         hfdat = hf.create_group('agn_data')
-
+        
         hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
     

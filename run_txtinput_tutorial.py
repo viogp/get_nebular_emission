@@ -11,12 +11,12 @@ to also get the predicted attenuated luminosities.
 
 import src.gne_const as const
 from src.gne import gne
-from src.gne_plots import make_testplots, make_gridplots
+from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
 run_code = True
-plot_tests = True
+plot_tests = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -200,7 +200,6 @@ root_z0 = None
 # Continuum and line attenuation calculation. If this option is selected 
     # the output file will have intrinsic AND attenuated values of
     # luminosity for the emission lines.
-
 # att=True to calculate the dust attenuation; False, otherwise
 att = False
     
@@ -276,7 +275,7 @@ for ivol in range(subvols):
             AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
             une_agn_U=une_agn_U,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
-            AGNinputs=AGNinputs, Lagn_params=Lagn_params,            
+            AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
@@ -286,5 +285,5 @@ for ivol in range(subvols):
             testing=testing,verbose=verbose)
 
 if plot_tests:  # Make test plots
-    make_testplots(root,snapshot,subvols=subvols,gridplots=True,
+    make_testplots(root,snapshot,subvols=subvols,gridplots=False,
                    outpath=outpath,verbose=verbose)

@@ -17,15 +17,19 @@ import h5py
 ### RUN the code with the given parameters and/or make plots
 testing = False    # If True: use only the first 50 elements
 run_code = True
-make_plots = True
+plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
 
-##################################################################
+###############################################################
+### OUTPUT FILES: Default output path is output/
+outpath = None
+
+###############################################################
 ### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
-# Stellar mass (M*) of the galaxy (or disc or buldge).
+# Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
 root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
@@ -89,7 +93,6 @@ inoh = False
 # Example for two components: IMF = ['Kennicut','Kennicut']
 IMF = ['Kennicut','Kennicut']
 
-
 ####################################################
 #####  Emission from AGN narrow line regions #######
 ####################################################
@@ -97,7 +100,7 @@ IMF = ['Kennicut','Kennicut']
 photmod_agn = 'feltre16'
 
 # Columns to read either the central or global metallicity 
-Zgas_NLR = [4,5]
+Zgas_NLR = ['data/Zgas_bulge','data/Zgas_disk']
 # Z_correct_grad = False (default)
 #    if the central gas metallicity has been provided
 # Z_correct_grad = True
@@ -116,7 +119,8 @@ une_agn_nH   = ['exponential','reff']
 # If une_age_nH is not None, agn_nH_params should specify
 # the location of the cold gas mass (Mg) and a radius.
 # agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
-agn_nH_params = [6,11,19,12]
+agn_nH_params = ['data/mgas_disk','data/rhm_disk',
+                 'data/mgas_bulge','data/rhm_bulge']
 # spec: model for the spectral distribution of the AGN
 une_agn_spec = 'feltre16'
 # U: model to calculate the ionising parameter
@@ -162,13 +166,6 @@ une_agn_U    = 'panuzzo03'
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
 AGNinputs = 'Lagn'; Lagn_params=['data/lagn','data/mstar_bulge']
 
-# Z_central=True indicates that the given Zgas is that for the NLR or
-#                at the center of the gal.
-# Z_central=False indicates that the given Zgas is not central,
-#           Z-gradients from the literature (f(M*_gal)) are used to estimate
-#           the Zgas at the galactic center
-Z_central=False
-
 ####################################################
 ########  Redshift evolution parameters  ###########
 ####################################################
@@ -188,9 +185,8 @@ root_z0 = None
 # Continuum and line attenuation calculation. If this option is selected 
     # the output file will have intrinsic AND attenuated values of
     # luminosity for the emission lines.
-    
 # att=True to calculate the dust attenuation; False, otherwise
-att = True
+att = False
     
 # To use Cardelli's law (following Favole et. al. 2020):
     # attmod = 'cardelli89' (default)
@@ -221,7 +217,7 @@ extra_params = ['data/mh','data/magK','data/magR','data/type','data/MBH']
 # Paramter to impose cuts
 cutcols = ['data/mh']
 # List of minimum values. None for no inferior limit.
-mincuts = [20*9.35e8]
+mincuts = [21*9.35e8]
 # List of maximum values. None for no superior limit.
 maxcuts = [None]
 
@@ -229,6 +225,7 @@ maxcuts = [None]
 #############    Run the code and/or make plots   ################
 ##################################################################
 
+verbose = True
 for ivol in range(subvols):
     infile = root+str(ivol)+endf
 
@@ -266,8 +263,8 @@ for ivol in range(subvols):
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
-            testing=testing,verbose=True)
+            testing=testing,verbose=verbose)
 
-if make_plots:  # Make test plots
-    make_testplots(root,snapshot,subvols=subvols,
-                   outpath=outpath,verbose=True)
+if plot_tests:  # Make test plots
+    make_testplots(root,snapshot,subvols=subvols,gridplots=False,
+                   outpath=outpath,verbose=verbose)

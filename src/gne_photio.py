@@ -360,9 +360,9 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         nn = nHcomp[ind]
         nHd, inH = st.interpl_weights(nn,nHedges)
         if verbose:
-            print(comp,'<logUs>=',np.average(uu),
-                  '<logZ>=',np.average(zz),
-                  '<lognH>=',np.average(nn))        
+            print('Comp ',comp,': <logUs>=',np.average(uu),
+                  '; <logZ>=',np.average(zz),
+                  '; <lognH>=',np.average(nn))        
 
         c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
 
