@@ -11,7 +11,6 @@ NOTE: this module requires the numpy and scipy libraries to be
 """
 import sys
 import numpy as np
-from scipy.ndimage import gaussian_filter
 import src.gne_const as c
 
 def percentiles(val, data, weights=None):

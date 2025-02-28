@@ -56,7 +56,7 @@ Based upon the 'Cosmology Calculator' (Wright, 2006, PASP,
 
 import sys
 import numpy as np
-from scipy.constants import c,year,parsec,kilo,mega,giga
+import src.gne_const as c
 from scipy.integrate import romberg
 
 WM = None
@@ -77,12 +77,12 @@ inv_dz = 1.0/dz
 
 zlow_lim = 0.001
 
-Mpc = mega*parsec #10**6*3.08567758131e+16
-H100 = 100.0*kilo/Mpc # in h/s units
-Gyr = giga*year
-invH0 = (Mpc/(100.0*kilo))/Gyr
-DH = c/1000./100. # Hubble Distance in Mpc/h (c is in m/s)
-Mpc2cm = mega*parsec*100.
+Mpc = c.mega*c.parsec #10**6*3.08567758131e+16
+H100 = 100.0*c.kilo/Mpc # in h/s units
+Gyr = c.giga*c.yr_to_s
+invH0 = (Mpc/(100.0*c.kilo))/Gyr
+DH = c.c/1000./100. # Hubble Distance in Mpc/h (c is in m/s)
+Mpc2cm = c.Mpc_to_cm
 #zlow = 0.00001 ; dlz = np.log(zmax)/float(nzmax) 
 #lredshift = np.arange(np.log(zlow),np.log(zmax),dz)
 
@@ -148,7 +148,7 @@ def set_cosmology(omega0=None,omegab=None,lambda0=None,h0=None, \
         r_comoving[i] = r_comoving[i-1] + romberg(f,z1,z2)
 
     global kmpersec_to_mpchpergyr
-    kmpersec_to_mpchpergyr = kilo * (Gyr/Mpc) * h
+    kmpersec_to_mpchpergyr = c.kilo * (Gyr/Mpc) * h
 
     return
 
@@ -352,7 +352,7 @@ def angular_diameter_distance(z):
           set using set_cosmology()    
     """
     cosmology_set()
-    dr = comoving_distance(z)*Mpc/(c/H100) #Unitless
+    dr = comoving_distance(z)*Mpc/(c.c/H100) #Unitless
     x = np.sqrt(np.abs(WK))*dr
     if np.ndim(x) > 0:
         ratio = np.ones_like(x)*-1.00
@@ -380,7 +380,7 @@ def angular_diameter_distance(z):
                 y = -y
             ratio = 1.0 + y/6.0 + np.power(y,2)/120.0
     dt = ratio*dr/(1.0+z)
-    dA = (c/H100)*dt/Mpc
+    dA = (c.c/H100)*dt/Mpc
     return dA
 
 

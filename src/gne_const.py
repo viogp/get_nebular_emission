@@ -16,7 +16,7 @@ ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 Lbolsun = 3.826e33 # erg/s
 Msun    = 1.989e30 # kg
-pc      = 3.086e16 # m
+parsec  = 3.085677581491367e+16 # m
 
 re2rs_exp = 1.678
 
@@ -24,8 +24,11 @@ re2rs_exp = 1.678
 #   Conversion factors:
 #--------------------------------------------
 kg_to_Msun= 1./Msun
-Mpc_to_cm = pc*1e8
-yr_to_s   = 365*24*60*60
+Mpc_to_cm = parsec*1e8
+yr_to_s   = 365.*24.*60.*60.
+kilo      = 1000.0
+mega      = 1000000.0
+giga      = 1000000000.0
 #--------------------------------------------
 boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
 
