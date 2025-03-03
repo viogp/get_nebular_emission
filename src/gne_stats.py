@@ -417,3 +417,46 @@ def get_err2Pk(k, Pk, dk, N, vol):
     err2Pk = norm * (Pk + vol / N) ** 2
 
     return err2Pk
+
+
+def components2log10tot(comps, log10input=True):
+    '''
+    Calculate the total property as log10(sum(comps)),
+    from provided information on components,
+    if log10input, otherwise return sum(comps).
+
+    Parameters
+    ----------
+    comps : array of floats
+        Array with properties
+    log10input: boolean
+        True if input components as log10(prop)
+    
+    Returns
+    -------
+    log_tot : array of floats
+        Total log10(sum(comps))
+    '''
+    ncomp = comps.shape[1]
+    if ncomp > 1:
+        log_tot = np.zeros(comps.shape[0]); log_tot.fill(c.notnum)
+        ptot = np.zeros(log_tot.shape)
+        for ii in range(ncomp):
+            props = np.copy(comps[:,ii])
+            mask = props>c.notnum
+            if log10input:
+                ptot[mask] = ptot[mask] + 10**props[mask]
+            else:
+                ptot[mask] = ptot[mask] + props[mask]
+
+        if log10input:
+            mask = ptot>0
+            log_tot[mask] = np.log10(ptot[mask])
+        else:
+            log_tot = ptot
+    else:
+        log_tot = np.copy(comps)
+        
+    return log_tot
+
+

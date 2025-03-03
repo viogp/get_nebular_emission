@@ -429,7 +429,6 @@ def get_ncomponents(cols):
     return ncomp
 
 
-
 def read_sfrdata(infile, cols, cut, inputformat='hdf5',
                  testing=False, verbose=True):    
     '''

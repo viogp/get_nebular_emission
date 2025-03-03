@@ -297,7 +297,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     #----------------NLR AGN calculation------------------------
     if AGN:
         # Get total mass for Z corrections 
-        lm_tot = get_lm_tot(lms)
+        lm_tot = io.components2tot(lms)
 
         # Get the central metallicity
         if Z_correct_grad:

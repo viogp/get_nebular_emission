@@ -6,37 +6,6 @@ import src.gne_const as c
 import src.gne_io as io
 from src.gne_Z import get_lzgas
 
-
-def get_lm_tot(lms):
-    '''
-    Calculate the total log10(M*/Msusn)
-
-    Parameters
-    ----------
-    lms : array of floats
-        Array with masses
-
-    Returns
-    -------
-    lms_tot : array of floats
-        Total log10(M*/Msusn)
-    '''
-    ncomp = lms.shape[1]
-
-    lm_tot = np.copy(lms[:,0])
-    if ncomp > 1:
-        ms_tot = np.zeros(lm_tot.shape)
-        for ii in range(ncomp):
-            ms = np.copy(lms[:,ii])
-            mask = ms>c.notnum
-            ms_tot[mask] = ms_tot[mask] + 10**ms[mask]
-
-        mask = ms_tot>0
-        lm_tot[mask] = np.log10(ms_tot[mask])
-    
-    return lm_tot
-
-
 def get_sfrdata(infile,cols,selection=None,
                 h0=None,units_h0=False, units_Gyr=False,
                 inoh = False, LC2sfr=False, mtot2mdisk=True, 

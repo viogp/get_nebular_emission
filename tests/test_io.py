@@ -34,6 +34,7 @@ class TestStringMethods(unittest.TestCase):
         #self.assertEqual(io.get_outnom('example.txt',39,ftype='plots'),
         #                 'output/iz39/plots/bpt_example.pdf')
 
+        
     def test_get_data_agnnH(self):
         incols = [6, 11]
         sel=[0]

@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 
 import src.gne_stats as st
+import src.gne_const as c
 
 class TestPredict(unittest.TestCase):
     def test_get_cumulative_2Ddensity(self):
@@ -83,6 +84,29 @@ class TestPredict(unittest.TestCase):
         expval = [[150.5, 160],[148.0, 157.5]]
         val = st.bilinear_interpl(eval_x, eval_y, xedges, yedges, zedges_3d)
         np.testing.assert_array_almost_equal(val, expval, decimal=7)
+
+    
+    def test_components2log10tot(self):
+        # Test data with one components
+        ncomp = 1; xx = np.zeros((3,ncomp))
+        xx[0,0]=10;  xx[1,0]=11.2; xx[2,0]=12
+        vals = st.components2log10tot(xx)
+        np.testing.assert_allclose(vals,xx, atol=0.001)
+
+        # Generate data with several components
+        ncomp = 2; xx = np.zeros((3,ncomp))
+        xx[0,0]=10;  xx[1,0]=11.2; xx[2,0]=12
+        xx[0,1]=10.5;xx[1,1]=11.8; xx[2,1]=c.notnum
+
+        # Tests with and without log10input
+        expected = np.array([10.619,11.897,12.])
+        vals = st.components2log10tot(xx)
+        np.testing.assert_allclose(vals,expected, atol=0.001)
+        
+        expected = np.array([20.5,23.,12.])
+        vals = st.components2log10tot(xx, log10input=False)
+        np.testing.assert_allclose(vals,expected, atol=0.001)
+
         
 if __name__ == '__main__':
     unittest.main()
