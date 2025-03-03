@@ -57,7 +57,7 @@ Based upon the 'Cosmology Calculator' (Wright, 2006, PASP,
 import sys
 import numpy as np
 import src.gne_const as c
-from scipy.integrate import romberg
+from src.gne_stats import romberg
 
 WM = None
 WV = None
@@ -226,6 +226,7 @@ def f(z):
         WM*np.power(a,-3) + WR*np.power(a,-4)
     result = DH/np.sqrt(result)
     return result
+
 
 def E(z):
     """

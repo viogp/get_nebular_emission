@@ -419,7 +419,7 @@ def get_err2Pk(k, Pk, dk, N, vol):
     return err2Pk
 
 
-def components2log10tot(comps, log10input=True):
+def components2tot(comps, log10input=True):
     '''
     Calculate the total property as log10(sum(comps)),
     from provided information on components,
@@ -460,3 +460,45 @@ def components2log10tot(comps, log10input=True):
     return log_tot
 
 
+def romberg(f, a, b, max_steps=10, acc=1e-8):
+    """
+    Calculates the integral of a function using Romberg integration.
+    (Adapted from Wikipedia)
+    
+    Args:
+        f: The function to integrate.
+        a: Lower limit of integration.
+        b: Upper limit of integration.
+        max_steps: Maximum number of steps.
+        acc: Desired accuracy.
+
+    Returns:
+        The approximate value of the integral.
+    """
+    R1, R2 = [0] * max_steps, [0] * max_steps  # Buffers for storing rows
+    Rp, Rc = R1, R2  # Pointers to previous and current rows
+
+    h = b - a  # Step size
+    Rp[0] = 0.5 * h * (f(a) + f(b))  # First trapezoidal step
+
+    for i in range(1, max_steps+1):
+        h /= 2.0
+
+        # Compute Rc[0]=R(i,0)
+        ep = 2 ** (i - 1); sumf = 0.
+        for k in range(1, ep + 1):
+            sumf += f(a + (2*k - 1)*h)
+        Rc[0] = 0.5*Rp[0] + h*sumf  
+
+        # Compute Rc[j]=R(i,j)
+        for j in range(1, i + 1):
+            m4 = 4**j
+            Rc[j] = (m4*Rc[j - 1] - Rp[j - 1])/(m4 - 1)  
+
+        # Stop the calculation if the desired accuracy has been achieved
+        if i > 1 and abs(Rp[i - 1] - Rc[i]) < acc:
+            return Rc[i]
+
+        # Swap Rn and Rc for next iteration
+        Rp, Rc = Rc, Rp
+    return Rp[max_steps]  # Return our best guess

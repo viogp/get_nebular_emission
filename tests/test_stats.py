@@ -6,6 +6,9 @@ import numpy as np
 import src.gne_stats as st
 import src.gne_const as c
 
+def func(x):
+    return x
+
 class TestPredict(unittest.TestCase):
     def test_get_cumulative_2Ddensity(self):
         # Generate a 2D Gaussian
@@ -86,11 +89,11 @@ class TestPredict(unittest.TestCase):
         np.testing.assert_array_almost_equal(val, expval, decimal=7)
 
     
-    def test_components2log10tot(self):
+    def test_components2tot(self):
         # Test data with one components
         ncomp = 1; xx = np.zeros((3,ncomp))
         xx[0,0]=10;  xx[1,0]=11.2; xx[2,0]=12
-        vals = st.components2log10tot(xx)
+        vals = st.components2tot(xx)
         np.testing.assert_allclose(vals,xx, atol=0.001)
 
         # Generate data with several components
@@ -100,12 +103,17 @@ class TestPredict(unittest.TestCase):
 
         # Tests with and without log10input
         expected = np.array([10.619,11.897,12.])
-        vals = st.components2log10tot(xx)
+        vals = st.components2tot(xx)
         np.testing.assert_allclose(vals,expected, atol=0.001)
         
         expected = np.array([20.5,23.,12.])
-        vals = st.components2log10tot(xx, log10input=False)
+        vals = st.components2tot(xx, log10input=False)
         np.testing.assert_allclose(vals,expected, atol=0.001)
+
+    def test_romberg(self):
+        expected = 0.5
+        val = st.romberg(func,0,1)
+        self.assertAlmostEqual(val, expected)        
 
         
 if __name__ == '__main__':

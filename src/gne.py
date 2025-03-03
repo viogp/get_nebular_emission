@@ -8,9 +8,10 @@ import numpy as np
 import src.gne_io as io
 from src.gne_une import get_une_sfr, get_une_agn
 from src.gne_Z import correct_Z,get_zgasagn
-from src.gne_m_sfr import get_sfrdata, get_lm_tot
+from src.gne_m_sfr import get_sfrdata
 from src.gne_Lagn import bursttobulge,get_Lagn
 import src.gne_const as c
+from src.gne_stats import components2tot
 from src.gne_photio import get_lines, get_limits, calculate_flux
 from src.gne_att import attenuation
 from src.gne_plots import make_testplots
@@ -297,7 +298,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     #----------------NLR AGN calculation------------------------
     if AGN:
         # Get total mass for Z corrections 
-        lm_tot = io.components2tot(lms)
+        lm_tot = components2tot(lms)
 
         # Get the central metallicity
         if Z_correct_grad:
