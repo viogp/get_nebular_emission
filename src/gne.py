@@ -9,7 +9,7 @@ import src.gne_io as io
 from src.gne_une import get_une_sfr, get_une_agn
 from src.gne_Z import correct_Z,get_zgasagn
 from src.gne_m_sfr import get_sfrdata
-from src.gne_Lagn import bursttobulge,get_Lagn
+from src.gne_Lagn import get_Lagn
 import src.gne_const as c
 from src.gne_stats import components2tot
 from src.gne_photio import get_lines, get_limits, calculate_flux
@@ -313,18 +313,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         ###here Duplicate lzgas_agn to the SFR components at the moment
         lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
-        ###here to be removed once the NLR is consistently done on 1 component
-        ####here to be removed from here
-        #Lagn_param = io.read_data(infile,cut,
-        #                          inputformat=inputformat,
-        #                          params=Lagn_params,
-        #                          testing=testing,
-        #                          verbose=verbose)        
-        #if ncomp>1:
-        #    bursttobulge(lms, Lagn_param)
-        ####here to be removed until here (affecting to tremonti aprox)
-        
-        
+        ##here to be removed once the NLR is consistently done on 1 component
+
         agn_nH_param = None
         if une_agn_nH is not None:
             agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
@@ -346,37 +336,30 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         une_agn_nH=une_agn_nH,
                         une_agn_spec=une_agn_spec,
                         une_agn_U=une_agn_U,verbose=verbose)
-
-        if verbose:
-            print('AGN:')
-            print(' U and nH calculated.')
+        if verbose: print('AGN:\n',' U and nH calculated.')
         
-        lu_o_agn = np.copy(lu_agn)
-        lnH_o_agn = np.copy(lnH_agn)
-        lzgas_o_agn = np.copy(lzgas_agn) 
-
+        # Calculate emission lines in adequate unites 
         nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
                                 xid_phot=xid_agn,alpha_phot=alpha_agn,
                                 verbose=verbose)
-        
-        # Change units into erg/s
         if (photmod_agn == 'feltre16'):
             # Units: erg/s for a central Lacc=10^45 erg/s
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
-       
-        if verbose:
-            print(' Emission lines calculated.')
+        if verbose: print(' Emission lines calculated.')
 
+        # Calculate attenuation if required
         if att:
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
-                                                        att_ratio_lines=att_ratio_lines,redshift=redshift,h0=h0,
-                                          origin='agn',
-                                          cut=cut, attmod=attmod, photmod=photmod_agn,verbose=verbose)
-            if verbose:
-                print(' Attenuation calculated.')     
+                                                        att_ratio_lines=att_ratio_lines,
+                                                        redshift=redshift,h0=h0,
+                                                        origin='agn',cut=cut,
+                                                        attmod=attmod,
+                                                        photmod=photmod_agn,verbose=verbose)
+            if verbose: print(' Attenuation calculated.')     
         else:
             nebline_agn_att = np.array(None)
-            
+
+        # Calculate fluxes if required
         if flux:
             fluxes_agn = calculate_flux(nebline_agn,outfile,origin='agn')
             fluxes_agn_att = calculate_flux(nebline_agn_att,outfile,origin='agn')
@@ -386,17 +369,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn = np.array(None)
             fluxes_agn_att = np.array(None)
 
+        # Write output in a file            
         io.write_agn_data(outfile,Lagn,
-                          lu_o_agn,lnH_o_agn,lzgas_o_agn,
+                          lu_agn,lnH_agn,lzgas_agn,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn,
                           verbose=verbose)             
         del lu_agn, lnH_agn, lzgas_agn 
-        del lu_o_agn, lnH_o_agn, lzgas_o_agn
         del nebline_agn, nebline_agn_att
-
-
     del lms, lssfr, cut
     
     if verbose:

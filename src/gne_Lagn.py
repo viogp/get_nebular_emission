@@ -6,22 +6,6 @@ import numpy as np
 import src.gne_const as c
 from src.gne_io import read_data
 
-def bursttobulge(lms,Lagn_param):
-    '''
-    Changes the bulge component of the stellar mass from the mass of the starburst
-    to the total mass of the bulge.
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    Lagn_params : floats
-     Parameters to calculate the AGN emission. 
-     The last one is always the stellar mass of the bulge.
-    '''
-    ind = np.where(Lagn_param[-1]>0)
-
-    lms[:,1] = c.notnum
-    lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
-
-
 def get_Ledd(Mbh): # Eddington luminosity
     '''
     Calculate the Eddington luminosity for a black hole of mass Mbh,
