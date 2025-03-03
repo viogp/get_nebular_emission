@@ -48,8 +48,7 @@ List of functions:
   emission_line_flux(luminosity_data,z): returns flux from luminosity
   emission_line_luminosity(flux_data,z): returns luminosity from flux
   polar2cartesians(ra,dec,zz): returns cartesian coordinates (cMpc/h)
-NOTE: this module requires the numpy and scipy libraries to be
-      available for import!
+NOTE: this module requires the numpy library to be available for import!
 Based upon the 'Cosmology Calculator' (Wright, 2006, PASP, 
 118, 1711) and Fortran 90 code written by John Helly.
 """

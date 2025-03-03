@@ -1,13 +1,11 @@
 #! /usr/bin/env python
-
 """
 Some useful functions
   percentiles(xbins,xarray,yarray,per): obtains percentiles of yarray in xbins
   convert_to_stdev(grid): normalised a grid to cumulative standard deviations.
   n_gt_x(x,array): returns the number of elements in the array larger than each of the values in x.
   chi2(obs,model,err): returns the chi^2 for a model
-NOTE: this module requires the numpy and scipy libraries to be
-      available for import!
+ ...
 """
 import sys
 import numpy as np
