@@ -413,7 +413,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_agn,
+def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
                       profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
@@ -836,7 +836,8 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
 
 def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     '''
-    Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
+    Given the rate of ionizing photons, Q,
+    the filling factor, epsilon, the electron density, nH,
     the assumed temperature for the ionizing regions, the volume filling-factor
     and the assumed IMF,
     get the ionizing parameter, logU, and the electron density, logne,
@@ -917,7 +918,7 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
         if origin=='agn':
-            lnH[ind] = np.log10(c.nH_agn)
+            lnH[ind] = np.log10(c.nH_NLR)
             lzgas[ind] = lzgas_all[ind]
             
             for comp in range(len(Q[0])):
@@ -1081,10 +1082,10 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
     # ncomp = len(lms[0])
     Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
     
-    epsilon = np.full(np.shape(lzgas_o)[0],c.eNGC1976)
+    epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
     if une_agn_nH is not None:
         epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
-                                    filenom,nH=c.nH_agn,
+                                    filenom,nH=c.nH_NLR,
                                     profile=une_agn_nH,verbose=verbose)
 
     if une_agn_U not in c.une_agn_U:

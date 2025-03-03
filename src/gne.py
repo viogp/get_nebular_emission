@@ -237,7 +237,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                             xid_phot=xid_sfr, co_phot=co_sfr,
                             imf_cut_phot=imf_cut_sfr,verbose=verbose)
 
-    # Change units into erg/s  ###here ???
+    # Change units into erg/s 
     if (photmod_sfr == 'gutkin16'):
         # Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
         sfr = np.zeros(shape=np.shape(lssfr))
@@ -297,11 +297,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     #----------------NLR AGN calculation------------------------
     if AGN:
-        # Get total mass for Z corrections 
-        lm_tot = components2tot(lms)
-
         # Get the central metallicity
         if Z_correct_grad:
+            # Get total mass for Z corrections 
+            lm_tot = components2tot(lms)
+
             lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
                                     Z_correct_grad=True,lm_tot=lm_tot,
                                     inputformat=inputformat,
@@ -310,11 +310,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,
                                     inoh=inoh,inputformat=inputformat,
                                     testing=testing,verbose=verbose)
-
         ###here Duplicate lzgas_agn to the SFR components at the moment
         lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
         ##here to be removed once the NLR is consistently done on 1 component
 
+        # Get the rate of ionizing photons, Q, from the AGN bolometric luminosity
         agn_nH_param = None
         if une_agn_nH is not None:
             agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
@@ -322,7 +322,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                              h0=h0,units_h0=units_h0,
                                              inputformat=inputformat,
                                              testing=testing,verbose=verbose)
-            
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,AGNinputs=AGNinputs,
                         h0=h0,units_h0=units_h0,

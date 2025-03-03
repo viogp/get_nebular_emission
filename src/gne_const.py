@@ -56,9 +56,8 @@ inputformats = ['txt','hdf5']
 zeq = ['tremonti2004','tremonti2004b','leblanc']
 
 une_sfr_nH = ['kashino20']
-une_sfr_U  = ['kashino20', 'orsi14', 'panuzzo03_sfr']
+une_sfr_U  = ['kashino20', 'orsi14']
 
-une_agn_nH   = ['exponential']
 une_agn_spec = ['feltre16']
 une_agn_U    = ['panuzzo03']
 
@@ -182,23 +181,13 @@ e_f_agn = 0.15
 kagn = 5.44e-4 
 kagn_exp = 0.597
 
-#Lagos et. al 2008:
-# 1e-4  # Efficiency of cold gas accretion onto the BH during gas cooling (1e-4 in Lagos et. al)
+# Typical temperature of ionising regions (Hirschmann+2017):
+temp_ionising = 10000  # K
 
-# Lacey et. al 2016
-epsilon_heat = 0.02 # BH heating efficienty 
-
-nH_agn = 1000 # cm^-3
-radius_NLR = 0.001 # Mpc
-
-# From Osterbrock and Ferland: typical filling factor for NLR AGN
-eNGC1976 = 0.03
-
-#------------------------------------------
-
-# Relationship between epsilon and M and Z
-epsilon_a_sfr = -0.1633
-epsilon_b_sfr = 0.3776
+# Typical values for AGN NLR (Osterbrock and Ferland, 2006 book)
+epsilon_NLR = 0.01
+nH_NLR =      1000   # cm^-3
+radius_NLR = 0.001   # Mpc
 
 #------------------------------------------
 nH_bins = {
