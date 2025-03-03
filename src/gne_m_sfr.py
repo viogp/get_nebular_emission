@@ -6,34 +6,35 @@ import src.gne_const as c
 import src.gne_io as io
 from src.gne_Z import get_lzgas
 
-def get_ncomponents(cols):
+
+def get_lm_tot(lms):
     '''
-    Get the number of components to estimate the emission lines from
+    Calculate the total log10(M*/Msusn)
 
     Parameters
     ----------
-    cols : list
-      List of columns with properties per components
+    lms : array of floats
+        Array with masses
 
     Returns
     -------
-    ncomp : integer
-      Number of components (for example 2 for bulge and disk)
+    lms_tot : array of floats
+        Total log10(M*/Msusn)
     '''
+    ncomp = lms.shape[1]
+
+    lm_tot = np.copy(lms[:,0])
+    if ncomp > 1:
+        ms_tot = np.zeros(lm_tot.shape)
+        for ii in range(ncomp):
+            ms = np.copy(lms[:,ii])
+            mask = ms>c.notnum
+            ms_tot[mask] = ms_tot[mask] + 10**ms[mask]
+
+        mask = ms_tot>0
+        lm_tot[mask] = np.log10(ms_tot[mask])
     
-    ncomp = 1
-
-    try:
-        dum = np.shape(cols)[1]
-        ncomp = np.shape(cols)[0]
-    except:
-        ncomp = 1
-        print('STOP (gne_io.get_ncomponents): ',
-              'Columns should be given as m_sfr_z=[[0,1,2]]')
-        sys.exit()
-        
-    return ncomp
-
+    return lm_tot
 
 
 def get_sfrdata(infile,cols,selection=None,
@@ -84,7 +85,7 @@ def get_sfrdata(infile,cols,selection=None,
     -------
     lms, lssfr, lzgas : array of floats
     '''
-    ncomp = get_ncomponents(cols)
+    ncomp = io.get_ncomponents(cols)
 
     ms,sfr,zgas = io.read_sfrdata(infile, cols, selection,
                                inputformat=inputformat, 

@@ -8,8 +8,6 @@ import sys
 import os
 import numpy as np
 import src.gne_const as c
-from src.gne_sfr import get_ncomponents
-#import math
 
 def stop_if_no_file(infile):
     '''
@@ -343,6 +341,7 @@ def get_selection(infile, outfile, inputformat='hdf5',
 
     return selection
 
+
 def read_data(infile, cut, inputformat='hdf5', params=[None],
               testing=False, verbose=True):    
     '''
@@ -399,6 +398,35 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
         outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
 
     return outparams
+
+
+def get_ncomponents(cols):
+    '''
+    Get the number of components to estimate the emission lines from
+
+    Parameters
+    ----------
+    cols : list
+      List of columns with properties per components
+
+    Returns
+    -------
+    ncomp : integer
+      Number of components (for example 2 for bulge and disk)
+    '''
+    
+    ncomp = 1
+
+    try:
+        dum = np.shape(cols)[1]
+        ncomp = np.shape(cols)[0]
+    except:
+        ncomp = 1
+        print('STOP (gne_io.get_ncomponents): ',
+              'Columns should be given as m_sfr_z=[[0,1,2]]')
+        sys.exit()
+        
+    return ncomp
 
 
 
