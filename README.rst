@@ -20,7 +20,7 @@ Requirements and Installation
 
 This code has been developed in Python 3.7.1 and it is compatible with Python above 3.5 versions. The code has been tested to run in Linux and Windows operating systems. 
 
-This code uses numpy as specified in docs/requirements.txt.
+This code uses numpy and h5py as specified in docs/requirements.txt. Test plots are made with matplotlib.
 
 To install this code, clone the GitHub repository:
 
@@ -30,9 +30,9 @@ git clone git@github.com:galform/get_nebular_emission.git
 
 Running the code
 -----------------------------
-The code can be run following the **run_txtinput_tutorial.py** or **run_hdf5input_tutorial.py** as a normal python3 programs.  
+The code can be run following the **run_txtinput_tutorial.py** or **run_hdf5input_tutorial.py** as a normal python programs.  
 ```
-python3 run_txtinput_tutorial.py
+python run_txtinput_tutorial.py
 ```
 
 By default, output data and plots will be generated in a folder within this directory called *output*.
@@ -51,7 +51,7 @@ Folders
 Tutorial with an example run
 -----------------------------
 
-Brief tutorial going through all the main options of the code are available for a input text file, **run_txtinput_tutorial.py**. A more in-depth review of all the options in the code can be found at Expósito-Márquez et. al. 2024 in prep. The tutorials run over model galaxies stored in the *example_data* directory. These are produced at z = 0 by the semi-analytical model described in [Gonzalez-Perez et al. 2020](https://academic.oup.com/mnras/article/498/2/1852/5894931).
+Brief tutorial going through all the main options of the code are available for a input text file, **run_txtinput_tutorial.py**. The tutorials run over model galaxies stored in the *example_data* directory. These are produced at z = 0 by the semi-analytical model described in [Gonzalez-Perez et al. 2020](https://academic.oup.com/mnras/article/498/2/1852/5894931).
 
 The example code make selections within the data, calculate emission line luminosities and make test plots. A line ratio diagram with the results from the example text file, without considering dust attenuation, can be seen below together with the local data from [Favole et al. 2023](https://arxiv.org/abs/2303.11031).
 
@@ -62,7 +62,7 @@ The example code make selections within the data, calculate emission line lumino
 
 Citing
 -----------------------
-As you use get_emission_lines, cite the following paper:
+If you use get_emission_lines, please cite the following paper:
 
 * [Baugh et al. 2022](https://arxiv.org/abs/2112.00129)
   <details>```bibtex
