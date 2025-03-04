@@ -55,11 +55,11 @@ inputformats = ['txt','hdf5']
 
 zeq = ['tremonti2004','tremonti2004b','leblanc']
 
-une_sfr_nH = ['kashino20']
-une_sfr_U  = ['kashino20', 'orsi14']
+model_nH_sfr = ['kashino20']
+model_U_sfr  = ['kashino20', 'orsi14']
 
-une_agn_spec = ['feltre16']
-une_agn_U    = ['panuzzo03']
+model_spec_agn = ['feltre16']
+model_U_agn    = ['panuzzo03']
 
 photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",

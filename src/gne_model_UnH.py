@@ -60,7 +60,7 @@ def surface_density(x,M,reff,profile='exponential',verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (gne_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -97,7 +97,7 @@ def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (gne_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -139,7 +139,7 @@ def enclosed_mass_sphere(x,M,reff,profile='exponential',verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (gne_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -203,7 +203,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     
     if profile not in profiles:
         if verbose:
-            print('STOP (gne_une): Unrecognised profile for the surface density.')
+            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
             print('                Possible profiles= {}'.format(profiles))
         sys.exit()
     elif profile=='exponential':
@@ -559,7 +559,7 @@ def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
     return Q
 
 
-def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
+def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     '''
     Characterise the SF ionising region from global galactic properties,
     using the model from
@@ -644,7 +644,7 @@ def get_une_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     return output
 
 
-def get_une_orsi14(lzgas, q0, z0, gamma):
+def get_UnH_orsi14(lzgas, q0, z0, gamma):
     '''
     Given log10(Zgas) and the values for the free parameters,
     get the ionizing parameter, logU, using the model from Orsi 2014.
@@ -699,7 +699,7 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
 
     return lu
 
-# def get_une_carton17(lms, lssfr, lzgas):
+# def get_UnH_carton17(lms, lssfr, lzgas):
 #     '''
 #     Given log10(Mstar), log10(sSFR), log10(Z),
 #     get the ionizing parameter, logU, and the electron density, logne,
@@ -732,7 +732,7 @@ def get_une_orsi14(lzgas, q0, z0, gamma):
 #     return lu, lnH, lzgas
 
 
-def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
+def get_U_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     '''
     Given the rate of ionizing photons, log10(Mstar), log10(sSFR), log10(Z),
     the assumed temperature for the ionizing regions, the volume filling-factor
@@ -800,8 +800,8 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            # lu, lnH, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
-            lu, lnH, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            # lu, lnH, lzgas = get_UnH_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lnH, lzgas = get_UnH_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
                 epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
@@ -834,7 +834,7 @@ def get_une_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, I
     return lu, lnH, lzgas
 
 
-def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
+def get_U_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     '''
     Given the rate of ionizing photons, Q,
     the filling factor, epsilon, the electron density, nH,
@@ -903,8 +903,8 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            # lu, lnH, lzgas = get_une_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
-            lu, lnH, lzgas = get_une_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
+            # lu, lnH, lzgas = get_UnH_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
+            lu, lnH, lzgas = get_UnH_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
                 epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
@@ -937,11 +937,11 @@ def get_une_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
     return lu, lnH, lzgas
 
 
-def get_une_sfr(lms, lssfr, lzgas, filenom,
+def get_UnH_sfr(lms, lssfr, lzgas, filenom,
                 q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3, T=10000,
                 ng_ratio=None, epsilon_param=[None], epsilon_param_z0=[None],epsilon=0.01,
                 IMF=['Kroupa','Kroupa'],
-                une_sfr_nH='kashino20',une_sfr_U='kashino20',verbose=True):
+                model_nH_sfr='kashino20',model_U_sfr='kashino20',verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and log10(Zgas)),
@@ -972,9 +972,9 @@ def get_une_sfr(lms, lssfr, lzgas, filenom,
      Volume filling-factor of the galaxy.
     IMF : array of strings
      Assumed IMF for the input data of each component.
-    une_sfr_nH : string
+    model_nH_sfr : string
         Model to go from galaxy properties to Hydrogen (or e) number density.
-    une_sfr_U : string
+    model_U_sfr : string
         Model to go from galaxy properties to ionising parameter.
     verbose : boolean
         True for printing out messages.
@@ -1008,35 +1008,35 @@ def get_une_sfr(lms, lssfr, lzgas, filenom,
     #    else:
     #        ng_ratio = 1.
                         
-    if une_sfr_nH not in c.une_sfr_nH:
+    if model_nH_sfr not in c.model_nH_sfr:
         if verbose:
-            print('STOP (gne_une): Unrecognised model to get nH (HII).')
-            print('                Possible options= {}'.format(c.une_sfr_nH))
+            print('STOP (gne_model_UnH): Unrecognised model to get nH (HII).')
+            print('                Possible options= {}'.format(c.model_nH_sfr))
         sys.exit()
-    elif (une_sfr_nH == 'kashino20'):
-        lnH = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=True)
+    elif (model_nH_sfr == 'kashino20'):
+        lnH = get_UnH_kashino20(lms,lssfr,lzgas,IMF,nhout=True)
 
-    if une_sfr_U not in c.une_sfr_U:
+    if model_U_sfr not in c.model_U_sfr:
         if verbose:
-            print('STOP (gne_une): Unrecognised model to get U (HII).')
-            print('                Possible options= {}'.format(c.une_sfr_nH))
+            print('STOP (gne_model_UnH): Unrecognised model to get U (HII).')
+            print('                Possible options= {}'.format(c.model_nH_sfr))
         sys.exit()
-    elif (une_sfr_U == 'kashino20'):
-        lu = get_une_kashino20(lms,lssfr,lzgas,IMF,nhout=False)
-    elif (une_sfr_U == 'orsi14'):
-        lu = get_une_orsi14(lzgas,q0,z0,gamma)
-    elif (une_sfr_U == 'panuzzo03_sfr'):
+    elif (model_U_sfr == 'kashino20'):
+        lu = get_UnH_kashino20(lms,lssfr,lzgas,IMF,nhout=False)
+    elif (model_U_sfr == 'orsi14'):
+        lu = get_UnH_orsi14(lzgas,q0,z0,gamma)
+    elif (model_U_sfr == 'panuzzo03_sfr'):
         Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
-        lu, lnH, lzgas = get_une_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
+        lu, lnH, lzgas = get_U_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
         
     return lu, lnH # epsilon, ng_ratio
 
 
-def get_une_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
+def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
                 Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
                 T=10000, epsilon_param_z0=[None],
-                une_agn_nH=None,une_agn_spec='feltre16',
-                une_agn_U='panuzzo03', verbose=True):
+                model_nH_agn=None,model_spec_agn='feltre16',
+                model_U_agn='panuzzo03', verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -1061,9 +1061,9 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
      Parameters for epsilon calculation in the sample of galaxies at redshift 0.
     epsilon : floats
      Volume filling-factor of the galaxy.
-    une_agn_nH : string
+    model_nH_agn : string
         Profile assumed for the distribution of gas around NLR AGN.
-    une_agn_spec : string
+    model_spec_agn : string
         Model for the spectral distribution for AGNs.
     verbose : boolean
      Yes = print out messages.
@@ -1083,17 +1083,17 @@ def get_une_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
     Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
     
     epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
-    if une_agn_nH is not None:
+    if model_nH_agn is not None:
         epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
                                     filenom,nH=c.nH_NLR,
-                                    profile=une_agn_nH,verbose=verbose)
+                                    profile=model_nH_agn,verbose=verbose)
 
-    if une_agn_U not in c.une_agn_U:
+    if model_U_agn not in c.model_U_agn:
         if verbose:
-            print('STOP (gne_une): Unrecognised model to get U (AGN).')
-            print('                Possible options= {}'.format(c.une_agn_U))
+            print('STOP (gne_model_UnH): Unrecognised model to get U (AGN).')
+            print('                Possible options= {}'.format(c.model_U_agn))
         sys.exit()
-    elif (une_agn_U == 'panuzzo03'):
-        lu, lnH, lzgas = get_une_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
+    elif (model_U_agn == 'panuzzo03'):
+        lu, lnH, lzgas = get_U_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
     return Q, lu, lnH, epsilon, ng_ratio

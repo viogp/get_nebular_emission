@@ -66,8 +66,8 @@ units_L40h2=False
 # All available models can be seen in gne_const module.
 # NEBULAR model connecting global properties to ionising properties:
 # nH: number density of Hydrogen (or electrons); U: ionising parameter
-une_sfr_nH='kashino20'
-une_sfr_U='kashino20' #'orsi14'   
+model_nH_sfr='kashino20'
+model_U_sfr='kashino20' #'orsi14'   
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
@@ -126,16 +126,16 @@ Z_correct_grad = False
 #     Ideally the scale radius of the bulge and/or disk ('rscale') is given,
 #     but otherwise this can be estimated from either the effective or
 #     half-mass radius ('reff') or simply the radius of the component ('r').
-#     If une_agn_nH=None, a constant filling factor will be assumed.
-une_agn_nH   = ['exponential','reff'] 
+#     If model_nH_agn=None, a constant filling factor will be assumed.
+model_nH_agn   = ['exponential','reff'] 
 # If une_age_nH is not None, agn_nH_params should specify
 # the location of the cold gas mass (Mg) and a radius.
 # agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
 agn_nH_params = [6,11,19,12]
 # spec: model for the spectral distribution of the AGN
-une_agn_spec = 'feltre16'
+model_spec_agn = 'feltre16'
 # U: model to calculate the ionising parameter
-une_agn_U    = 'panuzzo03'
+model_U_agn    = 'panuzzo03'
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
@@ -269,12 +269,12 @@ for ivol in range(subvols):
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
-            une_sfr_nH=une_sfr_nH, une_sfr_U=une_sfr_U,
+            model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
-            une_agn_U=une_agn_U,photmod_agn=photmod_agn,
+            AGN=AGN,model_nH_agn=model_nH_agn,model_spec_agn=model_spec_agn,
+            model_U_agn=model_U_agn,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
             AGNinputs=AGNinputs, Lagn_params=Lagn_params,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,

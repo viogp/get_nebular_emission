@@ -6,7 +6,7 @@
 import time
 import numpy as np
 import src.gne_io as io
-from src.gne_une import get_une_sfr, get_une_agn
+from src.gne_model_UnH import get_UnH_sfr, get_UnH_agn
 from src.gne_Z import correct_Z,get_zgasagn
 from src.gne_m_sfr import get_sfrdata
 from src.gne_Lagn import get_Lagn
@@ -19,15 +19,15 @@ from src.gne_plots import make_testplots
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
-        une_sfr_nH='kashino19',une_sfr_U='kashino19',
+        model_nH_sfr='kashino19',model_U_sfr='kashino19',
         photmod_sfr='gutkin16',
         q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
         T=10000,xid_sfr=0.3,co_sfr=1,
         m_sfr_z=[None],mtot2mdisk=True,
         inoh=False,LC2sfr=False,
         IMF=['Kroupa','Kroupa'],imf_cut_sfr=100,
-        AGN=False,une_agn_nH=None,une_agn_spec='feltre16',
-        une_agn_U='panuzzo03',photmod_agn='feltre16',
+        AGN=False,model_nH_agn=None,model_spec_agn='feltre16',
+        model_U_agn='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
         agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
         Zgas_NLR=None,Z_correct_grad=False,
@@ -120,15 +120,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Description labels of the datasets in the output files for the extra parameters.
     attmod : string
      Attenuation model.
-    une_sfr_nH : string
+    model_nH_sfr : string
         Model to go from galaxy properties to Hydrogen (or e) number density.
-    une_sfr_U : string
+    model_U_sfr : string
         Model to go from galaxy properties to ionising parameter.
-    une_agn_nH : list of 2 strings
+    model_nH_agn : list of 2 strings
         Profile assumed for the gas around NLR AGN and provided radii.
-    une_agn_spec : string
+    model_spec_agn : string
         Model for the spectral distribution for AGNs.
-    une_sfr_U : string
+    model_U_sfr : string
         Model to go from galaxy properties to AGN ionising parameter.
     photmod_sfr : string
      Photoionisation model to be used for look up tables.
@@ -174,11 +174,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
-                                 une_sfr_nH=une_sfr_nH,une_sfr_U=une_sfr_U,
+                                 model_nH_sfr=model_nH_sfr,model_U_sfr=model_U_sfr,
                                  photmod_sfr=photmod_sfr,
-                                 une_agn_nH=une_agn_nH,
-                                 une_agn_spec=une_agn_spec,
-                                 une_agn_U=une_agn_U,
+                                 model_nH_agn=model_nH_agn,
+                                 model_spec_agn=model_spec_agn,
+                                 model_U_agn=model_U_agn,
                                  photmod_agn=photmod_agn,
                                  attmod=attmod,verbose=verbose)
 
@@ -219,11 +219,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
 
     # Characterise the HII regions from galaxy global properties
-    lu_sfr, lnH_sfr = get_une_sfr(lms, lssfr, lzgas, outfile,
+    lu_sfr, lnH_sfr = get_UnH_sfr(lms, lssfr, lzgas, outfile,
                                   q0=q0, z0=z0,gamma=gamma, T=T,
                                   epsilon_param_z0=epsilon_param_z0,
-                                  IMF=IMF,une_sfr_nH=une_sfr_nH,
-                                  une_sfr_U=une_sfr_U,verbose=verbose)
+                                  IMF=IMF,model_nH_sfr=model_nH_sfr,
+                                  model_U_sfr=model_U_sfr,verbose=verbose)
     if verbose:
         print('SF:')
         print(' U and nH calculated.')
@@ -316,8 +316,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         # Get the rate of ionizing photons, Q, from the AGN bolometric luminosity
         agn_nH_param = None
-        if une_agn_nH is not None:
-            agn_nH_param = io.get_data_agnnH(infile,une_agn_nH[1],
+        if model_nH_agn is not None:
+            agn_nH_param = io.get_data_agnnH(infile,model_nH_agn[1],
                                              agn_nH_params,selection=cut,
                                              h0=h0,units_h0=units_h0,
                                              inputformat=inputformat,
@@ -329,12 +329,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         testing=testing,verbose=verbose)
         
         Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
-            get_une_agn(lms,lssfr,lzgas_agn, outfile,
+            get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
                         agn_nH_param=agn_nH_param,
-                        une_agn_nH=une_agn_nH,
-                        une_agn_spec=une_agn_spec,
-                        une_agn_U=une_agn_U,verbose=verbose)
+                        model_nH_agn=model_nH_agn,
+                        model_spec_agn=model_spec_agn,
+                        model_U_agn=model_U_agn,verbose=verbose)
         if verbose: print('AGN:\n',' U and nH calculated.')
         
         # Calculate emission lines in adequate unites 

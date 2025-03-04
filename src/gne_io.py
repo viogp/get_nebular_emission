@@ -553,10 +553,10 @@ def get_data_agnnH(infile,rtype,cols,selection=None,
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
                     units_h0=False,outpath=None,
-                    une_sfr_nH=None, une_sfr_U=None,
+                    model_nH_sfr=None, model_U_sfr=None,
                     photmod_sfr=None,
-                    une_agn_nH=None, une_agn_spec=None,
-                    une_agn_U=None, photmod_agn=None,
+                    model_nH_agn=None, model_spec_agn=None,
+                    model_U_agn=None, photmod_agn=None,
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -585,17 +585,17 @@ def generate_header(infile,redshift,snap,
         True if input units with h    
     outpath : string
         Path to output
-    une_sfr_nH : string
+    model_nH_sfr : string
         Model to go from galaxy properties to Hydrogen (or e) number density.
-    une_sfr_U : string
+    model_U_sfr : string
         Model to go from galaxy properties to ionising parameter.
     photmod_sfr : string
         Photoionisation model to be used for look up tables.
-    une_agn_nH : list of 2 strings
+    model_nH_agn : list of 2 strings
         Profile assumed for the gas around NLR AGN and type of radii.
-    une_agn_spec : string
+    model_spec_agn : string
         Model for the spectral distribution for AGNs.
-    une_sfr_U : string
+    model_U_sfr : string
         Model to go from galaxy properties to AGN ionising parameter.
     photmod_agn : string
         Photoionisation model to be used for look up tables.
@@ -632,12 +632,12 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'vol_Mpc3'] = vol
     head.attrs[u'mp_Msun'] = mp
 
-    if une_sfr_nH is not None: head.attrs[u'une_sfr_nH'] = une_sfr_nH
-    if une_sfr_U is not None: head.attrs[u'une_sfr_U'] = une_sfr_U    
+    if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
+    if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
-    if une_agn_nH is not None: head.attrs[u'une_agn_nH'] = une_agn_nH[0]
-    if une_agn_spec is not None: head.attrs[u'une_agn_spec'] = une_agn_spec
-    if une_agn_U is not None: head.attrs[u'une_agn_U'] = une_agn_U
+    if model_nH_agn is not None: head.attrs[u'model_nH_agn'] = model_nH_agn[0]
+    if model_spec_agn is not None: head.attrs[u'model_spec_agn'] = model_spec_agn
+    if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
     if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
     if attmod is not None: head.attrs[u'attmod'] = attmod
     hf.close()
