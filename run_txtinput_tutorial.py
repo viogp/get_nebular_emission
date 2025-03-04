@@ -14,9 +14,9 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False    # If True: use only the first 50 elements
+testing = True   # If True: use only the first 50 elements
 run_code = True
-plot_tests = True
+plot_tests = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -128,10 +128,11 @@ model_U_agn    = 'panuzzo03'
 # n_NLR, T_NLR and r_NLR are taken as constants.
 # mgas_r is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
-# Each list correspond to a different component:
-# mgas_r = [[mgas_buldge,R_buldge],[mgas_disk,R_disk]]
+# Each list can correspond to a different component:
+# mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
 
-#mgas_r = [[19,12]]
+#mgas_r = None
+#mgas_r = [[19,12]]; mgasr_type=['sphere']
 mgas_r = [[6,11],[9,12]]
 
 # Type of component: 'disc', 'sphere' or None
@@ -282,11 +283,12 @@ for ivol in range(subvols):
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,model_nH_agn=model_nH_agn,model_spec_agn=model_spec_agn,
-            model_U_agn=model_U_agn,photmod_agn=photmod_agn,
-            mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
-            Lagn_inputs=Lagn_inputs,Lagn_params=Lagn_params,
+            AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
+            model_U_agn=model_U_agn,
+            mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
+            model_spec_agn=model_spec_agn,
+            Lagn_inputs=Lagn_inputs,Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,

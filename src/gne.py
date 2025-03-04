@@ -26,11 +26,14 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         m_sfr_z=[None],mtot2mdisk=True,
         inoh=False,LC2sfr=False,
         IMF=['Kroupa','Kroupa'],imf_cut_sfr=100,
-        AGN=False,model_nH_agn=None,model_spec_agn='feltre16',
-        model_U_agn='panuzzo03',photmod_agn='feltre16',
-        xid_agn=0.5,alpha_agn=-1.7,
-        agn_nH_params=None,Lagn_inputs='Lagn', Lagn_params=[None],
+        AGN=False,photmod_agn='feltre16',
         Zgas_NLR=None,Z_correct_grad=False,
+        model_U_agn='panuzzo03',
+        mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
+        model_spec_agn='feltre16',
+        alpha_NLR=-1.7,xid_NLR=0.5,
+        nH_NLR=c.nH_NLR,t_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
+        Lagn_inputs='Lagn', Lagn_params=[None],
         zeq=None,infile_z0=None,
         att=False,attmod='cardelli89',
         att_params=[None], att_ratio_lines=[None],
@@ -45,14 +48,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     Parameters
     ----------
-    infile : strings
-     List with the name of the input files. 
-     - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-     - In csv files (*.csv), columns separated by ','.
-    m_sfr_z : list
-     - [[component1_stellar_mass,sfr/LC,Z],[component2_stellar_mass,sfr/LC,Z],...]
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
+    infile : string
+        Name of the input file.
+    redshift : float
+        Redshift of the input data.
+    m_sfr_z : list of integers (txt input files) or strings (hdf5 files)
+        [[component1_stellar_mass,sfr/LC,Z],...]
     inputformat : string
         Format of the input file: 'hdf5' or 'txt'.
     infile_z0 : strings
@@ -61,8 +62,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      - In csv files (*.csv), columns separated by ','.
     h0 : float
       If not None: value of h, H0=100h km/s/Mpc.
-    redshift : float
-     Redshift of the input data.
     snap: integer
         Simulation snapshot number
     cutcols : list
@@ -142,9 +141,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      If True the galaxies with U, ne and Z outside the photoionization model's grid limits won't be considered.
     mtot2mdisk : boolean
      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
-    xid_agn : float
+    xid_NLR : float
      Dust-to-metal ratio for the AGN photoionisation model.
-    alpha_agn : float
+    alpha_NLR : float
      Alpha value for the AGN photoionisation model.
     xid_sfr : float
      Dust-to-metal ratio for the SF photoionisation model.
@@ -174,9 +173,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
-                                 model_nH_sfr=model_nH_sfr,model_U_sfr=model_U_sfr,
+                                 model_nH_sfr=model_nH_sfr,
+                                 model_U_sfr=model_U_sfr,
                                  photmod_sfr=photmod_sfr,
-                                 model_nH_agn=model_nH_agn,
                                  model_spec_agn=model_spec_agn,
                                  model_U_agn=model_U_agn,
                                  photmod_agn=photmod_agn,
@@ -314,20 +313,22 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
         ##here to be removed once the NLR is consistently done on 1 component
 
-        # Get the rate of ionizing photons, Q, from the AGN bolometric luminosity
-        agn_nH_param = None
-        if model_nH_agn is not None:
-            agn_nH_param = io.get_data_agnnH(infile,model_nH_agn[1],
-                                             agn_nH_params,selection=cut,
-                                             h0=h0,units_h0=units_h0,
-                                             inputformat=inputformat,
-                                             testing=testing,verbose=verbose)
+        # Get the AGN bolometric luminosity
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,Lagn_inputs=Lagn_inputs,
                         h0=h0,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
-        
+
+        # Get the ionising parameter, U, (and filling factor)
+        mgas_r = [None]
+        if mgas_r_agn is not None:
+            mgas_r = io.get_mgas_r(infile,mgas_r_agn,
+                                   mgasr_type_agn,r_type_agn,
+                                   selection=cut,h0=h0,units_h0=units_h0,
+                                   inputformat=inputformat,
+                                   testing=testing,verbose=verbose)
+        print(mgas_r); exit() ###here                                           
         Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
             get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
@@ -339,7 +340,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         
         # Calculate emission lines in adequate unites 
         nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
-                                xid_phot=xid_agn,alpha_phot=alpha_agn,
+                                xid_phot=xid_NLR,alpha_phot=alpha_NLR,
                                 verbose=verbose)
         if (photmod_agn == 'feltre16'):
             # Units: erg/s for a central Lacc=10^45 erg/s
