@@ -32,7 +32,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
         model_spec_agn='feltre16',
         alpha_NLR=-1.7,xid_NLR=0.5,
-        nH_NLR=c.nH_NLR,t_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
+        nH_NLR=c.nH_NLR,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
         zeq=None,infile_z0=None,
         att=False,attmod='cardelli89',
@@ -172,15 +172,17 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     # Generate header in the output file from input
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
-                                 units_h0,outpath=outpath,
+                                 units_h0,AGN,
+                                 outpath=outpath,
                                  model_nH_sfr=model_nH_sfr,
                                  model_U_sfr=model_U_sfr,
                                  photmod_sfr=photmod_sfr,
                                  model_spec_agn=model_spec_agn,
                                  model_U_agn=model_U_agn,
                                  photmod_agn=photmod_agn,
+                                 nH_NLR=nH_NLR,T_NLR=T_NLR,r_NLR=r_NLR,
                                  attmod=attmod,verbose=verbose)
-
+    print(outfile); exit() ###here
     #----------------HII region calculation------------------------
     # Number of components
     ncomp = io.get_ncomponents(m_sfr_z)
@@ -296,22 +298,19 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     #----------------NLR AGN calculation------------------------
     if AGN:
+        if verbose: print('AGN:')
         # Get the central metallicity
         if Z_correct_grad:
             # Get total mass for Z corrections 
             lm_tot = components2tot(lms)
-
-            lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
+            lzgas_agn = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
                                     Z_correct_grad=True,lm_tot=lm_tot,
                                     inputformat=inputformat,
                                     testing=testing,verbose=verbose)
         else:
-            lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,
+            lzgas_agn = get_zgasagn(infile,Zgas_NLR,selection=cut,
                                     inoh=inoh,inputformat=inputformat,
                                     testing=testing,verbose=verbose)
-        ###here Duplicate lzgas_agn to the SFR components at the moment
-        lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
-        ##here to be removed once the NLR is consistently done on 1 component
 
         # Get the AGN bolometric luminosity
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
@@ -321,14 +320,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         testing=testing,verbose=verbose)
 
         # Get the ionising parameter, U, (and filling factor)
-        mgas_r = [None]
+        mgas = None; hr = None
         if mgas_r_agn is not None:
-            mgas_r = io.get_mgas_r(infile,mgas_r_agn,
-                                   mgasr_type_agn,r_type_agn,
-                                   selection=cut,h0=h0,units_h0=units_h0,
+            mgas, hr = io.get_mgas_hr(infile,mgas_r_agn,r_type_agn,cut,
+                                   h0=h0,units_h0=units_h0,
                                    inputformat=inputformat,
                                    testing=testing,verbose=verbose)
-        print(mgas_r); exit() ###here                                           
+        print(mgas, hr); exit() ###here
         Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
             get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
                         Lagn=Lagn, T=T,
@@ -336,7 +334,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         model_nH_agn=model_nH_agn,
                         model_spec_agn=model_spec_agn,
                         model_U_agn=model_U_agn,verbose=verbose)
-        if verbose: print('AGN:\n',' U and nH calculated.')
+        if verbose: print(' U calculated.')
         
         # Calculate emission lines in adequate unites 
         nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,

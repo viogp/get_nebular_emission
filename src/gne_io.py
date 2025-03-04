@@ -628,10 +628,11 @@ def get_mgas_hr(infile,cols,r_type,selection,
 
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
-                    units_h0=False,outpath=None,
+                    units_h0=False,AGN=False,outpath=None,
                     model_nH_sfr=None, model_U_sfr=None,
                     photmod_sfr=None,photmod_agn=None,
-                    model_spec_agn=None,model_U_agn=None, 
+                    model_spec_agn=None,model_U_agn=None,
+                    nH_NLR=None,T_NLR=None,r_NLR=None,
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -657,7 +658,9 @@ def generate_header(infile,redshift,snap,
     mp : float
         Simulation resolution, particle mass
     units_h0: boolean
-        True if input units with h    
+        True if input units with h
+    AGN : boolean
+        True if the calculation from AGN NLR is performed
     outpath : string
         Path to output
     model_nH_sfr : string
@@ -668,10 +671,16 @@ def generate_header(infile,redshift,snap,
         Photoionisation model to be used for look up tables.
     model_spec_agn : string
         Model for the spectral distribution for AGNs.
-    model_U_sfr : string
+    model_U_agn : string
         Model to go from galaxy properties to AGN ionising parameter.
     photmod_agn : string
         Photoionisation model to be used for look up tables.
+    nH_NLR : float
+        Value assumed for the electron number density in AGN NLR.
+    T_NLR : float
+        Value assumed for the AGN NLR temperature.
+    r_NLR : float
+        Value assumed for the radius of the AGN NLR.
     attmod : string
         Attenuation model.
     verbose : bool
@@ -708,9 +717,16 @@ def generate_header(infile,redshift,snap,
     if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
     if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
-    if model_spec_agn is not None: head.attrs[u'model_spec_agn'] = model_spec_agn
-    if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
-    if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
+
+    if AGN:
+        if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
+        if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
+        if model_spec_agn is not None:
+            head.attrs[u'model_spec_agn'] = model_spec_agn
+        if nH_NLR is not None: head.attrs[u'nH_NLR_cm3'] = nH_NLR
+        if T_NLR is not None: head.attrs[u'T_NLR_K'] = T_NLR
+        if r_NLR is not None: head.attrs[u'r_NLR_Mpc'] = r_NLR
+        
     if attmod is not None: head.attrs[u'attmod'] = attmod
     hf.close()
     

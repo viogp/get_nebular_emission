@@ -131,9 +131,9 @@ model_U_agn    = 'panuzzo03'
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
 
-#mgas_r = None
+mgas_r = None
 #mgas_r = [[19,12]]; mgasr_type=['sphere']
-mgas_r = [[6,11],[9,12]]
+#mgas_r = [[6,11],[9,12]]
 
 # Type of component: 'disc', 'sphere' or None
 mgasr_type = ['disc','sphere']
