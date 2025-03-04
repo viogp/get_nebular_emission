@@ -1,5 +1,5 @@
 """
-.. moduleauthor:: Julen Expósito-Márquez <expox7@gmail.com>
+.. Moduleauthor:: Julen Expósito-Márquez <expox7@gmail.com>
 .. contributions:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
 import numpy as np
@@ -206,7 +206,7 @@ def Rsch(Mbh):
     return Rs
 
 
-def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
+def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
              h0=None,units_h0=False,units_Gyr=False,units_L40h2=False,
              kagn=c.kagn,kagn_exp=c.kagn_exp,testing=False,verbose=True):
     '''
@@ -222,7 +222,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         Format of the input file.
     params : array of strings
         Names of the parameters to calculate the AGN emission. 
-    AGNinputs : string
+    Lagn_inputs : string
         Type of calculation to obtain Lagn
     units_h0: boolean
         True if input units with h
@@ -249,13 +249,13 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
                      params=params,
                      testing=testing,verbose=verbose)
     
-    if AGNinputs=='Lagn':
+    if Lagn_inputs=='Lagn':
         Lagn = vals[0]
         if units_L40h2:
             Lagn = Lagn*1e40/h0/h0
         return Lagn # erg/s
     
-    elif AGNinputs=='Mdot_hh':
+    elif Lagn_inputs=='Mdot_hh':
         Mdot = vals[0]
         Mbh = vals[1]
         if units_h0:
@@ -271,7 +271,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
 
-    elif AGNinputs=='Mdot_stb_hh':
+    elif Lagn_inputs=='Mdot_stb_hh':
         Mdot = vals[0] + vals[1]
         Mbh = vals[2]
         if units_h0:
@@ -287,7 +287,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
 
-    elif AGNinputs=='radio_mode':
+    elif Lagn_inputs=='radio_mode':
         Mhot = vals[0]
         Mbh = vals[1]
         if units_h0:
@@ -306,7 +306,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
             
-    elif AGNinputs=='quasar_mode':
+    elif Lagn_inputs=='quasar_mode':
         M_b = vals[0]
         r_b = vals[1]
         v_b = vals[2]
@@ -326,7 +326,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
 
-    elif AGNinputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
+    elif Lagn_inputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
         M_b = vals[0]
         r_b = vals[1]
         v_b = vals[2]
