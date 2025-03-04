@@ -138,11 +138,11 @@ mgas_r = [[6,11],[9,12]]
 # Type of component: 'disc', 'sphere' or None
 mgasr_type = ['disc','sphere']
 
-# Type of radius input:
+# Type of radius input, per component:
 # 0: scalelength;
 # 1: effective or half-mass/light radius
 # 2: radius of the galaxy or host halo
-r_type = 1
+r_type = [1,1]
 
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'

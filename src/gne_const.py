@@ -18,7 +18,7 @@ Lbolsun = 3.826e33 # erg/s
 Msun    = 1.989e30 # kg
 parsec  = 3.085677581491367e+16 # m
 
-re2rs_exp = 1.678
+re2hr_exp = 1.678
 
 #--------------------------------------------
 #   Conversion factors:

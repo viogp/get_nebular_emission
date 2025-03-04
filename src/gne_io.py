@@ -527,9 +527,8 @@ def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
 
     check_file(infile, verbose=verbose)
 
-    ncomp = get_ncomponents(cols)
-
     # Initialise output
+    ncomp = get_ncomponents(cols)
     outm, outr = [np.zeros((ncomp,len(selection))) for i in range(2)]
 
     # Read input data
@@ -562,12 +561,10 @@ def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
     for i in range(ncomp):
         outm[i,:] = mgas[i,selection]
         outr[i,:] = hr[i,selection]
-    print('outm ',outm)
-    print('outr ',outr)
     return outm, outr        
 
           
-def get_mgas_r(infile,cols,ctype,rtype,selection=None,
+def get_mgas_hr(infile,cols,r_type,selection,
                    h0=None,units_h0=False,inputformat='hdf5',
                    testing=False,verbose=False):
     '''
@@ -579,9 +576,7 @@ def get_mgas_r(infile,cols,ctype,rtype,selection=None,
        Name of the input file.
     cols : list of either integers or strings
        Inputs columns for text files or dataset name for hdf5 files.
-    ctype : string ('disc', 'sphere' or None)
-       Component type for the filling factor calculation.
-    rtype : integer
+    r_type : list of integers per component
        0 for scalelength; 1 for R50 or Reff; and 2 for a full radius
     selection : array of integers
        List of indexes of the selected galaxies from the samples.
@@ -600,25 +595,35 @@ def get_mgas_r(infile,cols,ctype,rtype,selection=None,
     -------
     mgas, hr : array of floats
     '''
-    print(cols); exit() ###here
-    vals = read_data(infile,selection,inputformat=inputformat,
-                     params=cols,testing=testing,verbose=verbose)
+
+    # Read Mgas and hr
+    mgas, hr = read_mgas_hr(infile,cols,selection,
+                            inputformat=inputformat,
+                            testing=testing,verbose=verbose)
     if units_h0:
-        vals = vals/h0
+        mgas = mgas/h0
+        hr = hr/h0
 
-    outparams = vals
+    # Initialise output with change of units
+    outm = np.copy(mgas)
+    outr = np.copy(hr)
 
-    if rtype == 'reff':
-        # Transform  reff (exponential): rscale = reff/1.678
-        outparams[1] = outparams[1]/c.re2rs_exp
-        if np.shape(outparams)[0]>2: outparams[3] = outparams[3]/c.re2rs_exp
-    elif rtype == 'r':
-        # Transform  r: rscale = r/2./1.678
-        outparams[1] = outparams[1]/2./c.re2rs_exp
-        if np.shape(outparams)[0]>2: outparams[3] = outparams[3]/2./c.re2rs_exp
-        
-    return outparams
 
+    # Check that rtype is adequate
+    ncomp = np.shape(outr)[0]
+    if (min(r_type)<0 or max(r_type)>2 or len(r_type)!=ncomp):
+        print('WARNING! Input r_type should be 0, 1 or 2, per component.')
+
+    # Correct scalelenght for each component
+    for i in range(ncomp):
+        if r_type[i] == 1:
+            # Get the scalelenght from an effective or half-mass(light) radius
+            outr[i,:] = hr[i,:]/c.re2hr_exp
+        elif r_type[i] == 2:
+            # Transform  R/2./1.678
+            outr[i,:] = hr[i,:]/2./c.re2hr_exp
+
+    return outm, outr
 
 
 def generate_header(infile,redshift,snap,
