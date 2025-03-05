@@ -104,8 +104,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         Model to go from galaxy properties to Hydrogen (or e) number density.
     model_U_sfr : string
         Model to go from galaxy properties to ionising parameter.
-    model_nH_agn : list of 2 strings
-        Profile assumed for the gas around NLR AGN and provided radii.
     model_spec_agn : string
         Model for the spectral distribution for AGNs.
     model_U_sfr : string
@@ -122,8 +120,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     xid_NLR : float
      Dust-to-metal ratio for the AGN photoionisation model.
-    alpha_NLR : float
-     Alpha value for the AGN photoionisation model.
+    alpha_NLR : array of floats
+        Spectral index assumed for the AGN.
     xid_sfr : float
      Dust-to-metal ratio for the SF photoionisation model.
     co_sfr : float
@@ -305,7 +303,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                   nH_NLR,T_NLR,r_NLR,alpha_NLR,xid_NLR]
 
         nattrs = io.add2header(outfile,names,values)
-        print(outfile); exit() ###here
         
         # Get the central metallicity
         if Z_correct_grad:
@@ -328,24 +325,22 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         testing=testing,verbose=verbose)
 
         # Get the ionising parameter, U, (and filling factor)
-        mgas = None; hr = None
+        mgas = None; hr = None ###here line to be removed
         if mgas_r_agn is not None:
             mgas, hr = io.get_mgas_hr(infile,mgas_r_agn,r_type_agn,cut,
                                    h0=h0,units_h0=units_h0,
                                    inputformat=inputformat,
                                    testing=testing,verbose=verbose)
-        print(mgas, hr); exit() ###here
-        Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
-            get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
-                        Lagn=Lagn, T=T,
-                        agn_nH_param=agn_nH_param,
-                        model_nH_agn=model_nH_agn,
-                        model_spec_agn=model_spec_agn,
-                        model_U_agn=model_U_agn,verbose=verbose)
+
+        lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
+                                          mgasr_type=mgasr_type_agn,
+                                          verbose=verbose)
         if verbose: print(' U calculated.')
-        
-        # Calculate emission lines in adequate unites 
-        nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
+        print(lu_agn, epsilon_agn); exit() ###here        
+        # Calculate emission lines in adequate units
+        ###here Generate lnH_agn.T
+        nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,
+                                photmod=photmod_agn,
                                 xid_phot=xid_NLR,alpha_phot=alpha_NLR,
                                 verbose=verbose)
         if (photmod_agn == 'feltre16'):

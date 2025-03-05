@@ -529,33 +529,55 @@ def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None):
     return Q
 
 
-def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
+def get_Q_agn(Lagn,alpha,model_spec='feltre16',verbose=True):
     '''
-    Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
-    get the rate of ionizing photons in photon per second.
+    Obtain the rate of ionizing photons in photon per second, Q,
+    given the bolometric luminosity and spectral index of the AGN.
 
     Parameters
     ----------
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    IMF : array of strings
-     Assumed IMF for the input data of each component.
-    Lagn : floats
-     Bolometric luminosity of the AGN (Lsun).
-     
+    Lagn : array of floats
+       Bolometric luminosity of the AGNs (erg/s).
+    alpha_NLR : array of floats
+        Spectral index assumed for the AGN.
+    model_spec_agn : string
+        Model for the spectral distribution for AGNs.
+    verbose : boolean
+       If True print out messages.
+
     Returns
     -------
-    Q : floats
+    Q : array of floats
     '''
-    Q = np.zeros(np.shape(lssfr))
-    ind = np.where(Lagn>0)[0]
+    Q = np.zeros(np.shape(Lagn))
+    
+    if model_spec not in c.model_spec_agn:
+        if verbose:
+            print('STOP (gne_model_UnH): Unrecognised spectral AGN model.')
+            print('                Possible options= {}'.format(c.model_spec_agn))
+        sys.exit()
+        
+    elif (model_spec == 'feltre16'):
+        lambdas = c.agn_spec_limits[model_spec]
+        nu3 = c.c/(lambdas[0]*1e-6)  # Hz
+        nu2 = c.c/(lambdas[1]*1e-6)
+        nu1 = c.c/(lambdas[2]*1e-6)
+        nuL = c.c/(lambdas[3]*1e-6)
+
+        int_S = np.power(nu1,3)/3. +\
+            (np.power(nu2,0.5) - np.power(nu1,0.5))/0.5 +\
+            (np.power(nu3,alpha+1) - np.power(nu2,alpha+1))/(alpha+1)
+
+        int_SL = (np.power(nu1,2) - np.power(nuL,2))/2. -\
+            (np.power(nu2,-0.5) - np.power(nu1,-0.5))/0.5 +\
+            (np.power(nu3,alpha) - np.power(nu2,alpha))/alpha
+
+        mask = Lagn > 0.
+        Q[mask] = Lagn[mask]*Lagn[mask]*int_Sl/(c.h_erg*int_S)
+
+    #ind = np.where(Lagn>0)[0]
     # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
-    Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
-    # This implies that Lion = Lbol/5 aprox.
+    #Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
             
     return Q
 
@@ -1033,68 +1055,61 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
     return lu, lnH # epsilon, ng_ratio
 
 
-def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
-                Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
-                T=10000, epsilon_param_z0=[None],
-                model_nH_agn=None,model_spec_agn='feltre16',
-                model_U_agn='panuzzo03', verbose=True):
+def get_UnH_agn(Lagn, mgas, hr, filenom, 
+                mgasr_type=None,verbose=True):
     '''
-    Given the global properties of a galaxy or a region
-    (log10(Mstar), log10(sSFR) and 12+log(O/H)),
-    get the characteristics of the ionising region
-    (ionizing parameter, U, and the electron density, ne).
+    Given the AGN bolometric luminosity,
+    gas mass and scalelenght (per component)
+    get the ionizing parameter, U, and the
+    filling factor, epsilon, if needed.
 
     Parameters
     ----------
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    Lagn : floats
-     Bolometric luminosity of the AGNs (erg/s).
-    T : float
-     Typical temperature of ionizing regions.
-    agn_nH_param : floats
-     Parameters for epsilon calculation.
-    epsilon_param_z0 : floats
-     Parameters for epsilon calculation in the sample of galaxies at redshift 0.
-    epsilon : floats
-     Volume filling-factor of the galaxy.
-    model_nH_agn : string
-        Profile assumed for the distribution of gas around NLR AGN.
-    model_spec_agn : string
-        Model for the spectral distribution for AGNs.
+    Lagn : array of floats
+       Bolometric luminosity of the AGNs (erg/s).
+    mgas : array of floats (or None)
+       Central gas mass or per galaxy component
+    hr : array of floats (or None)
+       Scalelenght of the central region or per component
+    filenom : string
+        File with information relevant for the calculation
     verbose : boolean
-     Yes = print out messages.
+       If True print out messages.
 
     Returns
     -------
-    Q, lu, lnH, lzgas : floats
+    lu, epsilon : array of floats (or None)
     '''
 
-    # Read redshift
+    # Read model for the calculation of the ionising parameter
     f = h5py.File(filenom, 'r')
     header = f['header']
-    redshift = header.attrs['redshift']
+    model_U_agn = header.attrs['model_U_agn']
     f.close()
-    
-    # ncomp = len(lms[0])
-    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
-    
-    epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
-    if model_nH_agn is not None:
-        epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
-                                    filenom,nH=c.nH_NLR,
-                                    profile=model_nH_agn,verbose=verbose)
 
     if model_U_agn not in c.model_U_agn:
         if verbose:
             print('STOP (gne_model_UnH): Unrecognised model to get U (AGN).')
             print('                Possible options= {}'.format(c.model_U_agn))
         sys.exit()
+        
     elif (model_U_agn == 'panuzzo03'):
+        # Calculate the number of ionising photons
+        f = h5py.File(filenom, 'r')
+        header = f['header']
+        model_spec_agn = header.attrs['model_spec_agn']
+        alpha_NLR = header.attrs['alpha_NLR']
+        f.close()
+        
+        Q = get_Q_agn(Lagn,alpha_NLR,model_spec=model_spec_agn,verbose=verbose)
+        print(Q); exit() ###here
+        ## ncomp = len(lms[0])
+        #if model_nH_agn is not None:
+        #    epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
+        #                            filenom,nH=c.nH_NLR,
+        #                            profile=model_nH_agn,verbose=verbose)
+    
+        epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
         lu, lnH, lzgas = get_U_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
         
-    return Q, lu, lnH, epsilon, ng_ratio
+    return lu, epsilon

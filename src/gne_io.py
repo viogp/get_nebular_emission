@@ -362,7 +362,6 @@ def add2header(filenom,names,values,verbose=True):
     if verbose: print(f'* gne_io.add2header: Appended {count} attributes out of {len(names)}')
     
     return count
-    #if attmod is not None: head.attrs[u'attmod'] = attmod
 
 
 def get_selection(infile, outfile, inputformat='hdf5',

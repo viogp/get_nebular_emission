@@ -6,9 +6,9 @@ testlimit = 50
 mp   = 1.67e-27            # Proton mass, kg
 c    = 2.998e8             # Light velocity, m/s
 c_cm = 2.998e10            # Light velocity, cm/s
-planck = 4.135e-15*1.6e-12 # Planck constant, erg*s
-G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
-nH_gal = 100  # cm^-3
+h    = 6.62607015e-34      # Planck constant, Js 
+h_erg= 4.135e-15*1.6e-12   # Planck constant, erg/s
+G    = 4.3e-9              # Gravitational constant, km^2 Mpc Ms^-1 s^-2
 
 zsun = 0.0134 # Asplund 2009
 zsunK20 = 0.014 # Kashino 2020
@@ -235,6 +235,11 @@ line_wavelength = {
                            6717,6731,1240,1548,1551,1640,1661,
                            1666,1883,1888,1907,1910])
     }
+
+# Wavelenghts in \AA for the piecewise AGN spectral approximation
+agn_spec_limits = {
+    "feltre16" : np.array([0.001,0.25,10,912])
+} 
 
 def coef_att_line_model_func(z=0):
     line_att_coef = line_att_coef_func(z)
