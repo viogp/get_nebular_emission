@@ -355,6 +355,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         # Calculate attenuation if required
         if att:
+            # Add relevant constants to header
+            nattrs = io.add2header(outfile,['attmod'],[attmod])
+
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
                                                         att_ratio_lines=att_ratio_lines,
                                                         redshift=redshift,h0=h0,
