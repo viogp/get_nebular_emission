@@ -91,24 +91,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     gamma : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    T : float
-     Typical temperature of ionizing regions.
-    AGN : boolean
-     If True calculates emission from the narrow-line region of AGNs.
-    Lagn_inputs : string
-     Type of inputs for AGN's bolometric luminosity calculations.
-    Lagn_params : list
-     Inputs for AGN's bolometric luminosity calculations.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    Zgas_NLR : list of integer (text file) or strings (hdf5 file)
-        Location of the central metallicity in input files
-    Z_correct_gradrection : boolean
         If True, corrects Zgas_NLR using gradients from the literature
-    agn_nH_params : list
-     Inputs for the calculation of the volume-filling factor.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
     extra_params : list
      Parameters from the input files which will be saved in the output file.
      - For text or csv files: list of integers with column position.
@@ -117,8 +100,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Names of the datasets in the output files for the extra parameters.
     extra_params_labels : strings
      Description labels of the datasets in the output files for the extra parameters.
-    attmod : string
-     Attenuation model.
     model_nH_sfr : string
         Model to go from galaxy properties to Hydrogen (or e) number density.
     model_U_sfr : string
@@ -130,9 +111,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     model_U_sfr : string
         Model to go from galaxy properties to AGN ionising parameter.
     photmod_sfr : string
-     Photoionisation model to be used for look up tables.
-    photmod_agn : string
-     Photoionisation model to be used for look up tables.
+        Photoionisation model to be used for look up tables.
     inoh : boolean
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas
     LC2sfr : boolean
@@ -151,6 +130,30 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      C/O ratio for the SF photoionisation model.
     imf_cut_sfr : float
      Solar mass high limit for the IMF for the SF photoionisation model.
+    AGN : boolean
+       If True calculates emission from the narrow-line region of AGNs.
+    Lagn_inputs : string
+       Type of inputs for AGN's bolometric luminosity calculations.
+    Lagn_params : list of integers (text files) or strings (hdf5 files)
+       Parameters to obtain the bolometric luminosity.
+    Zgas_NLR : list of integer (text file) or strings (hdf5 file)
+        Location of the central metallicity in input files
+    Z_correct_gradrection : boolean
+        True to modify the metallicity by literature gradients
+    model_spec_agn : string
+        Model for the spectral distribution for AGNs.
+    model_U_agn : string
+        Model to go from galaxy properties to AGN ionising parameter.
+    photmod_agn : string
+        Photoionisation model to be used for look up tables.
+    nH_NLR : float
+        Value assumed for the electron number density in AGN NLR.
+    T_NLR : float
+        Value assumed for the AGN NLR temperature.
+    r_NLR : float
+        Value assumed for the radius of the AGN NLR.
+    attmod : string
+        Attenuation model.
     units_h0: boolean
         True if input units with h
     units_Gyr: boolean

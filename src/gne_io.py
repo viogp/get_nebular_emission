@@ -161,7 +161,7 @@ def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=Fals
     if dirf is None:
         dirf = 'output/iz' + str(snap) + '/'
         if ftype == 'plots': dirf = dirf + ftype + '/'
-        create_dir(dirf)    
+    create_dir(dirf)    
 
     if ftype == 'line_data':
         outfile = dirf + nom + '.hdf5'
@@ -252,6 +252,126 @@ def get_nheader(infile,firstchar=None):
                         ih+=1
     return ih
         
+
+
+def generate_header(infile,redshift,snap,
+                    h0,omega0,omegab,lambda0,vol,mp,
+                    units_h0=False,outpath=None,
+                    model_nH_sfr=None, model_U_sfr=None,
+                    photmod_sfr=None,verbose=True):
+    """
+    Generate the header of the file with the line data
+
+    Parameters
+    -----------
+    infile : string
+        Path to input
+    zz: float
+        Redshift of the simulation snapshot
+    snap: integer
+        Simulation snapshot number
+    h0 : float
+        Hubble constant divided by 100
+    omega0 : float
+        Matter density at z=0
+    omegab : float
+        Baryonic density at z=0
+    lambda0 : float
+        Cosmological constant z=0
+    vol : float
+        Simulation volume
+    mp : float
+        Simulation resolution, particle mass
+    units_h0: boolean
+        True if input units with h
+    outpath : string
+        Path to output
+    model_nH_sfr : string
+        Model to go from galaxy properties to Hydrogen (or e) number density.
+    model_U_sfr : string
+        Model to go from galaxy properties to ionising parameter.
+    photmod_sfr : string
+        Photoionisation model to be used for look up tables.
+    verbose : bool
+        True for messages
+ 
+    Returns
+    -----
+    filenom : string
+       Full path to the output file
+    """
+
+    # Get the file name
+    filenom = get_outnom(infile,snap,dirf=outpath,ftype='line_data',verbose=verbose)
+
+    # Change units if required
+    if units_h0:
+        vol = vol/(h0*h0*h0)
+        mp = mp/h0
+    
+    # Generate the output file (the file is rewrtitten)
+    hf = h5py.File(filenom, 'w')
+
+    # Generate a header
+    headnom = 'header'
+    head = hf.create_dataset(headnom,(100,))
+    head.attrs[u'redshift'] = redshift
+    head.attrs[u'h0'] = h0
+    head.attrs[u'omega0'] = omega0
+    head.attrs[u'omegab'] = omegab
+    head.attrs[u'lambda0'] = lambda0
+    head.attrs[u'vol_Mpc3'] = vol
+    head.attrs[u'mp_Msun'] = mp
+
+    if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
+    if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
+    if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
+    hf.close()
+    
+    return filenom
+
+
+def add2header(filenom,names,values,verbose=True):
+    """
+    Add attributes to header
+
+    Parameters
+    -----------
+    filenom : string
+        Path to file 
+    names : list of strings
+        Atribute names
+    values: list
+        Values of attributes
+    verbose : bool
+        True for messages
+    """
+    
+    # Open the file header
+    hf = h5py.File(filenom, 'a')
+    head = hf['header']
+    
+    # Append attributes
+    count = 0
+    for ii, nom in enumerate(names):
+        if nom is not None:
+            head.attrs[nom] = values[ii]
+            count += 1
+    hf.close()
+
+    if verbose: print(f'* gne_io.add2header: Appended {count} attributes out of {len(names)}')
+    
+    return count
+    #if AGN:
+    #    if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
+    #    if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
+    #    if model_spec_agn is not None:
+    #        head.attrs[u'model_spec_agn'] = model_spec_agn
+    #    if nH_NLR is not None: head.attrs[u'nH_NLR_cm3'] = nH_NLR
+    #    if T_NLR is not None: head.attrs[u'T_NLR_K'] = T_NLR
+    #    if r_NLR is not None: head.attrs[u'r_NLR_Mpc'] = r_NLR
+    #    
+    #if attmod is not None: head.attrs[u'attmod'] = attmod
 
 
 def get_selection(infile, outfile, inputformat='hdf5',
@@ -625,112 +745,6 @@ def get_mgas_hr(infile,cols,r_type,selection,
 
     return outm, outr
 
-
-def generate_header(infile,redshift,snap,
-                    h0,omega0,omegab,lambda0,vol,mp,
-                    units_h0=False,AGN=False,outpath=None,
-                    model_nH_sfr=None, model_U_sfr=None,
-                    photmod_sfr=None,photmod_agn=None,
-                    model_spec_agn=None,model_U_agn=None,
-                    nH_NLR=None,T_NLR=None,r_NLR=None,
-                    attmod=None,verbose=True):
-    """
-    Generate the header of the file with the line data
-
-    Parameters
-    -----------
-    infile : string
-        Path to input
-    zz: float
-        Redshift of the simulation snapshot
-    snap: integer
-        Simulation snapshot number
-    h0 : float
-        Hubble constant divided by 100
-    omega0 : float
-        Matter density at z=0
-    omegab : float
-        Baryonic density at z=0
-    lambda0 : float
-        Cosmological constant z=0
-    vol : float
-        Simulation volume
-    mp : float
-        Simulation resolution, particle mass
-    units_h0: boolean
-        True if input units with h
-    AGN : boolean
-        True if the calculation from AGN NLR is performed
-    outpath : string
-        Path to output
-    model_nH_sfr : string
-        Model to go from galaxy properties to Hydrogen (or e) number density.
-    model_U_sfr : string
-        Model to go from galaxy properties to ionising parameter.
-    photmod_sfr : string
-        Photoionisation model to be used for look up tables.
-    model_spec_agn : string
-        Model for the spectral distribution for AGNs.
-    model_U_agn : string
-        Model to go from galaxy properties to AGN ionising parameter.
-    photmod_agn : string
-        Photoionisation model to be used for look up tables.
-    nH_NLR : float
-        Value assumed for the electron number density in AGN NLR.
-    T_NLR : float
-        Value assumed for the AGN NLR temperature.
-    r_NLR : float
-        Value assumed for the radius of the AGN NLR.
-    attmod : string
-        Attenuation model.
-    verbose : bool
-        True for messages
- 
-    Returns
-    -----
-    filenom : string
-       Full path to the output file
-    """
-
-    # Get the file name
-    filenom = get_outnom(infile,snap,dirf=outpath,ftype='line_data',verbose=verbose)
-
-    # Change units if required
-    if units_h0:
-        vol = vol/(h0*h0*h0)
-        mp = mp/h0
-    
-    # Generate the output file (the file is rewrtitten)
-    hf = h5py.File(filenom, 'w')
-
-    # Generate a header
-    headnom = 'header'
-    head = hf.create_dataset(headnom,(100,))
-    head.attrs[u'redshift'] = redshift
-    head.attrs[u'h0'] = h0
-    head.attrs[u'omega0'] = omega0
-    head.attrs[u'omegab'] = omegab
-    head.attrs[u'lambda0'] = lambda0
-    head.attrs[u'vol_Mpc3'] = vol
-    head.attrs[u'mp_Msun'] = mp
-
-    if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
-    if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
-    if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
-
-    if AGN:
-        if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
-        if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
-        if model_spec_agn is not None:
-            head.attrs[u'model_spec_agn'] = model_spec_agn
-        if nH_NLR is not None: head.attrs[u'nH_NLR_cm3'] = nH_NLR
-        if T_NLR is not None: head.attrs[u'T_NLR_K'] = T_NLR
-        if r_NLR is not None: head.attrs[u'r_NLR_Mpc'] = r_NLR
-        
-    if attmod is not None: head.attrs[u'attmod'] = attmod
-    hf.close()
-    
-    return filenom
     
 
 def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
