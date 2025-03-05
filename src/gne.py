@@ -175,17 +175,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     # Generate header in the output file from input
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
-                                 units_h0,AGN,
-                                 outpath=outpath,
+                                 units_h0,outpath=outpath,
                                  model_nH_sfr=model_nH_sfr,
                                  model_U_sfr=model_U_sfr,
                                  photmod_sfr=photmod_sfr,
-                                 model_spec_agn=model_spec_agn,
-                                 model_U_agn=model_U_agn,
-                                 photmod_agn=photmod_agn,
-                                 nH_NLR=nH_NLR,T_NLR=T_NLR,r_NLR=r_NLR,
-                                 attmod=attmod,verbose=verbose)
-    print(outfile); exit() ###here
+                                 verbose=verbose)
+
     #----------------HII region calculation------------------------
     # Number of components
     ncomp = io.get_ncomponents(m_sfr_z)
@@ -302,6 +297,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     #----------------NLR AGN calculation------------------------
     if AGN:
         if verbose: print('AGN:')
+        
+        # Add relevant constants to header
+        names = ['model_spec_agn','model_U_agn','photmod_agn',
+                  'nH_NLR_cm3','T_NLR_K','r_NLR_Mpc','alpha_NLR','xid_NLR']
+        values = [model_spec_agn,model_U_agn,photmod_agn,
+                  nH_NLR,T_NLR,r_NLR,alpha_NLR,xid_NLR]
+
+        nattrs = io.add2header(outfile,names,values)
+        print(outfile); exit() ###here
+        
         # Get the central metallicity
         if Z_correct_grad:
             # Get total mass for Z corrections 

@@ -362,15 +362,6 @@ def add2header(filenom,names,values,verbose=True):
     if verbose: print(f'* gne_io.add2header: Appended {count} attributes out of {len(names)}')
     
     return count
-    #if AGN:
-    #    if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
-    #    if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
-    #    if model_spec_agn is not None:
-    #        head.attrs[u'model_spec_agn'] = model_spec_agn
-    #    if nH_NLR is not None: head.attrs[u'nH_NLR_cm3'] = nH_NLR
-    #    if T_NLR is not None: head.attrs[u'T_NLR_K'] = T_NLR
-    #    if r_NLR is not None: head.attrs[u'r_NLR_Mpc'] = r_NLR
-    #    
     #if attmod is not None: head.attrs[u'attmod'] = attmod
 
 
