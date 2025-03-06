@@ -202,7 +202,7 @@ def Rsch(Mbh):
     Rs : floats
     '''
     
-    Rs = 2*c.G*Mbh/(c.c_cm**2) * 1e10 * 3.086e19 #km
+    Rs = 2*c.G_Ms*Mbh/(c.c_cm**2) * 1e10 * 3.086e19 #km  ###here check units
     return Rs
 
 

@@ -3,23 +3,6 @@ import numpy as np
 notnum    = -999.
 testlimit = 50
 
-mp   = 1.67e-27            # Proton mass, kg
-c    = 2.998e8             # Light velocity, m/s
-c_cm = 2.998e10            # Light velocity, cm/s
-h    = 6.62607015e-34      # Planck constant, Js 
-h_erg= 4.135e-15*1.6e-12   # Planck constant, erg/s
-G    = 4.3e-9              # Gravitational constant, km^2 Mpc Ms^-1 s^-2
-
-zsun = 0.0134 # Asplund 2009
-zsunK20 = 0.014 # Kashino 2020
-ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
-
-Lbolsun = 3.826e33 # erg/s
-Msun    = 1.989e30 # kg
-parsec  = 3.085677581491367e+16 # m
-
-re2hr_exp = 1.678
-
 #--------------------------------------------
 #   Conversion factors:
 #--------------------------------------------
@@ -29,8 +12,28 @@ yr_to_s   = 365.*24.*60.*60.
 kilo      = 1000.0
 mega      = 1000000.0
 giga      = 1000000000.0
+J2erg     = 1e7
 #--------------------------------------------
-boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
+
+G    = 6.6743e-11          # Gravitational constant, Nm^2/kg^2=m^3/kg/s^2
+G_Ms = 4.3e-9              # Gravitational constant, km^2*Mpc/Ms/s^-2     ###here to be checked
+mp   = 1.67e-27            # Proton mass, kg
+c    = 2.998e8             # Light velocity, m/s
+c_cm = 2.998e10            # Light velocity, cm/s
+h    = 6.62607015e-34      # Planck constant, Js 
+h_erg= h*J2erg             # Planck constant, erg/s
+kB   = 1.380649×10−23      # Boltzmann constant, J/K
+kB_Ms= kB*1e4*kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2*Msun/s^2/K ###here to be checked
+
+Lbolsun = 3.826e33              # erg/s
+Msun    = 1.989e30              # kg
+parsec  = 3.085677581491367e+16 # m
+
+zsun = 0.0134      # Asplund 2009
+zsunK20 = 0.014    # Kashino 2020
+ohsun = 8.69       # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
+
+re2hr_exp = 1.678
 
 sigma_1Dprobs = [0.682689492137086,    # 1 sigma
                  0.954499736103642,    # 2 sigma

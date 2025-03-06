@@ -262,12 +262,12 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     # den_star = surface_density(x,Ms,reff,profile=profile,verbose=verbose)
     # gamma_gas = gamma_gas_func()
     # gamma_star = gamma_star_func(h_star,den_star)
-    # Pext = 0.5*np.pi*c.G*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(c.Mpc_to_cm**2)
+    # Pext = 0.5*np.pi*c.G_Ms*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(c.Mpc_to_cm**2)
     
-    Pext = 0.5*np.pi*c.G*den_gas**2 * 1e10/(c.Mpc_to_cm**2)
+    Pext = 0.5*np.pi*c.G_Ms*den_gas**2 * 1e10/(c.Mpc_to_cm**2) ###here check units
     
-    # P = nkT
-    n = Pext/(T*c.boltzmann) / c.Mpc_to_cm**3 # cm^-3
+    # P = nkT 
+    n = Pext/(T*c.kB_Ms) / c.Mpc_to_cm**3 # cm^-3  ###here check units
     
     return n
 
@@ -301,7 +301,7 @@ def gamma_star_func(h_star,den_star):
     gamma_gas : float
     '''
     
-    gamma_star = np.sqrt(np.pi*c.G*h_star*den_star) # GALFORM
+    gamma_star = np.sqrt(np.pi*c.G_Ms*h_star*den_star) # GALFORM  ###here check units
     
     return gamma_star
     
