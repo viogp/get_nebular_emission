@@ -322,10 +322,6 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'lambda0'] = lambda0
     head.attrs[u'vol_Mpc3'] = vol
     head.attrs[u'mp_Msun'] = mp
-
-    if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
-    if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
-    if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
     hf.close()
     
     return filenom
@@ -832,7 +828,7 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
     return 
 
 
-def write_agn_data(filenom,Lagn,lu_agn,lnH_agn,lzgas_agn,
+def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                    nebline_agn,nebline_agn_att=None,
                    fluxes_agn=None,fluxes_agn_att=None,
                    epsilon_agn=None,
@@ -862,27 +858,25 @@ def write_agn_data(filenom,Lagn,lu_agn,lnH_agn,lzgas_agn,
     # Read information on models
     f = h5py.File(filenom, 'r')   
     header = f['header']
-    photmod_agn = header.attrs['photmod_agn']
+    photmod_agn = header.attrs['photmod_NLR']
     f.close()
 
     with h5py.File(filenom,'a') as hf:
         # AGN data
         hfdat = hf.create_group('agn_data')
 
-        hfdat.create_dataset('Lagn', data=lu_agn, maxshape=(None,None))
+        hfdat.create_dataset('Lagn', data=Lagn, maxshape=(None))
         hfdat['Lagn'].dims[0].label = 'L_bol (erg/s)'
         
         hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
     
-        hfdat.create_dataset('lnH_agn',data=lnH_agn, maxshape=(None,None))
-        hfdat['lnH_agn'].dims[0].label = 'log10(nH) (cm**-3)'
-    
         hfdat.create_dataset('lz_agn', data=lzgas_agn, maxshape=(None,None))
         hfdat['lz_agn'].dims[0].label = 'log10(Z)'
-        
-        hfdat.create_dataset('epsilon_agn', data=epsilon_agn[None,:], maxshape=(None,None))
-        hfdat['epsilon_agn'].dims[0].label = 'NLRs volume filling factor (dimensionless)'
+
+        if epsilon_agn is not None:
+            hfdat.create_dataset('epsilon_agn', data=epsilon_agn, maxshape=(None,None))
+            hfdat['epsilon_agn'].dims[0].label = 'NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 

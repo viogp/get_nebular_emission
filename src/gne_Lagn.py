@@ -388,5 +388,5 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
     # logLagn = np.log10(Lagn)
     # print(len(n1),len(n2),len(n3),len(n4))
     # print(np.mean(logLagn[n1]),np.mean(logLagn[n2]),np.mean(logLagn[n3]))
-        
+    
     return Lagn # erg s^-1

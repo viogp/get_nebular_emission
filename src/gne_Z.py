@@ -4,6 +4,7 @@
 """
 import numpy as np
 import src.gne_const as c
+import src.gne_stats as st
 import src.gne_io as io
 
 def get_lzgas(zz,inoh=False):
@@ -30,6 +31,8 @@ def get_lzgas(zz,inoh=False):
         ind = np.where(zz>0)
         lzgas[ind] = np.log10(zz[ind])
 
+    lzgas = st.ensure_2d(lzgas)
+        
     return lzgas
 
 
@@ -234,4 +237,7 @@ def get_zgasagn(infile,cols,selection=None,inoh=False,
 
     if Z_correct_grad:
         lzgas = correct_Zagn(lm_tot,lzgas)
+
+    lzgas = st.ensure_2d(lzgas)
+
     return lzgas

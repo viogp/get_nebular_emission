@@ -3,6 +3,15 @@ import numpy as np
 notnum    = -999.
 testlimit = 50
 
+#-------------------Solar constants
+Lbolsun = 3.826e33  # erg/s
+Msun    = 1.989e30  # kg
+zsun = 0.0134       # Asplund 2009
+zsunK20 = 0.014     # Kashino 2020
+ohsun = 8.69        # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
+
+parsec  = 3.085677581491367e+16 # m
+
 #--------------------------------------------
 #   Conversion factors:
 #--------------------------------------------
@@ -22,16 +31,8 @@ c    = 2.998e8             # Light velocity, m/s
 c_cm = 2.998e10            # Light velocity, cm/s
 h    = 6.62607015e-34      # Planck constant, Js 
 h_erg= h*J2erg             # Planck constant, erg/s
-kB   = 1.380649×10−23      # Boltzmann constant, J/K
+kB   = 1.380649e-23        # Boltzmann constant, J/K
 kB_Ms= kB*1e4*kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2*Msun/s^2/K ###here to be checked
-
-Lbolsun = 3.826e33              # erg/s
-Msun    = 1.989e30              # kg
-parsec  = 3.085677581491367e+16 # m
-
-zsun = 0.0134      # Asplund 2009
-zsunK20 = 0.014    # Kashino 2020
-ohsun = 8.69       # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
 
 re2hr_exp = 1.678
 
@@ -188,8 +189,9 @@ kagn_exp = 0.597
 temp_ionising = 10000  # K
 
 # Typical values from Osterbrock and Ferland, 2006 book:
-epsilon_NLR = 0.01
+nH_sfr =       100   # cm^-3
 nH_NLR =      1000   # cm^-3
+epsilon_NLR = 0.01
 radius_NLR = 0.001   # Mpc
 alphaB = {5000: 4.54e-13, 10000: 2.59e-13, 20000: 1.43e-13}  #cm^3/s
 
