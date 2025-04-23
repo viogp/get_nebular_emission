@@ -113,10 +113,9 @@ photmod_agn = 'feltre16'
 # Columns to read either the central or global metallicity
 # If several components are given, they will be added
 Zgas_NLR = [4,5]
-# Z_correct_grad = False (default)
-#    if the central gas metallicity has been provided
-# Z_correct_grad = True
-#    to correct a global metallicity with the gradients from Belfiore+2017
+# Z_correct_grad 
+#    False (default) if the central gas metallicity has been provided
+#    True to correct a global metallicity with the gradients from Belfiore+2017
 Z_correct_grad = False
 
 # Connecting global properties to AGN NLR characteristics:
