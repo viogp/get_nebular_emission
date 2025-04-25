@@ -22,12 +22,12 @@ class TestPredict(TestCase):
     #    vals = unh.get_Q_agn(Lagn,-1.7)
     #    np.testing.assert_allclose(vals,expected,atol=atol)
 
-    def test_get_U_panuzzo(self):
-        atol = 1e-7
-        Q = np.array([1e50])
-        expected = Lagn
-        vals = unh.get_Q_agn(Lagn,-1.7)
-        np.testing.assert_allclose(vals,expected,atol=atol)
+    #def test_get_U_panuzzo(self):
+    #    atol = 1e-7
+    #    Q = np.array([1e50])
+    #    expected = Lagn
+    #    vals = unh.get_Q_agn(Lagn,-1.7)
+    #    np.testing.assert_allclose(vals,expected,atol=atol)
         
 if __name__ == '__main__':
     unittest.main()

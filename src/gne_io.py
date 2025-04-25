@@ -256,9 +256,7 @@ def get_nheader(infile,firstchar=None):
 
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
-                    units_h0=False,outpath=None,
-                    model_nH_sfr=None, model_U_sfr=None,
-                    photmod_sfr=None,verbose=True):
+                    units_h0=False,outpath=None,verbose=True):
     """
     Generate the header of the file with the line data
 
@@ -286,12 +284,6 @@ def generate_header(infile,redshift,snap,
         True if input units with h
     outpath : string
         Path to output
-    model_nH_sfr : string
-        Model to go from galaxy properties to Hydrogen (or e) number density.
-    model_U_sfr : string
-        Model to go from galaxy properties to ionising parameter.
-    photmod_sfr : string
-        Photoionisation model to be used for look up tables.
     verbose : bool
         True for messages
  
@@ -714,19 +706,18 @@ def get_mgas_hr(infile,cols,r_type,selection,
     outm = np.copy(mgas)
     outr = np.copy(hr)
 
-
     # Check that rtype is adequate
     ncomp = np.shape(outr)[0]
     if (min(r_type)<0 or max(r_type)>2 or len(r_type)!=ncomp):
         print('WARNING! Input r_type should be 0, 1 or 2, per component.')
 
-    # Correct scalelenght for each component
+    # Assuming an exponential profile, get the scalelenght if not provided
     for i in range(ncomp):
         if r_type[i] == 1:
-            # Get the scalelenght from an effective or half-mass(light) radius
+            # Scalength from an effective or half-mass(light) radius
             outr[i,:] = hr[i,:]/c.re2hr_exp
         elif r_type[i] == 2:
-            # Transform  R/2./1.678
+            # Scalength from the radius of the galaxy, R/2./1.678
             outr[i,:] = hr[i,:]/2./c.re2hr_exp
 
     return outm, outr

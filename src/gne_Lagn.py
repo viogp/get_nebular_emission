@@ -1,5 +1,5 @@
 """
-.. Moduleauthor:: Julen Expósito-Márquez <expox7@gmail.com>
+.. moduleauthor:: Julen Expósito-Márquez <expox7@gmail.com>
 .. contributions:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
 import numpy as np
@@ -190,7 +190,7 @@ def epsilon_td(spin):
 
 def Rsch(Mbh):
     '''
-    Given the mass of the black hole, it calculates the Schwarzschild radius.
+    Schwarzschild radius (Mpc) given the mass of the black hole (Msun)
 
     Parameters
     ----------
@@ -201,8 +201,9 @@ def Rsch(Mbh):
     -------
     Rs : floats
     '''
-    
-    Rs = 2*c.G_Ms*Mbh/(c.c_cm**2) * 1e10 * 3.086e19 #km  ###here check units
+
+    Mbh_kg = Mbh*c.Msun
+    Rs = 2*c.G*Mbh_kg/(c.c**2)/(c.mega*c.parsec)  
     return Rs
 
 

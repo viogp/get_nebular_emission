@@ -226,6 +226,39 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
         
         return n
 
+
+def gamma_gas_func():
+    '''
+    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
+     
+    Returns
+    -------
+    gamma_gas : float
+    '''
+    gamma_gas = 10 #km s^-1, Lagos et al. 2011    
+    return gamma_gas
+
+
+def gamma_star_func(h_star,den_star):
+    '''
+    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
+    
+    Parameters
+    ----------
+    h_star : float
+     Stellar scaleheight.
+    den_star : float
+     Stellar surface density.
+     
+    Returns
+    -------
+    gamma_gas : float
+    '''
+    
+    gamma_star = np.sqrt(np.pi*c.G_Ms*h_star*den_star) # GALFORM  ###here check units
+    return gamma_star
+    
+
     
 def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     '''
@@ -253,58 +286,28 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     -------
     n : floats
     '''
-    
-    reff = c.halfmass_to_reff*r_hm 
+
+    ###here to be checked: R50 vs Reff???
+    reff = c.halfmass_to_reff*r_hm
     
     den_gas = surface_density(x,M,reff,profile=profile,verbose=verbose)
+
+    ###here Julen's version
+    h_star = c.reff_to_scale_high*reff
+    den_star = surface_density(x,Ms,h_star,profile=profile,verbose=verbose)
+    gamma_gas = gamma_gas_func()
+    gamma_star = gamma_star_func(h_star,den_star)
+    Pext = 0.5*np.pi*c.G_Ms*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(c.Mpc_to_cm**2)
+    ###here end
     
-    # h_star = c.reff_to_scale_high*reff
-    # den_star = surface_density(x,Ms,reff,profile=profile,verbose=verbose)
-    # gamma_gas = gamma_gas_func()
-    # gamma_star = gamma_star_func(h_star,den_star)
-    # Pext = 0.5*np.pi*c.G_Ms*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(c.Mpc_to_cm**2)
-    
-    Pext = 0.5*np.pi*c.G_Ms*den_gas**2 * 1e10/(c.Mpc_to_cm**2) ###here check units
-    
-    # P = nkT 
-    n = Pext/(T*c.kB_Ms) / c.Mpc_to_cm**3 # cm^-3  ###here check units
+    ###here New to be checked: do I need the star commponent?
+    #Pext = 0.5*np.pi*c.G_Ms*den_gas**2 * 1e10/(c.Mpc_to_cm**2) ###here check units
+    #
+    ## P = nkT 
+    #n = Pext/(T*c.kB_Ms) / c.Mpc_to_cm**3 # cm^-3  ###here check units
     
     return n
 
-
-def gamma_gas_func():
-    '''
-    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    gamma_gas = 10 #km s^-1, Lagos et al. 2011
-    
-    return gamma_gas
-
-
-def gamma_star_func(h_star,den_star):
-    '''
-    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
-    
-    Parameters
-    ----------
-    h_star : float
-     Stellar scaleheight.
-    den_star : float
-     Stellar surface density.
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    
-    gamma_star = np.sqrt(np.pi*c.G_Ms*h_star*den_star) # GALFORM  ###here check units
-    
-    return gamma_star
-    
 
 def mean_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     '''
@@ -525,7 +528,7 @@ def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None):
         ###here ref. missing
         Q[:,comp] = 10**(lssfr[:,comp] + lms[:,comp]) * c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn
         # lssfr[:,comp] = np.log10(Q[:,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[:,comp]
-                        
+    #Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016 (Julen's)               
     return Q
 
 
@@ -563,15 +566,15 @@ def get_Q_agn(Lagn,alpha,model_spec='feltre16',verbose=True):
         nu2 = c.c/(lambdas[1]*1e-6)
         nu1 = c.c/(lambdas[2]*1e-6)
         nuL = c.c/(lambdas[3]*1e-6)
-
+        
         int_S = np.power(nu1,3)/3. +\
             (np.power(nu2,0.5) - np.power(nu1,0.5))/0.5 +\
             (np.power(nu3,alpha+1) - np.power(nu2,alpha+1))/(alpha+1)
-
+        
         int_SL = (np.power(nu1,2) - np.power(nuL,2))/2. -\
             (np.power(nu2,-0.5) - np.power(nu1,-0.5))/0.5 +\
             (np.power(nu3,alpha) - np.power(nu2,alpha))/alpha
-
+        
         mask = Lagn > 0.
         Q[mask] = Lagn[mask]*Lagn[mask]*int_SL/(c.h_erg*int_S)
 

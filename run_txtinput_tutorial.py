@@ -6,7 +6,7 @@ The input of the code are global galactic properties.
 The intrinsic luminosities can be passed through an attenuation model 
 to also get the predicted attenuated luminosities.
 
-@authors: expox7, viogp
+@authors: viogp, expox7
 """
 
 import src.gne_const as const

@@ -25,14 +25,15 @@ J2erg     = 1e7
 #--------------------------------------------
 
 G    = 6.6743e-11          # Gravitational constant, Nm^2/kg^2=m^3/kg/s^2
-G_Ms = 4.3e-9              # Gravitational constant, km^2*Mpc/Ms/s^-2     ###here to be checked
 mp   = 1.67e-27            # Proton mass, kg
 c    = 2.998e8             # Light velocity, m/s
-c_cm = 2.998e10            # Light velocity, cm/s
 h    = 6.62607015e-34      # Planck constant, Js 
-h_erg= h*J2erg             # Planck constant, erg/s
 kB   = 1.380649e-23        # Boltzmann constant, J/K
-kB_Ms= kB*1e4*kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2*Msun/s^2/K ###here to be checked
+
+G_Ms = G*Msun/(kilo*kilo*parsec*mega) # 4.301e-9 km^2*Mpc/Msun/s^-2 
+c_cm = 2.998e10                       # Light velocity, cm/s
+h_erg= h*J2erg                        # Planck constant, erg s
+kB_Ms= kB/(Msun*(parsec*mega)**2)     # 7.29e-99 Mpc^2*Msun/s^2/K 
 
 re2hr_exp = 1.678
 
