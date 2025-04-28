@@ -15,11 +15,11 @@ from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False   # If True: use only the first 50 elements
-run_code = True
+run_code = False
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
-AGN = True
+AGN = False
 
 ###############################################################
 ### OUTPUT FILES: Default output path is output/

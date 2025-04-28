@@ -860,7 +860,6 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     header = f['header']
     redshift = header.attrs['redshift']
     photmod_sfr = header.attrs['photmod_sfr']
-    photmod_agn = header.attrs['photmod_NLR']
     mp = header.attrs['mp_Msun']
     lu = f['sfr_data/lu_sfr'][:]
     # Read AGN information if it exists
@@ -868,6 +867,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
         AGN = False
     else:
         AGN = True
+        photmod_agn = header.attrs['photmod_NLR']
         lua = f['agn_data/lu_agn'][:]
 
     # Get number of components
@@ -1322,8 +1322,13 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     lambda0 = header.attrs['lambda0']
     h0 = header.attrs['h0']
     photmod_sfr = header.attrs['photmod_sfr']
-    photmod_agn = header.attrs['photmod_NLR']
 
+    # Read AGN information if it exists
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        photmod_agn = header.attrs['photmod_NLR']
     f.close()
     
     # Set the cosmology from the simulation
@@ -1380,10 +1385,6 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
         SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
         
-        # Read AGN information if it exists
-        AGN = True
-        if 'agn_data' not in f.keys(): AGN = False
-
         if AGN:
             # Read AGN information from file
             lu_agn = f['agn_data/lu_agn'][:,0]
