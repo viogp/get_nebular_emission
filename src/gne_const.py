@@ -157,7 +157,7 @@ def line_att_coef_func(z=0):
 #    AGNs:
 #-------------------------------------------
 
-AGNinputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
+Lagn_inputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
 
 # Griffin et. al 2019:
 alpha_adaf = 0.1 # Viscosity parameter for ADAFs
@@ -184,10 +184,11 @@ kagn_exp = 0.597
 # Typical temperature of ionising regions (Hirschmann+2017):
 temp_ionising = 10000  # K
 
-# Typical values for AGN NLR (Osterbrock and Ferland, 2006 book)
+# Typical values from Osterbrock and Ferland, 2006 book:
 epsilon_NLR = 0.01
 nH_NLR =      1000   # cm^-3
 radius_NLR = 0.001   # Mpc
+alphaB = {5000: 4.54e-13, 10000: 2.59e-13, 20000: 1.43e-13}  #cm^3/s
 
 #------------------------------------------
 nH_bins = {

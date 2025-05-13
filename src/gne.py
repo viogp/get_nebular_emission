@@ -29,7 +29,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         AGN=False,model_nH_agn=None,model_spec_agn='feltre16',
         model_U_agn='panuzzo03',photmod_agn='feltre16',
         xid_agn=0.5,alpha_agn=-1.7,
-        agn_nH_params=None,AGNinputs='Lagn', Lagn_params=[None],
+        agn_nH_params=None,Lagn_inputs='Lagn', Lagn_params=[None],
         Zgas_NLR=None,Z_correct_grad=False,
         zeq=None,infile_z0=None,
         att=False,attmod='cardelli89',
@@ -96,7 +96,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Typical temperature of ionizing regions.
     AGN : boolean
      If True calculates emission from the narrow-line region of AGNs.
-    AGNinputs : string
+    Lagn_inputs : string
      Type of inputs for AGN's bolometric luminosity calculations.
     Lagn_params : list
      Inputs for AGN's bolometric luminosity calculations.
@@ -323,7 +323,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                              inputformat=inputformat,
                                              testing=testing,verbose=verbose)
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
-                        params=Lagn_params,AGNinputs=AGNinputs,
+                        params=Lagn_params,Lagn_inputs=Lagn_inputs,
                         h0=h0,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)

@@ -139,35 +139,35 @@ model_U_agn    = 'panuzzo03'
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
-# The way of obtaining Lagn is indicated in AGNinputs.
+# The way of obtaining Lagn is indicated in Lagn_inputs.
 # The calcultions require different black hole (BH) parameters.
-# AGNinputs='Lagn' if Lagn in input
+# Lagn_inputs='Lagn' if Lagn in input
 #            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
 #            Lagn_params=[Lagn, Mbh] 
-# AGNinputs='Mdot_hh' for a calculation from
+# Lagn_inputs='Mdot_hh' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
-# AGNinputs='Mdot_stb_hh' for a calculation from
+# Lagn_inputs='Mdot_stb_hh' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
-# AGNinputs='radio_mode' for a calculation from
+# Lagn_inputs='radio_mode' for a calculation from
 #            the mass of the hot gas, Mhot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
-# AGNinputs='quasar_mode' for a calculation from
+# Lagn_inputs='quasar_mode' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
 #            the circular velocity of the bulge, vbulge,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mbh,(Mspin)]
-# AGNinputs='complete' for a calculation from
+# Lagn_inputs='complete' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
 #            the circular velocity of the bulge, vbulge,
@@ -175,12 +175,12 @@ model_U_agn    = 'panuzzo03'
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-AGNinputs = 'Lagn'; Lagn_params=[17,21]
-#AGNinputs = 'Mdot_hh'; Lagn_params=[16,8,21]
-#AGNinputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
-#AGNinputs = 'radio_mode'; Lagn_params=[9,8]
-#AGNinputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
-#AGNinputs = 'complete'; Lagn_params=[25,12,14,9,21]
+Lagn_inputs = 'Lagn'; Lagn_params=[17,21]
+#Lagn_inputs = 'Mdot_hh'; Lagn_params=[16,8,21]
+#Lagn_inputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
+#Lagn_inputs = 'radio_mode'; Lagn_params=[9,8]
+#Lagn_inputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
+#Lagn_inputs = 'complete'; Lagn_params=[25,12,14,9,21]
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -276,7 +276,7 @@ for ivol in range(subvols):
             AGN=AGN,model_nH_agn=model_nH_agn,model_spec_agn=model_spec_agn,
             model_U_agn=model_U_agn,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
-            AGNinputs=AGNinputs, Lagn_params=Lagn_params,
+            Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,

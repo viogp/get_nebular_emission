@@ -10,26 +10,27 @@ import src.gne_const as c
 from src.gne_stats import perc_2arrays
 from src.gne_io import get_ncomponents
 
-def alpha_B(T):
+def get_alphaB(T):
+    
     '''
-    Given the temperature of the ionizing region, it interpolates from Osterbrock & Ferland 2006
-    tables the corresponding value of the hydrogen case B recombination coefficient.
+    Calculate the hydrogen case B recombination coefficient,
+    for a given temperature of the ionising region.
+    Interpolate the values saved in the constant file.
 
     Parameters
     ----------
-    T : floats
-     Typical temperature considered for nebular regions.
+    T : float
+        Nebular region's temperature (K).
      
     Returns
     -------
-    alphaB : floats
+    alphaB : float
     '''
+
+    temps = list(c.alphaB.keys())
+    vals = list(c.alphaB.values())
     
-    temps = [5000, 10000, 20000]
-    values = [4.54e-13, 2.59e-13, 1.43e-13] # Osterbrock & Ferland 2006, Second Edition, page 22
-    
-    alphaB = np.interp(T,temps,values)
-    
+    alphaB = np.interp(T,temps,vals)
     return alphaB
 
 
@@ -627,13 +628,13 @@ def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     #cte = np.zeros(np.shape(lssfr))
     #
     #for comp in range(len(Q[0])):
-    #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+    #    epsilon[:,comp][ind_comp[comp]] = ((1/get_alphaB(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
     #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
     #    
     #    if ng_ratio != None:
     #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
     #    
-    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #    cte[:,comp][ind_comp[comp]] = 3*(get_alphaB(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
     #
     #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
@@ -687,13 +688,13 @@ def get_UnH_orsi14(lzgas, q0, z0, gamma):
     #cte = np.zeros(np.shape(lssfr))
     #
     #for comp in range(len(Q[0])):
-    #    epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+    #    epsilon[:,comp][ind_comp[comp]] = ((1/get_alphaB(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
     #                          ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
     #    
     #    if ng_ratio != None:
     #        epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
     #    
-    #    cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+    #    cte[:,comp][ind_comp[comp]] = 3*(get_alphaB(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
     #
     #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
@@ -804,13 +805,13 @@ def get_U_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF
             lu, lnH, lzgas = get_UnH_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
-                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                epsilon[:,comp][ind_comp[comp]] = ((1/get_alphaB(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                                       ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
                 
                 if ng_ratio != None:
                     epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
-                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+                cte[:,comp][ind_comp[comp]] = 3*(get_alphaB(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
             
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
@@ -822,7 +823,7 @@ def get_U_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF
                 
                 epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
                 
-                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
+                cte[:,comp][ind_comp[comp]] = ( (3*(get_alphaB(T)**(2/3)) / (4*c.c_cm)) 
                  * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
 
             # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
@@ -907,13 +908,13 @@ def get_U_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
             lu, lnH, lzgas = get_UnH_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
             
             for comp in range(len(Q[0])):
-                epsilon[:,comp][ind_comp[comp]] = ((1/alpha_B(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
+                epsilon[:,comp][ind_comp[comp]] = ((1/get_alphaB(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                                       ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
                 
                 if ng_ratio != None:
                     epsilon[:,comp][ind_comp[comp]] = epsilon[:,comp][ind_comp[comp]] * ng_ratio
                 
-                cte[:,comp][ind_comp[comp]] = 3*(alpha_B(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
+                cte[:,comp][ind_comp[comp]] = 3*(get_alphaB(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
             
             lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
         
@@ -925,7 +926,7 @@ def get_U_panuzzo03(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF):
                 
                 epsilon[:,comp][ind_comp[comp]] = epsilon0[ind_comp[comp]]
                 
-                cte[:,comp][ind_comp[comp]] = ( (3*(alpha_B(T)**(2/3)) / (4*c.c_cm)) 
+                cte[:,comp][ind_comp[comp]] = ( (3*(get_alphaB(T)**(2/3)) / (4*c.c_cm)) 
                  * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
 
             # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
