@@ -15,11 +15,11 @@ from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False   # If True: use only the first 50 elements
-run_code = False
+run_code = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
-AGN = False
+AGN = True
 
 ###############################################################
 ### OUTPUT FILES: Default output path is output/
@@ -116,7 +116,7 @@ Zgas_NLR = [4,5]
 # Z_correct_grad 
 #    False (default) if the central gas metallicity has been provided
 #    True to correct a global metallicity with the gradients from Belfiore+2017
-Z_correct_grad = False
+Z_correct_grad = True
 
 # Connecting global properties to AGN NLR characteristics:
 # Model to calculate the ionising parameter, U

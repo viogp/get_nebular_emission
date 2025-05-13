@@ -262,13 +262,13 @@ def gamma_star_func(h_star,den_star):
     
 def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     '''
-    Given the mass of the desired component of the galaxy, the disk effective radius
-    and a distance to the center, it calculates the particle density at that distance.
+    Calculate the particle density at a distance x from the center,
+    given the mass of a galaxy (component) and the effective radius
 
     Parameters
     ----------
     x : floats
-      Distance to the center in which surface density is going to be calculated (Mpc).
+        Distance to the center in which surface density is going to be calculated (Mpc).
     Ms : floats
       Stellar mass of the galaxy (Msun).
     Mg : floats
