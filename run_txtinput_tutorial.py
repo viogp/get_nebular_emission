@@ -127,7 +127,7 @@ Z_correct_grad = False
 #     but otherwise this can be estimated from either the effective or
 #     half-mass radius ('reff') or simply the radius of the component ('r').
 #     If model_nH_agn=None, a constant filling factor will be assumed.
-model_nH_agn   = ['exponential','reff'] 
+
 # If une_age_nH is not None, agn_nH_params should specify
 # the location of the cold gas mass (Mg) and a radius.
 # agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
@@ -273,7 +273,7 @@ for ivol in range(subvols):
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,model_nH_agn=model_nH_agn,model_spec_agn=model_spec_agn,
+            AGN=AGN,model_spec_agn=model_spec_agn,
             model_U_agn=model_U_agn,photmod_agn=photmod_agn,
             agn_nH_params=agn_nH_params,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,

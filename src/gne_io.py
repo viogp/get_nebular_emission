@@ -1,5 +1,5 @@
 """
-.. Moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 .. contributions:: Olivia Vidal <ovive.pro@gmail.com>
 .. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
@@ -423,7 +423,7 @@ def get_ncomponents(cols):
     except:
         ncomp = 1
         print('STOP (gne_io.get_ncomponents): ',
-              'Columns should be given as m_sfr_z=[[0,1,2]]')
+              'Columns should be given as [[0,1,..][...]]')
         sys.exit()
         
     return ncomp
@@ -490,11 +490,6 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
                 ms = np.append(ms,[X[0]],axis=0)
                 ssfr = np.append(ssfr,[X[1]],axis=0)
                 zgas = np.append(zgas,[X[2]],axis=0)
-    else:
-        if verbose:
-            print('STOP (gne_io.read_sfrdata): ',
-                  'Input file has not been found.')
-        sys.exit()
 
     for i in range(ncomp):
         outms[i,:] = ms[i,cut]
@@ -502,6 +497,73 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
         outzgas[i,:] = zgas[i,cut]
 
     return outms, outssfr, outzgas        
+
+
+
+def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
+                   testing=False, verbose=True):    
+    '''
+    Read input Mgas and scalelenght for each component
+    
+    Parameters
+    ----------
+    infile : string
+       Name of the input file.
+    cols : list of either integers or strings
+       Inputs columns for text files or dataset name for hdf5 files.
+    selection : array of integers
+       List of indexes of the selected galaxies from the samples.
+    inputformat : string
+       Format of the input file.
+    testing : boolean
+       If True only run over few entries for testing purposes
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    mgas, hr : array of floats
+    '''
+
+    check_file(infile, verbose=verbose)
+
+    ncomp = get_ncomponents(cols)
+
+    # Initialise output
+    outm, outr = [np.zeros((ncomp,len(selection))) for i in range(2)]
+
+    # Read input data
+    if inputformat not in c.inputformats:
+        if verbose:
+            print('STOP (gne_io): Unrecognised input format.',
+                  'Possible input formats = {}'.format(c.inputformats))
+        sys.exit()
+    elif inputformat=='hdf5':
+        with h5py.File(infile, 'r') as hf:
+            for i in range(ncomp):
+                if i==0:
+                    mgas = np.array([hf[cols[i][0]][:]])
+                    hr = np.array([hf[cols[i][1]][:]])
+                else:
+                    mgas = np.append(mgas,[hf[cols[i][0]][:]],axis=0)
+                    hr = np.append(hr,[hf[cols[i][1]][:]],axis=0)
+    elif inputformat=='txt':
+        ih = get_nheader(infile)            
+        for i in range(ncomp):
+            X = np.loadtxt(infile,usecols=cols[i],skiprows=ih).T
+            
+            if i==0:
+                mgas = np.array([X[0]])
+                hr = np.array([X[1]])
+            else:
+                mgas = np.append(mgas,[X[0]],axis=0)
+                hr = np.append(hr,[X[1]],axis=0)
+
+    for i in range(ncomp):
+        outm[i,:] = mgas[i,selection]
+        outr[i,:] = hr[i,selection]
+
+    return outm, outr        
 
 
 
@@ -554,9 +616,8 @@ def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
                     units_h0=False,outpath=None,
                     model_nH_sfr=None, model_U_sfr=None,
-                    photmod_sfr=None,
-                    model_nH_agn=None, model_spec_agn=None,
-                    model_U_agn=None, photmod_agn=None,
+                    photmod_sfr=None, photmod_agn=None,
+                    model_spec_agn=None, model_U_agn=None, 
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -591,8 +652,6 @@ def generate_header(infile,redshift,snap,
         Model to go from galaxy properties to ionising parameter.
     photmod_sfr : string
         Photoionisation model to be used for look up tables.
-    model_nH_agn : list of 2 strings
-        Profile assumed for the gas around NLR AGN and type of radii.
     model_spec_agn : string
         Model for the spectral distribution for AGNs.
     model_U_sfr : string
@@ -635,7 +694,6 @@ def generate_header(infile,redshift,snap,
     if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
     if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
-    if model_nH_agn is not None: head.attrs[u'model_nH_agn'] = model_nH_agn[0]
     if model_spec_agn is not None: head.attrs[u'model_spec_agn'] = model_spec_agn
     if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
     if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn

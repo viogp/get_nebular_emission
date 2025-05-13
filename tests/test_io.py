@@ -2,6 +2,7 @@
 
 import shutil
 import unittest
+import numpy as np
 from numpy.testing import assert_allclose
 
 import src.gne_io as io
@@ -33,6 +34,23 @@ class TestStringMethods(unittest.TestCase):
         #                 'output/iz100/example.hdf5')
         #self.assertEqual(io.get_outnom('example.txt',39,ftype='plots'),
         #                 'output/iz39/plots/bpt_example.pdf')
+
+    def test_read_mgas_hr(self):
+        sel=[0,1]
+        incols = [[6, 11]]
+        expect_m = np.array([[6.69049152e+08,2.09834368e+08]])
+        expect_r = np.array([[3.02573503e-03,0.0017807]])
+        mm,rr = io.read_mgas_hr(txtfile,incols,sel,inputformat='txt')
+        assert_allclose(mm,expect_m,rtol=0.01)  
+        assert_allclose(rr,expect_r,rtol=0.01)  
+
+        incols = [['data/mgas_disk','data/rhm_disk'],
+                  ['data/mgas_bulge','data/rhm_bulge']]
+        expect_m = np.array([[6.69049152e+08,2.09834368e+08],[0,0]])
+        expect_r = np.array([[3.02573503e-03,0.0017807],[0,0]])
+        mm,rr = io.read_mgas_hr(hf5file,incols,sel,inputformat='hdf5')
+        assert_allclose(mm,expect_m,rtol=0.01)  
+        assert_allclose(rr,expect_r,rtol=0.01)  
 
         
     def test_get_data_agnnH(self):

@@ -1548,7 +1548,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
 
 
 def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
-                   xid_agn=0.5,alpha_agn=-1.7,verbose=True):
+                   xid_NLR=0.5,alpha_NLR=-1.7,verbose=True):
     '''
     Make plots for photoionisation tables
     
@@ -1563,7 +1563,7 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
                                      co=co_sfr,imf_cut=imf_cut_sfr,
                                      verbose=verbose)
     grids_agn = plot_model_bpt_grids(photmod='feltre16',
-                                     xid=xid_agn,alpha=alpha_agn,
+                                     xid=xid_NLR,alpha=alpha_NLR,
                                      verbose=verbose)
     
     return
