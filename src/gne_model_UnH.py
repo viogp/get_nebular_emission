@@ -1003,9 +1003,9 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
     #    # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
     #    # ng_ratio = n_ratio(ng,ng_z0)
     #    if redshift==0.8:
-    #        ng_ratio = c.med_to_low
+    #        ng_ratio = 1.74
     #    elif redshift==1.5:
-    #        ng_ratio = c.high_to_low
+    #        ng_ratio = 1.58
     #    else:
     #        ng_ratio = 1.
                         

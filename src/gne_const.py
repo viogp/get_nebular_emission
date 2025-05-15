@@ -18,8 +18,6 @@ Lbolsun = 3.826e33 # erg/s
 Msun    = 1.989e30 # kg
 parsec  = 3.085677581491367e+16 # m
 
-re2rs_exp = 1.678
-
 #--------------------------------------------
 #   Conversion factors:
 #--------------------------------------------
@@ -100,11 +98,11 @@ phot_to_sfr_kenn = 9.85e52 # phot/s
 # Reescaled to Kennicut, it gives our number.
 
 #-------------------------------------------
-
-# Mean ratio between global cold gas density at different redshift for GP20
-
-med_to_low = 1.74 # 0.8 to 0
-high_to_low = 1.58 # 1.5 to 0
+#    Scalelength:
+#-------------------------------------------
+re2hr    = 1/1.68 # Cole+2000, Leroy+2021
+r502re   = 1.     # Lima Neto+1999, Wolf+2010, Huang+2017
+rvir2r50 = 0.03   # Huang+2017, Yang+2025
 
 #-------------------------------------------
 #    Atenuation:

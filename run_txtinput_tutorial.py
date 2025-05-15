@@ -120,22 +120,21 @@ Zgas_NLR = [4,5]
 Z_correct_grad = False
 
 # Connecting global properties to AGN NLR characteristics:
-# nH: number density calculated assuming a profile for the gas ('exponential')
-#     and given a radius for the component.
-#     This is used to calculate the filling factor, using agn_nH_params.
-#     Ideally the scale radius of the bulge and/or disk ('rscale') is given,
-#     but otherwise this can be estimated from either the effective or
-#     half-mass radius ('reff') or simply the radius of the component ('r').
-#     If model_nH_agn=None, a constant filling factor will be assumed.
+# Model to calculate the ionising parameter, U
+model_U_agn    = 'panuzzo03'
 
-# If une_age_nH is not None, agn_nH_params should specify
-# the location of the cold gas mass (Mg) and a radius.
-# agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
+# Panuzzo's model requires the calculation of the filling factor
+# epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
+# n_NLR, T_NLR and r_NLR are taken as constants.
+# mgas_r is a list of lists with either the column number
+# for each parameters or the name of the HDF5 variable.
+# Each list can correspond to a different component:
+# mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
+
 agn_nH_params = [6,11,19,12]
+
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'
-# U: model to calculate the ionising parameter
-model_U_agn    = 'panuzzo03'
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
@@ -273,11 +272,12 @@ for ivol in range(subvols):
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,model_spec_agn=model_spec_agn,
-            model_U_agn=model_U_agn,photmod_agn=photmod_agn,
-            agn_nH_params=agn_nH_params,
-            Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
+            AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
+            model_U_agn=model_U_agn,            
+            agn_nH_params=agn_nH_params,
+            model_spec_agn=model_spec_agn,
+            Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,

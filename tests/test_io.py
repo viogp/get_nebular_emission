@@ -6,6 +6,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import src.gne_io as io
+import src.gne_const as c
 
 txtfile = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.txt'
 hf5file = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.hdf5'
@@ -52,6 +53,52 @@ class TestStringMethods(unittest.TestCase):
         assert_allclose(mm,expect_m,rtol=0.01)  
         assert_allclose(rr,expect_r,rtol=0.01)  
 
+        
+    def test_get_mgas_hr(self):
+        sel=[0]
+        incols = [['data/mgas_disk','data/rhm_disk']]
+        expect_m = np.array([[6.69049152e+08]])
+        expect_r = np.array([[3.02573503e-03]])
+        mm,rr = io.get_mgas_hr(hf5file,incols,[4],sel)
+        assert_allclose(mm,expect_m,rtol=0.01)
+        assert_allclose(rr,expect_r,rtol=0.01)
+
+        sel=[0,1,3]
+        rtype=[0,0]
+        incols = [['data/mgas_disk','data/rhm_disk'],
+                  ['data/mgas_bulge','data/rhm_bulge']]
+        expect_m = np.array([[6.69049152e+08,2.09834368e+08,3.23166387e+09],
+                             [0,0,0]])
+        expect_r = np.array([[3.02573503e-03,0.0017807,0.00372818],
+                             [0,0,0.00125381]])
+        mm,rr = io.get_mgas_hr(hf5file,incols,rtype,sel)
+        assert_allclose(mm,expect_m,rtol=0.01)  
+        assert_allclose(rr,expect_r,rtol=0.01)  
+        
+        mm,rr = io.get_mgas_hr(hf5file,incols,[1,2],sel)
+        assert_allclose(mm,expect_m,rtol=0.01)
+        exp = np.copy(expect_r)
+        exp[0,:] = c.re2hr*expect_r[0,:]
+        exp[1,:] = c.re2hr*c.r502re*expect_r[1,:]
+        assert_allclose(rr,exp,rtol=0.01)  
+        
+        h=2.
+        mm,rr = io.get_mgas_hr(hf5file,incols,[0,3],sel,
+                               h0=h,units_h0=True)
+        assert_allclose(mm,expect_m/h,rtol=0.01)
+        exp = np.copy(expect_r)/h
+        exp[1,:] = c.re2hr*c.r502re*c.rvir2r50*exp[1,:]
+        assert_allclose(rr,exp,rtol=0.01)  
+
+        re2hr=8.; r502re=300.
+        mm,rr = io.get_mgas_hr(hf5file,incols,[1,2],sel,
+                               re2hr=re2hr,r502re=r502re)
+        assert_allclose(mm,expect_m,rtol=0.01)
+        exp = np.copy(expect_r)
+        exp[0,:] = re2hr*expect_r[0,:]
+        exp[1,:] = re2hr*r502re*expect_r[1,:]
+        assert_allclose(rr,exp,rtol=0.01)  
+        
         
     def test_get_data_agnnH(self):
         incols = [6, 11]
