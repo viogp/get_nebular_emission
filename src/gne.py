@@ -32,7 +32,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         agn_nH_params=None,
         model_spec_agn='feltre16',
         alpha_NLR=-1.7,xid_NLR=0.5,
-        nH_NLR=c.nH_NLR,t_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
+        nH_NLR=c.nH_NLR,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
         zeq=None,infile_z0=None,
         att=False,attmod='cardelli89',
@@ -296,6 +296,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     #----------------NLR AGN calculation------------------------
     if AGN:
+        if verbose: print('AGN:')
         # Get the central metallicity
         if Z_correct_grad:
             # Get total mass for Z corrections 
@@ -335,7 +336,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         model_nH_agn=model_nH_agn,
                         model_spec_agn=model_spec_agn,
                         model_U_agn=model_U_agn,verbose=verbose)
-        if verbose: print('AGN:\n',' U and nH calculated.')
+        if verbose: print(' U calculated.')
         
         # Calculate emission lines in adequate unites 
         nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,

@@ -49,7 +49,7 @@ class TestStringMethods(unittest.TestCase):
                   ['data/mgas_bulge','data/rhm_bulge']]
         expect_m = np.array([[6.69049152e+08,2.09834368e+08],[0,0]])
         expect_r = np.array([[3.02573503e-03,0.0017807],[0,0]])
-        mm,rr = io.read_mgas_hr(hf5file,incols,sel,inputformat='hdf5')
+        mm,rr = io.read_mgas_hr(hf5file,incols,sel)
         assert_allclose(mm,expect_m,rtol=0.01)  
         assert_allclose(rr,expect_r,rtol=0.01)  
 

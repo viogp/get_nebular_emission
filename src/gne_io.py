@@ -501,7 +501,7 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
 
 
 def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
-                   testing=False, verbose=True):    
+                 testing=False, verbose=True):    
     '''
     Read input Mgas and scalelenght for each component
     
@@ -624,7 +624,7 @@ def get_mgas_hr(infile,cols,r_type,selection,
     # Check that rtype is adequate
     ncomp = np.shape(outr)[0]
     if (min(r_type)<0 or max(r_type)>3 or len(r_type)!=ncomp):
-        print('WARNING! Input r_type should be 0, 1 or 2, per component.')
+        print('WARNING! Input r_type should be 0, 1, 2 or 3, per component.')
 
     # Correct scalelenght for each component
     for i in range(ncomp):
@@ -690,10 +690,10 @@ def get_data_agnnH(infile,rtype,cols,selection=None,
 
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
-                    units_h0=False,outpath=None,
-                    model_nH_sfr=None, model_U_sfr=None,
-                    photmod_sfr=None, photmod_agn=None,
-                    model_spec_agn=None, model_U_agn=None, 
+                    units_h0=False,AGN=False,outpath=None,
+                    model_nH_sfr=None,model_U_sfr=None,
+                    photmod_sfr=None,photmod_agn=None,
+                    model_spec_agn=None,model_U_agn=None,
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -719,7 +719,9 @@ def generate_header(infile,redshift,snap,
     mp : float
         Simulation resolution, particle mass
     units_h0: boolean
-        True if input units with h    
+        True if input units with h
+    AGN : boolean
+        True if the calculation from AGN NLR is performed
     outpath : string
         Path to output
     model_nH_sfr : string
@@ -730,15 +732,21 @@ def generate_header(infile,redshift,snap,
         Photoionisation model to be used for look up tables.
     model_spec_agn : string
         Model for the spectral distribution for AGNs.
-    model_U_sfr : string
+    model_U_agn : string
         Model to go from galaxy properties to AGN ionising parameter.
     photmod_agn : string
         Photoionisation model to be used for look up tables.
+    nH_NLR : float
+        Value assumed for the electron number density in AGN NLR.
+    T_NLR : float
+        Value assumed for the AGN NLR temperature.
+    r_NLR : float
+        Value assumed for the radius of the AGN NLR.
     attmod : string
         Attenuation model.
     verbose : bool
         True for messages
- 
+
     Returns
     -----
     filenom : string
