@@ -161,7 +161,7 @@ def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=Fals
     if dirf is None:
         dirf = 'output/iz' + str(snap) + '/'
         if ftype == 'plots': dirf = dirf + ftype + '/'
-        create_dir(dirf)    
+    create_dir(dirf)    
 
     if ftype == 'line_data':
         outfile = dirf + nom + '.hdf5'
@@ -694,6 +694,7 @@ def generate_header(infile,redshift,snap,
                     model_nH_sfr=None,model_U_sfr=None,
                     photmod_sfr=None,photmod_agn=None,
                     model_spec_agn=None,model_U_agn=None,
+                    nH_NLR=None,T_NLR=None,r_NLR=None,
                     attmod=None,verbose=True):
     """
     Generate the header of the file with the line data
@@ -760,7 +761,7 @@ def generate_header(infile,redshift,snap,
     if units_h0:
         vol = vol/(h0*h0*h0)
         mp = mp/h0
-    
+
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
 
@@ -778,12 +779,19 @@ def generate_header(infile,redshift,snap,
     if model_nH_sfr is not None: head.attrs[u'model_nH_sfr'] = model_nH_sfr
     if model_U_sfr is not None: head.attrs[u'model_U_sfr'] = model_U_sfr    
     if photmod_sfr is not None: head.attrs[u'photmod_sfr'] = photmod_sfr
-    if model_spec_agn is not None: head.attrs[u'model_spec_agn'] = model_spec_agn
-    if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
-    if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
+
+    if AGN:
+        if model_U_agn is not None: head.attrs[u'model_U_agn'] = model_U_agn
+        if photmod_agn is not None: head.attrs[u'photmod_agn'] = photmod_agn
+        if model_spec_agn is not None:
+            head.attrs[u'model_spec_agn'] = model_spec_agn
+        if nH_NLR is not None: head.attrs[u'nH_NLR_cm3'] = nH_NLR
+        if T_NLR is not None: head.attrs[u'T_NLR_K'] = T_NLR
+        if r_NLR is not None: head.attrs[u'r_NLR_Mpc'] = r_NLR
+
     if attmod is not None: head.attrs[u'attmod'] = attmod
     hf.close()
-    
+
     return filenom
     
 

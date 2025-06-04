@@ -860,7 +860,6 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     header = f['header']
     redshift = header.attrs['redshift']
     photmod_sfr = header.attrs['photmod_sfr']
-    photmod_agn = header.attrs['photmod_agn']
     mp = header.attrs['mp_Msun']
     lu = f['sfr_data/lu_sfr'][:]
     # Read AGN information if it exists
@@ -868,6 +867,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
         AGN = False
     else:
         AGN = True
+        photmod_agn = header.attrs['photmod_agn']
         lua = f['agn_data/lu_agn'][:]
 
     # Get number of components
@@ -938,9 +938,9 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     # Read data in each subvolume
     for ivol in range(subvols):
         filenom = root+str(ivol)+'.hdf5' #; print(filenom); exit()
-        f = h5py.File(filenom, 'r')
+        f = h5py.File(filenom, 'r'); header = f['header']
     
-        # Read SF information from file
+        # Read information from file
         lms1 = f['data/lms'][:]
         lzsfr1 = f['sfr_data/lz_sfr'][:]
         lusfr1 = f['sfr_data/lu_sfr'][:]
@@ -950,6 +950,11 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
             lzagn1 = f['agn_data/lz_agn'][:]
             luagn1 = f['agn_data/lu_agn'][:]
             lnagn1 = f['agn_data/lnH_agn'][:]
+            #if 'epsilon_NLR' in header.attrs:
+            #    epsilon_is_constant = True
+            #    epsilon1 = header.attrs['epsilon_NLR']
+            #else:
+            #    epsilon1 = f['agn_data/epsilon_NLR'][:]            
         f.close()
     
         if ivol == 0:
@@ -1311,8 +1316,13 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     lambda0 = header.attrs['lambda0']
     h0 = header.attrs['h0']
     photmod_sfr = header.attrs['photmod_sfr']
-    photmod_agn = header.attrs['photmod_agn']
-
+    
+    # Read AGN information if it exists
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        photmod_agn = header.attrs['photmod_agn']
     f.close()
     
     # Set the cosmology from the simulation
@@ -1370,8 +1380,8 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
         
         # Read AGN information if it exists
-        AGN = True
-        if 'agn_data' not in f.keys(): AGN = False
+        #AGN = True
+        #if 'agn_data' not in f.keys(): AGN = False
 
         if AGN:
             # Read AGN information from file

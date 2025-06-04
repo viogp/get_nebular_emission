@@ -172,13 +172,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     # Generate header in the output file from input
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
-                                 units_h0,outpath=outpath,
+                                 units_h0,AGN,
+                                 outpath=outpath,
                                  model_nH_sfr=model_nH_sfr,
                                  model_U_sfr=model_U_sfr,
                                  photmod_sfr=photmod_sfr,
                                  model_spec_agn=model_spec_agn,
                                  model_U_agn=model_U_agn,
                                  photmod_agn=photmod_agn,
+                                 nH_NLR=nH_NLR,T_NLR=T_NLR,r_NLR=r_NLR,
                                  attmod=attmod,verbose=verbose)
 
     #----------------HII region calculation------------------------
