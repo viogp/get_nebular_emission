@@ -7,8 +7,9 @@ import sys
 import numpy as np
 import h5py
 import src.gne_const as c
-from src.gne_stats import perc_2arrays
-from src.gne_io import get_ncomponents
+import src.gne_io as io
+import src.gne_stats as st
+
 
 def get_alphaB(T):
     
@@ -226,6 +227,41 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
         
         return n
 
+
+def gamma_gas_func():
+    '''
+    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
+     
+    Returns
+    -------
+    gamma_gas : float
+    '''
+    gamma_gas = 10 #km s^-1, Lagos et al. 2011
+    
+    return gamma_gas
+
+
+def gamma_star_func(h_star,den_star):
+    '''
+    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
+    
+    Parameters
+    ----------
+    h_star : float
+     Stellar scaleheight.
+    den_star : float
+     Stellar surface density.
+     
+    Returns
+    -------
+    gamma_gas : float
+    '''
+    
+    gamma_star = np.sqrt(np.pi*c.G*h_star*den_star) # GALFORM
+    
+    return gamma_star
+    
+
     
 def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     '''
@@ -271,40 +307,6 @@ def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     
     return n
 
-
-def gamma_gas_func():
-    '''
-    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    gamma_gas = 10 #km s^-1, Lagos et al. 2011
-    
-    return gamma_gas
-
-
-def gamma_star_func(h_star,den_star):
-    '''
-    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
-    
-    Parameters
-    ----------
-    h_star : float
-     Stellar scaleheight.
-    den_star : float
-     Stellar surface density.
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    
-    gamma_star = np.sqrt(np.pi*c.G*h_star*den_star) # GALFORM
-    
-    return gamma_star
-    
 
 def mean_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     '''
@@ -591,7 +593,7 @@ def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     lms, lssfr, lu, lnH, loh4 = [np.full(np.shape(lms1), c.notnum) for i in range(5)]
 
     # In Kashino+2020 a Kroupa IMF is assumed
-    ncomp = get_ncomponents(lms1.T)
+    ncomp = io.get_ncomponents(lms1.T)
     for i in range(ncomp):
         iimf = IMF[i]
         

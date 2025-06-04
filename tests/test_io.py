@@ -3,20 +3,26 @@
 import shutil
 import unittest
 import numpy as np
+import h5py
 from numpy.testing import assert_allclose
 
 import src.gne_io as io
 import src.gne_const as c
 
-txtfile = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.txt'
-hf5file = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol0.hdf5'
+opath = 'data/example_data/iz61/'
+root = 'GP20_31p25kpc_z0_example_vol0'
+txtfile = opath+root+'.txt'
+hf5file = opath+root+'.hdf5'
 
 class TestStringMethods(unittest.TestCase):
-    
+
     def test_outroot(self):
-        expath = 'output/a'
-        self.assertEqual(io.get_outroot('a/example.txt',100),
-                         'output/iz100/example')
+        expath = 'output/iz100/'
+        self.assertEqual(io.get_outroot('test/example.txt',100),
+                         expath+'example')
+        shutil.rmtree(expath)
+        
+        expath = 'output/test'
         self.assertEqual(io.get_outroot('example.txt',32,outpath=expath),
                          expath+'/iz32/example')
         shutil.rmtree(expath)
@@ -25,16 +31,46 @@ class TestStringMethods(unittest.TestCase):
         expath = 'plots/'
         self.assertEqual(io.get_plotpath('root'),expath)
         shutil.rmtree(expath)
-        expath = 'output/a/plots/'
-        self.assertEqual(io.get_plotpath('output/a/root'),expath)
-        self.assertEqual(io.get_plotpath('output/a/'),expath)
+        expath = 'output/test/'
+        self.assertEqual(io.get_plotpath('output/test/root'),expath+'plots/')
+        self.assertEqual(io.get_plotpath('output/test/'),expath+'plots/')
+        shutil.rmtree(expath)
+
+        
+    def test_outnom(self):
+        snap = 1
+        expath = 'output/iz'+str(snap)+'/'
+        self.assertEqual(io.get_outnom(hf5file,snap),expath+root+'.hdf5')
+        ft = 'plots'; pt='test'
+        self.assertEqual(io.get_outnom(hf5file,snap,ftype=ft,ptype=pt),
+                         expath+ft+'/'+pt+'_'+root+'.pdf')
         shutil.rmtree(expath)
         
-    #def test_outnom(self):
-        #self.assertEqual(io.get_outnom('a/example.txt',100),
-        #                 'output/iz100/example.hdf5')
-        #self.assertEqual(io.get_outnom('example.txt',39,ftype='plots'),
-        #                 'output/iz39/plots/bpt_example.pdf')
+        expath = 'output/test/'
+        self.assertEqual(io.get_outnom(hf5file,snap,dirf=expath),
+                         expath+root+'.hdf5')
+        shutil.rmtree(expath)
+        
+
+    def test_hdf5_headers(self):
+        expath = 'output/test/'
+        h0 = 0.7
+        filenom = io.generate_header(hf5file,0,100,h0,0.4,0.3,0.6,1,1e8,
+                                  outpath=expath,verbose=True)
+        self.assertEqual(filenom,expath+root+'.hdf5')
+        
+        names = ['a','b',None]
+        values = [1,'b',3]
+        num = io.add2header(filenom,names,values)
+
+        hf = h5py.File(filenom, 'r')
+        self.assertEqual(hf['header'].attrs['h0'], h0)
+        self.assertEqual(hf['header'].attrs[names[0]], values[0])
+        self.assertEqual(hf['header'].attrs[names[1]], values[1])
+        self.assertEqual(num,2)
+        hf.close()        
+        shutil.rmtree(expath)
+
 
     def test_read_mgas_hr(self):
         sel=[0,1]

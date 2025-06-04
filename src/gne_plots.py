@@ -867,7 +867,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
         AGN = False
     else:
         AGN = True
-        photmod_agn = header.attrs['photmod_agn']
+        photmod_agn = header.attrs['photmod_NLR']
         lua = f['agn_data/lu_agn'][:]
 
     # Get number of components
@@ -1322,7 +1322,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         AGN = False
     else:
         AGN = True
-        photmod_agn = header.attrs['photmod_agn']
+        photmod_agn = header.attrs['photmod_NLR']
     f.close()
     
     # Set the cosmology from the simulation

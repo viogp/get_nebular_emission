@@ -20,7 +20,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
         model_nH_sfr='kashino19',model_U_sfr='kashino19',
-        photmod_sfr='gutkin16',
+        photmod_sfr='gutkin16',nH_sfr=c.nH_sfr,
         q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
         T=10000,xid_sfr=0.3,co_sfr=1,
         m_sfr_z=[None],mtot2mdisk=True,
@@ -91,24 +91,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
     gamma : float
      Ionization parameter constant to calibrate Orsi 2014 model for nebular regions. q0(z/z0)^-gamma
-    T : float
-     Typical temperature of ionizing regions.
-    AGN : boolean
-     If True calculates emission from the narrow-line region of AGNs.
-    Lagn_inputs : string
-     Type of inputs for AGN's bolometric luminosity calculations.
-    Lagn_params : list
-     Inputs for AGN's bolometric luminosity calculations.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    Zgas_NLR : list of integer (text file) or strings (hdf5 file)
-        Location of the central metallicity in input files
-    Z_correct_gradrection : boolean
         If True, corrects Zgas_NLR using gradients from the literature
-    agn_nH_params : list
-     Inputs for the calculation of the volume-filling factor.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
     extra_params : list
      Parameters from the input files which will be saved in the output file.
      - For text or csv files: list of integers with column position.
@@ -117,22 +100,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Names of the datasets in the output files for the extra parameters.
     extra_params_labels : strings
      Description labels of the datasets in the output files for the extra parameters.
-    attmod : string
-     Attenuation model.
     model_nH_sfr : string
         Model to go from galaxy properties to Hydrogen (or e) number density.
     model_U_sfr : string
         Model to go from galaxy properties to ionising parameter.
-    model_nH_agn : list of 2 strings
-        Profile assumed for the gas around NLR AGN and provided radii.
     model_spec_agn : string
         Model for the spectral distribution for AGNs.
     model_U_sfr : string
         Model to go from galaxy properties to AGN ionising parameter.
     photmod_sfr : string
-     Photoionisation model to be used for look up tables.
-    photmod_agn : string
-     Photoionisation model to be used for look up tables.
+        Photoionisation model to be used for look up tables.
     inoh : boolean
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas
     LC2sfr : boolean
@@ -143,14 +120,38 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     xid_NLR : float
      Dust-to-metal ratio for the AGN photoionisation model.
-    alpha_NLR : float
-     Alpha value for the AGN photoionisation model.
+    alpha_NLR : array of floats
+        Spectral index assumed for the AGN.
     xid_sfr : float
      Dust-to-metal ratio for the SF photoionisation model.
     co_sfr : float
      C/O ratio for the SF photoionisation model.
     imf_cut_sfr : float
      Solar mass high limit for the IMF for the SF photoionisation model.
+    AGN : boolean
+       If True calculates emission from the narrow-line region of AGNs.
+    Lagn_inputs : string
+       Type of inputs for AGN's bolometric luminosity calculations.
+    Lagn_params : list of integers (text files) or strings (hdf5 files)
+       Parameters to obtain the bolometric luminosity.
+    Zgas_NLR : list of integer (text file) or strings (hdf5 file)
+        Location of the central metallicity in input files
+    Z_correct_gradrection : boolean
+        True to modify the metallicity by literature gradients
+    model_spec_agn : string
+        Model for the spectral distribution for AGNs.
+    model_U_agn : string
+        Model to go from galaxy properties to AGN ionising parameter.
+    photmod_agn : string
+        Photoionisation model to be used for look up tables.
+    nH_NLR : float
+        Value assumed for the electron number density in AGN NLR.
+    T_NLR : float
+        Value assumed for the AGN NLR temperature.
+    r_NLR : float
+        Value assumed for the radius of the AGN NLR.
+    attmod : string
+        Attenuation model.
     units_h0: boolean
         True if input units with h
     units_Gyr: boolean
@@ -172,18 +173,20 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     # Generate header in the output file from input
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
-                                 units_h0,AGN,
-                                 outpath=outpath,
-                                 model_nH_sfr=model_nH_sfr,
-                                 model_U_sfr=model_U_sfr,
-                                 photmod_sfr=photmod_sfr,
-                                 model_spec_agn=model_spec_agn,
-                                 model_U_agn=model_U_agn,
-                                 photmod_agn=photmod_agn,
-                                 nH_NLR=nH_NLR,T_NLR=T_NLR,r_NLR=r_NLR,
-                                 attmod=attmod,verbose=verbose)
+                                 units_h0,outpath=outpath,
+                                 verbose=verbose)
 
     #----------------HII region calculation------------------------
+    if verbose: print('SF:')        
+    # Add relevant constants to header
+    names = ['model_nH_sfr','model_U_sfr','photmod_sfr',
+             'nH_sfr_cm3','xid_sfr','co_sfr','imf_cut_sfr',
+             'q0_orsi','Z0_orsi','gamma_orsi']
+    values = [model_nH_sfr,model_U_sfr,photmod_sfr,
+              nH_sfr,xid_sfr,co_sfr,imf_cut_sfr,
+              q0,z0,gamma]
+    nattrs = io.add2header(outfile,names,values,verbose=verbose)
+    
     # Number of components
     ncomp = io.get_ncomponents(m_sfr_z)
     
@@ -225,9 +228,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                   epsilon_param_z0=epsilon_param_z0,
                                   IMF=IMF,model_nH_sfr=model_nH_sfr,
                                   model_U_sfr=model_U_sfr,verbose=verbose)
-    if verbose:
-        print('SF:')
-        print(' U and nH calculated.')
+
+    if verbose: print(' U and nH calculated.') 
             
     lu_o_sfr = np.copy(lu_sfr)
     lnH_o_sfr = np.copy(lnH_sfr)
@@ -248,7 +250,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     if verbose:
         print(' Emission lines calculated.')
-            
+
     if att:
         att_param = io.read_data(infile,cut,
                                  inputformat=inputformat,
@@ -299,6 +301,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     #----------------NLR AGN calculation------------------------
     if AGN:
         if verbose: print('AGN:')
+        # Add relevant constants to header
+        names = ['model_spec_NLR','model_U_NLR','photmod_NLR',
+                  'nH_NLR_cm3','T_NLR_K','r_NLR_Mpc','alpha_NLR','xid_NLR']
+        values = [model_spec_agn,model_U_agn,photmod_agn,
+                  nH_NLR,T_NLR,r_NLR,alpha_NLR,xid_NLR]
+        nattrs = io.add2header(outfile,names,values)
+
         # Get the central metallicity
         if Z_correct_grad:
             # Get total mass for Z corrections 
@@ -351,6 +360,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         # Calculate attenuation if required
         if att:
+            # Add relevant constants to header
+            nattrs = io.add2header(outfile,['attmod'],[attmod])
+            
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
                                                         att_ratio_lines=att_ratio_lines,
                                                         redshift=redshift,h0=h0,
