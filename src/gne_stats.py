@@ -110,6 +110,13 @@ def perc_2arrays(xedges, xarray, yarray, val, weights=None, nmin=None):
     return apercentile
 
 
+def ensure_2d(arr, axis=0):
+    if len(arr.shape) == 1:
+        # If 1D array, expand along the specified axis
+        return np.expand_dims(arr, axis=axis)
+    return arr
+
+
 def av_2arrays(xbins, xarray, yarray, weights, nmin):
     """ Returns average of yarray over xbins"""
     xlen = len(xbins) - 1

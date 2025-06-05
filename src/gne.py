@@ -347,9 +347,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         model_spec_agn=model_spec_agn,
                         model_U_agn=model_U_agn,verbose=verbose)
         if verbose: print(' U calculated.')
-        
-        # Calculate emission lines in adequate unites
-        nebline_agn = get_lines(lu_agn.T,lzgas_agn.T,outfile,lnH=lnH_agn.T,
+
+        # Calculate emission lines in adequate units
+        nebline_agn = get_lines(lu_agn.T,lzgas_agn.T,outfile,#lnH=lnH_agn.T,
                                 photmod=photmod_agn,origin='NLR',
                                 verbose=verbose)
         if (photmod_agn == 'feltre16'):
