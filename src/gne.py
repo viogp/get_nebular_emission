@@ -236,9 +236,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     lzgas_o_sfr = np.copy(lzgas)
 
     # Obtain spectral emission lines from HII regions
-    nebline_sfr = get_lines(lu_sfr.T,lnH_sfr.T,lzgas.T,photmod=photmod_sfr,
-                            xid_phot=xid_sfr, co_phot=co_sfr,
-                            imf_cut_phot=imf_cut_sfr,verbose=verbose)
+    nebline_sfr = get_lines(lu_sfr.T,lzgas.T,outfile,lnH=lnH_sfr.T,
+                            photmod=photmod_sfr,origin='sfr',verbose=verbose)
 
     # Change units into erg/s 
     if (photmod_sfr == 'gutkin16'):
@@ -349,9 +348,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         model_U_agn=model_U_agn,verbose=verbose)
         if verbose: print(' U calculated.')
         
-        # Calculate emission lines in adequate unites 
-        nebline_agn = get_lines(lu_agn.T,lnH_agn.T,lzgas_agn.T,photmod=photmod_agn,
-                                xid_phot=xid_NLR,alpha_phot=alpha_NLR,
+        # Calculate emission lines in adequate unites
+        nebline_agn = get_lines(lu_agn.T,lzgas_agn.T,outfile,lnH=lnH_agn.T,
+                                photmod=photmod_agn,origin='NLR',
                                 verbose=verbose)
         if (photmod_agn == 'feltre16'):
             # Units: erg/s for a central Lacc=10^45 erg/s
