@@ -27,7 +27,6 @@ G    = 6.6743e-11          # Gravitational constant, Nm^2/kg^2=m^3/kg/s^2
 mp   = 1.67e-27            # Proton mass, kg
 c    = 2.998e8             # Light velocity, m/s
 h    = 6.62607015e-34      # Planck constant, Js
-planck = 4.135e-15*1.6e-12 # Planck constant, erg*s ###here to be REMOVED
 kB   = 1.380649e-23        # Boltzmann constant, J/K
 
 G_Ms = G*Msun/(kilo*kilo*parsec*mega) # 4.301e-9 km^2*Mpc/Msun/s^-2 

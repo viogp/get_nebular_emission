@@ -29,7 +29,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         AGN=False,photmod_agn='feltre16',
         Zgas_NLR=None,Z_correct_grad=False,
         model_U_agn='panuzzo03',
-        agn_nH_params=None,
+        #agn_nH_params=None, ###here to be removed
+        mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
         model_spec_agn='feltre16',
         alpha_NLR=-1.7,xid_NLR=0.5,
         nH_NLR=c.nH_NLR,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
@@ -325,27 +326,42 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         ##here to be removed once the NLR is consistently done on 1 component
 
         # Get the AGN bolometric luminosity
-        agn_nH_param = None
-        model_nH_agn   = ['exponential','reff']
-        if model_nH_agn is not None:
-            agn_nH_param = io.get_data_agnnH(infile,model_nH_agn[1],
-                                             agn_nH_params,selection=cut,
-                                             h0=h0,units_h0=units_h0,
-                                             inputformat=inputformat,
-                                             testing=testing,verbose=verbose)
+        ###here remove commented lines below until Lagn
+        #agn_nH_param = None
+        #model_nH_agn   = ['exponential','reff']
+        #if model_nH_agn is not None:
+        #    agn_nH_param = io.get_data_agnnH(infile,model_nH_agn[1],
+        #                                     agn_nH_params,selection=cut,
+        #                                     h0=h0,units_h0=units_h0,
+        #                                     inputformat=inputformat,
+        #                                     testing=testing,verbose=verbose)
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,Lagn_inputs=Lagn_inputs,
                         h0=h0,units_h0=units_h0,
                         units_Gyr=units_Gyr,units_L40h2=units_L40h2,
                         testing=testing,verbose=verbose)
-        
-        Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
-            get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
-                        Lagn=Lagn, T=T,
-                        agn_nH_param=agn_nH_param,
-                        model_nH_agn=model_nH_agn,
-                        model_spec_agn=model_spec_agn,
-                        model_U_agn=model_U_agn,verbose=verbose)
+
+        # Get the ionising parameter, U, (and filling factor)
+        mgas = None; hr = None
+        if mgas_r_agn is not None:
+            mgas, hr = io.get_mgas_hr(infile,mgas_r_agn,r_type_agn,cut,
+                                   h0=h0,units_h0=units_h0,
+                                   inputformat=inputformat,
+                                   testing=testing,verbose=verbose)
+
+        lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
+                                          lms,lssfr,lzgas_agn,
+                                          mgasr_type=mgasr_type_agn,
+                                          verbose=verbose)            
+        ###here remove commented lines below until VERBOSE
+        lnH_agn = np.zeros(shape=np.shape(lu_agn)); lnH_agn.fill(c.nH_NLR)
+        #Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
+        #    get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
+        #                Lagn=Lagn, T=T,
+        #                agn_nH_param=agn_nH_param,
+        #                model_nH_agn=model_nH_agn,
+        #                model_spec_agn=model_spec_agn,
+        #                model_U_agn=model_U_agn,verbose=verbose)
         if verbose: print(' U calculated.')
 
         # Calculate emission lines in adequate units

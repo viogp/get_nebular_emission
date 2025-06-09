@@ -129,8 +129,19 @@ model_U_agn    = 'panuzzo03'
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
+#agn_nH_params = [6,11,19,12] ####here To be removed
+#mgas_r = None ###here to be tested
+#mgas_r = [[19,12]]; mgasr_type=['sphere'] ###here To be tested
+mgas_r = [[6,11],[9,12]]
 
-agn_nH_params = [6,11,19,12]
+# Type of component: 'disc', 'sphere' or None
+mgasr_type = ['disc','sphere'] ###here do I need this?
+
+# Type of radius input, per component:
+# 0: scalelength;
+# 1: effective or half-mass/light radius
+# 2: radius of the galaxy or host halo
+r_type = [1,1]
 
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'
@@ -273,8 +284,9 @@ for ivol in range(subvols):
             inoh=inoh,IMF = IMF,
             AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
-            model_U_agn=model_U_agn,            
-            agn_nH_params=agn_nH_params,
+            model_U_agn=model_U_agn,           
+            #agn_nH_params=agn_nH_params, ###here to be removed
+            mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 

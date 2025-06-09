@@ -416,7 +416,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
+def calculate_epsilon(mgas,hr,max_r,filenom,nH=c.nH_NLR,
                       profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
@@ -441,9 +441,12 @@ def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
     -------
     epsilon : array of floats
     '''
-
-    if epsilon_param.shape[0] == 2: #2
-        Mg, r = epsilon_param
+    ncomp = io.get_ncomponents(mgas)
+    Mg = mgas[0,:]
+    r = hr[0,:]
+#    if epsilon_param.shape[0] == 2: #2
+#        Mg, r = epsilon_param
+    if ncomp == 1:
         # Mg = Mg + Mg_bulge
         ind_epsilon = np.where((Mg>5e-5)&(r>5e-5)) ###here why this arbitrary values?
         epsilon = np.zeros(Mg.shape)
@@ -453,7 +456,9 @@ def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
         ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(max_r,
                                                                   Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
     else:
-        Mg, r, Mg_bulge, r_bulge = epsilon_param
+        #        Mg, r, Mg_bulge, r_bulge = epsilon_param
+        Mg_bulge = mgas[1,:]
+        r_bulge = hr[1,:]
         ind_epsilon = np.where((Mg>5e-5)&(r>5e-5))
         epsilon = np.zeros(Mg.shape)
         ng = np.zeros(Mg.shape)
@@ -556,7 +561,7 @@ def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
     Q = np.zeros(np.shape(lssfr))
     ind = np.where(Lagn>0)[0]
     # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
-    Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.planck) # Feltre 2016
+    Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.h*c.J2erg) # Feltre 2016
     # This implies that Lion = Lbol/5 aprox.
             
     return Q
@@ -1035,11 +1040,14 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
     return lu, lnH # epsilon, ng_ratio
 
 
-def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
-                Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
-                T=10000, epsilon_param_z0=[None],
-                model_nH_agn=None,model_spec_agn='feltre16',
-                model_U_agn='panuzzo03', verbose=True):
+#def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
+#                Lagn=None, ng_ratio=None,IMF=['Kroupa','Kroupa'],
+#                T=10000, epsilon_param_z0=[None],
+#                model_nH_agn=None,model_spec_agn='feltre16',
+#                model_U_agn='panuzzo03', verbose=True):
+def get_UnH_agn(Lagn, mgas, hr, filenom,
+                lms_o, lssfr_o,lzgas_o,model_U_agn='panuzzo03',###here to be adapted
+                mgasr_type=None,verbose=True):
     '''
     Given the global properties of a galaxy or a region
     (log10(Mstar), log10(sSFR) and 12+log(O/H)),
@@ -1075,7 +1083,6 @@ def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
     -------
     Q, lu, lnH, lzgas : floats
     '''
-
     # Read redshift
     f = h5py.File(filenom, 'r')
     header = f['header']
@@ -1083,13 +1090,18 @@ def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
     f.close()
     
     # ncomp = len(lms[0])
-    Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
     
     epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
+    model_nH_agn = ['exponential','reff'] ###here to be removed
     if model_nH_agn is not None:
-        epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
+        #epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
+        #                            filenom,nH=c.nH_NLR,
+        #                            profile=model_nH_agn,
+        #                            verbose=verbose)
+        epsilon = calculate_epsilon(mgas,hr,[c.radius_NLR],
                                     filenom,nH=c.nH_NLR,
-                                    profile=model_nH_agn,verbose=verbose)
+                                    profile=model_nH_agn,
+                                    verbose=verbose)
 
     if model_U_agn not in c.model_U_agn:
         if verbose:
@@ -1097,6 +1109,10 @@ def get_UnH_agn(lms_o, lssfr_o, lzgas_o, filenom, agn_nH_param=None,
             print('                Possible options= {}'.format(c.model_U_agn))
         sys.exit()
     elif (model_U_agn == 'panuzzo03'):
-        lu, lnH, lzgas = get_U_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
+        #Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
+        Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,Lagn=Lagn)
+        #lu, lnH, lzgas = get_U_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
+        lu, lnH, lzgas = get_U_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,c.temp_ionising,epsilon,None,'agn','Kennicut')
         
-    return Q, lu, lnH, epsilon, ng_ratio
+    #return Q, lu, lnH, epsilon, ng_ratio
+    return lu, epsilon
