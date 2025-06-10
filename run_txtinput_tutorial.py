@@ -138,8 +138,9 @@ mgasr_type = ['disc','sphere'] ###here do I need this?
 
 # Type of radius input, per component:
 # 0: scalelength;
-# 1: effective or half-mass/light radius
-# 2: radius of the galaxy or host halo
+# 1: effective radius, Re
+# 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
+# 3: radius of the galaxy or host halo
 r_type = [1,1]
 
 # spec: model for the spectral distribution of the AGN
