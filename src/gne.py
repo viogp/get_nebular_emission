@@ -29,7 +29,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         AGN=False,photmod_agn='feltre16',
         Zgas_NLR=None,Z_correct_grad=False,
         model_U_agn='panuzzo03',
-        #agn_nH_params=None, ###here to be removed
         mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
         model_spec_agn='feltre16',
         alpha_NLR=-1.7,xid_NLR=0.5,
@@ -326,15 +325,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         ##here to be removed once the NLR is consistently done on 1 component
 
         # Get the AGN bolometric luminosity
-        ###here remove commented lines below until Lagn
-        #agn_nH_param = None
-        #model_nH_agn   = ['exponential','reff']
-        #if model_nH_agn is not None:
-        #    agn_nH_param = io.get_data_agnnH(infile,model_nH_agn[1],
-        #                                     agn_nH_params,selection=cut,
-        #                                     h0=h0,units_h0=units_h0,
-        #                                     inputformat=inputformat,
-        #                                     testing=testing,verbose=verbose)
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
                         params=Lagn_params,Lagn_inputs=Lagn_inputs,
                         h0=h0,units_h0=units_h0,

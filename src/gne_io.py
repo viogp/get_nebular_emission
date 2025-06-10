@@ -740,52 +740,6 @@ def get_mgas_hr(infile,cols,r_type,selection,
 
 
 
-def get_data_agnnH(infile,rtype,cols,selection=None,
-                   h0=None,units_h0=False,
-                   inputformat='hdf5',
-                   testing=False,verbose=False):
-    '''
-    Get Mgas and R50 in the adecuate units.
-
-    Parameters
-    ----------
-    infile : string
-       Name of the input file
-    inputformat : string
-     Format of the input file.
-    cols : list
-      Expected : component1 = total or disk, component2 = bulge
-    units_h0 : bool
-    verbose : boolean
-      If True print out messages
-    testing : boolean
-      If True only run over few entries for testing purposes
-
-    Returns
-    -------
-    outparams : array of floats
-    '''
-
-    vals = read_data(infile,selection,inputformat=inputformat,
-                     params=cols,testing=testing,verbose=verbose)
-    if units_h0:
-        vals = vals/h0
-
-    outparams = vals
-
-    if rtype == 'reff':
-        # Transform  reff (exponential): rscale = reff/1.678
-        outparams[1] = c.re2hr*outparams[1]
-        if np.shape(outparams)[0]>2: outparams[3] = c.re2hr*outparams[3]
-    elif rtype == 'r':
-        # Transform  r: rscale = r/2./1.678
-        outparams[1] = c.re2hr*outparams[1]/2.
-        if np.shape(outparams)[0]>2: outparams[3] = c.re2hr*outparams[3]/2.
-        
-    return outparams
-
-
-
 def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
                nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
                extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
