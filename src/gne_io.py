@@ -851,13 +851,11 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
     Parameters
     ----------
     filenom : string
-      Name of the output file.
+       Name of the output file.
     Lagn : numpy array
-        Bolometric luminosity (erg/s)
+       Bolometric luminosity (erg/s)
     lu_agn : floats
      U of the galaxies per component.
-    lnH_agn : floats
-     ne of the galaxies per component (cm^-3).
     lzgas_agn : floats
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_agn : array of floats
