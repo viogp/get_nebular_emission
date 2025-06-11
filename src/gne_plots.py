@@ -949,12 +949,12 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
             Lagn1  = f['agn_data/Lagn'][:]
             lzagn1 = f['agn_data/lz_agn'][:]
             luagn1 = f['agn_data/lu_agn'][:]
-            lnagn1 = f['agn_data/lnH_agn'][:]
-            #if 'epsilon_NLR' in header.attrs:
-            #    epsilon_is_constant = True
-            #    epsilon1 = header.attrs['epsilon_NLR']
-            #else:
-            #    epsilon1 = f['agn_data/epsilon_NLR'][:]            
+            if 'epsilon_NLR' in header.attrs:
+                epsilon_is_constant = True
+                epsilon1 = header.attrs['epsilon_NLR']
+            else:
+                epsilon_is_constant = False
+                epsilon1 = f['agn_data/epsilon_NLR'][:]
         f.close()
     
         if ivol == 0:
@@ -962,7 +962,9 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
             lnsfr = lnsfr1; lms = lms1
             if AGN:
                 luagn = luagn1; lzagn = lzagn1
-                lnagn = lnagn1; Lagn = Lagn1
+                Lagn = Lagn1
+                if not epsilon_is_constant:
+                    epsilon = epsilon1    
         else:
             lusfr = np.append(lusfr,lusfr1,axis=0)
             lzsfr = np.append(lzsfr,lzsfr1,axis=0)
@@ -971,8 +973,12 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
             if AGN:
                 luagn = np.append(luagn,luagn1,axis=0)
                 lzagn = np.append(lzagn,lzagn1,axis=0)
-                lnagn = np.append(lnagn,lnagn1,axis=0)
                 Lagn = np.append(Lagn,Lagn1,axis=0)
+                if not epsilon_is_constant:
+                    epsilon = np.append(epsilon,epsilon1,axis=0)
+                else:
+                    epsilon = np.zeros(Lagn.shape); epsilon.fill(epsilon1)                   
+
         # Check number of galaxies within model limits
         if (len(lusfr) != len(lzsfr)):
             print('WARNING plots.uzn, SFR: different length arrays U and Z')
@@ -1005,10 +1011,10 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                                (z>=zamin) & (z<=zamax))
                 ina[i] = ina[i] + np.shape(ind)[1]
 
-                mask = (lnagn[:,i] > c.notnum)
-                nn = lnagn[mask,i]            
-                ind = np.where((nn>=nmin) & (nn<=nmax))
-                inna[i] = inna[i] + np.shape(ind)[1]        
+                #mask = (lnagn[:,i] > c.notnum)
+                #nn = lnagn[mask,i]            
+                #ind = np.where((nn>=nmin) & (nn<=nmax))
+                #inna[i] = inna[i] + np.shape(ind)[1]        
 
     # Plot per component U versus Z
     proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
@@ -1020,22 +1026,22 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     if AGN:
         leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
                 
-    # Plot per component nH versus M* (or Lagn)
-    proxies, labels = plot_comp_quartiles(axn, lms, lnsfr,
-                                          min_Ms, max_Ms, tots, inns)
-    if AGN:
-        col = np.zeros(Lagn[:,0].shape); col.fill(c.notnum)
-        mask = Lagn[:,0] > 0
-        col[mask] = np.log10(Lagn[mask,0])
-        lLagn = np.repeat(col[:, np.newaxis], nacomp, axis=1)
-
-        aproxies, alabels = plot_comp_quartiles(axna, lLagn, lnagn,
-                                                min_Lbol, max_Lbol, tota, inna)
+    ## Plot per component nH versus M* (or Lagn)
+    #proxies, labels = plot_comp_quartiles(axn, lms, lnsfr,
+    #                                      min_Ms, max_Ms, tots, inns)
+    #if AGN:
+    #    col = np.zeros(Lagn[:,0].shape); col.fill(c.notnum)
+    #    mask = Lagn[:,0] > 0
+    #    col[mask] = np.log10(Lagn[mask,0])
+    #    lLagn = np.repeat(col[:, np.newaxis], nacomp, axis=1)
+    #
+    #    aproxies, alabels = plot_comp_quartiles(axna, lLagn, lnagn,
+    #                                            min_Lbol, max_Lbol, tota, inna)
 
     # Legend for nH plots
     leg = axn.legend(proxies,labels, loc=0); leg.draw_frame(False)
-    if AGN:
-        leg = axna.legend(aproxies,alabels, loc=0); leg.draw_frame(False)
+    #if AGN:
+    #    leg = axna.legend(aproxies,alabels, loc=0); leg.draw_frame(False)
         
     # Output
     pltpath = io.get_plotpath(root)

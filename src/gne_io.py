@@ -794,7 +794,8 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
 
         if extra_param[0][0] != None:
             for i in range(len(extra_param)):
-                gdat.create_dataset(extra_params_names[i], data=extra_param[i][:,None], maxshape=(None,None))
+                gdat.create_dataset(extra_params_names[i], data =\
+                                    extra_param[i][:,None], maxshape=(None,None))
                 if extra_params_labels:
                     gdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
 
@@ -818,24 +819,27 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
             if fluxes_sfr.any():
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
                                      data=fluxes_sfr[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = \
+                    'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_sfr_att.any():
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux_att', 
                                      data=fluxes_sfr_att[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = \
+                    'Lines units: egr s^-1 cm^-2'
 
             
             if nebline_sfr_att.any():
                 if nebline_sfr_att[0,i,0] > 0:
                     hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
                                          data=nebline_sfr_att[:,i], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = \
+                        'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
     
     return 
 
 
-def write_agn_data(filenom,Lagn,lu_agn,lnH_agn,lzgas_agn,
+def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                    nebline_agn,nebline_agn_att=None,
                    fluxes_agn=None,fluxes_agn_att=None,
                    epsilon_agn=None,
@@ -861,7 +865,7 @@ def write_agn_data(filenom,Lagn,lu_agn,lnH_agn,lzgas_agn,
     nebline_agn_att : array of floats
        Dust attenuated luminosities (erg/s)
     '''
-    
+
     # Read information on models
     f = h5py.File(filenom, 'r')   
     header = f['header']
@@ -872,42 +876,45 @@ def write_agn_data(filenom,Lagn,lu_agn,lnH_agn,lzgas_agn,
         # AGN data
         hfdat = hf.create_group('agn_data')
 
-        hfdat.create_dataset('Lagn', data=lu_agn, maxshape=(None,None))
+        hfdat.create_dataset('Lagn', data=Lagn, maxshape=(None))
         hfdat['Lagn'].dims[0].label = 'L_bol (erg/s)'
         
         hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
-    
-        hfdat.create_dataset('lnH_agn',data=lnH_agn, maxshape=(None,None))
-        hfdat['lnH_agn'].dims[0].label = 'log10(nH) (cm**-3)'
-    
+
         hfdat.create_dataset('lz_agn', data=lzgas_agn, maxshape=(None,None))
         hfdat['lz_agn'].dims[0].label = 'log10(Z)'
-        
-        hfdat.create_dataset('epsilon_agn', data=epsilon_agn[None,:], maxshape=(None,None))
-        hfdat['epsilon_agn'].dims[0].label = 'NLRs volume filling factor (dimensionless)'
+
+        if epsilon_agn is not None:
+            hfdat.create_dataset('epsilon_NLR', data=epsilon_agn, maxshape=(None))
+            hfdat['epsilon_NLR'].dims[0].label = \
+                'AGN NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
                                  data=nebline_agn[0,i][None,:], maxshape=(None,None))
-            hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = 'Lines units: egr s^-1'
+            hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
+                'Lines units: egr s^-1'
             
             if fluxes_agn.any():
                 hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
                                      data=fluxes_agn[0,i][None,:], maxshape=(None,None))
-                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
+                    'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_agn_att.any():
                 if fluxes_agn_att[0,i,0] >= 0:
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
                                          data=fluxes_agn_att[0,i][None,:], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                    hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = \
+                        'Lines units: egr s^-1 cm^-2'
             
             if nebline_agn_att.any():
                 if nebline_agn_att[0,i,0] >= 0:
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
                                          data=nebline_agn_att[0,i][None,:], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = 'Lines units: egr s^-1'
+                    hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = \
+                        'Lines units: egr s^-1'
 
     return 
 

@@ -342,7 +342,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           lms,lssfr,lzgas_agn,
                                           mgasr_type=mgasr_type_agn,
-                                          verbose=verbose)            
+                                          verbose=verbose)
         ###here remove commented lines below until VERBOSE
         lnH_agn = np.zeros(shape=np.shape(lu_agn)); lnH_agn.fill(c.nH_NLR)
         #Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
@@ -358,6 +358,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         nebline_agn = get_lines(lu_agn.T,lzgas_agn.T,outfile,#lnH=lnH_agn.T,
                                 photmod=photmod_agn,origin='NLR',
                                 verbose=verbose)
+
         if (photmod_agn == 'feltre16'):
             # Units: erg/s for a central Lacc=10^45 erg/s
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
@@ -389,13 +390,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn_att = np.array(None)
 
         # Write output in a file            
-        io.write_agn_data(outfile,Lagn,
-                          lu_agn,lnH_agn,lzgas_agn,
+        io.write_agn_data(outfile,Lagn,lu_agn,lzgas_agn,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
-                          epsilon_agn,
+                          epsilon_agn=epsilon_agn,
                           verbose=verbose)             
-        del lu_agn, lnH_agn, lzgas_agn 
+        del lu_agn, lzgas_agn 
         del nebline_agn, nebline_agn_att
     del lms, lssfr, cut
     

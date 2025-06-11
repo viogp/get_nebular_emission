@@ -138,16 +138,6 @@ def get_sfrdata(infile,cols,selection=None,
             
     # Obtain log10(Zgas=MZcold/Mcold)
     lzgas = get_lzgas(zgas,inoh=inoh)
-    #if ncomp!=1: #Total Z
-    #    oh12 = np.zeros(lzgas.shape)
-    #    lzgas_tot = np.zeros(len(lzgas)); lzgas_tot.fill(c.notnum)
-    #    for comp in range(ncomp):
-    #        ind = np.where(lzgas[comp,:] != c.notnum)
-    #        oh12[comp,ind] = 10. ** (lzgas[comp,ind])
-    #
-    #    ins = np.sum(oh12,axis=1)
-    #    ind = np.where(ins>0)
-    #    lzgas_tot[ind] = np.log10(ins[ind])
 
     return lms.T,lssfr.T,lzgas.T
 
