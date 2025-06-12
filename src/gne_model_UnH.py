@@ -839,10 +839,7 @@ def get_U_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF
     return lu, lnH, lzgas
 
 
-def get_U_panuzzo03(Q,filenom,
-                    lms,lssfr,lzgas, ng_ratio,IMF, ###here remove line after tests
-                    epsilon=None,nH=None, origin='NLR'):
-#def get_U_panuzzo03(Q,filenom, epsilon=None, nH=None, origin='NLR'):
+def get_U_panuzzo03(Q,filenom,epsilon=None,nH=None, origin='NLR'):
     '''
     Calculate the ionising parameter, as log10(Us), from Eq.B.6, Panuzzo+2003.
     This requires as input the rate of ionising photons, Q,
@@ -880,60 +877,18 @@ def get_U_panuzzo03(Q,filenom,
     # Obtain the recombination coefficient
     alphaB = get_alphaB(temp)
 
-    ## Calculate the constant part of the equation ###here check units 
-    #const = (3/(4*c.c))*np.power(3*alphaB*alphaB/(4*np.pi),1/3)
-    #
-    ## Calculate the average ionising parameter
+    # Calculate the constant part of the equation
+    const = (3/(4*c.c_cm))*np.power(3*alphaB*alphaB/(4*np.pi),1/3)
+    
+    # Calculate the average ionising parameter
     #uu = const*np.power(Q*nH*epsilon*epsilon,1/3)
-    #
-    ## Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
-    #lu = np.zeros(uu.shape); lu.fill(c.notnum)
-    #lu[uu>0.] = np.log10(uu[uu>0.]) - np.log10(3)
-
+    ###here to be removed once array sizes are checked
+    e = np.repeat(epsilon[np.newaxis,...], len(Q[0]), axis=0).T
+    uu = const*np.power(Q*nH*e*e,1/3)
     
-    lzgas_all = np.copy(lzgas) 
-    lu, lnH, lzgas = [np.full(np.shape(lms), c.notnum) for i in range(3)]
-    ind = np.where((lssfr > c.notnum) &
-                   (lms > 0) &
-                   (lzgas_all > c.notnum) &
-                   (Q > 0))
-    ind_comp = []   
-    for comp in range(len(Q[0])):
-        ind_comp.append(np.where((lssfr[:,comp] > c.notnum) &
-                       (lms[:,comp] > 0) &
-                       (lzgas_all[:,comp] > c.notnum) &
-                       (Q[:,comp] > 0))[0])
-    
-    if (np.shape(ind)[1]>1):
-        epsilon1 = np.full(np.shape(lssfr),c.notnum)
-        cte = np.zeros(np.shape(lssfr))                
-        if origin=='NLR':
-            lnH[ind] = np.log10(nH)
-            lzgas[ind] = lzgas_all[ind]
-            
-            for comp in range(len(Q[0])):
-                
-                epsilon1[:,comp][ind_comp[comp]] = epsilon[ind_comp[comp]]
-                
-                cte[:,comp][ind_comp[comp]] = ( (3*(alphaB**(2/3)) / (4*c.c_cm)) 
-                 * (3*epsilon1[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) )
-
-            # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
-            cte[cte==0] = 1e-50
-            lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3) / 3)
-            lu[cte==1e-50] = c.notnum
-    
-        if origin=='sfr':
-            for comp in range(len(Q[0])):
-                epsilon1[:,comp][ind_comp[comp]] = ((1/alphaB) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
-                                      ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
-                
-                if ng_ratio != None:
-                    epsilon1[:,comp][ind_comp[comp]] = epsilon1[:,comp][ind_comp[comp]] * ng_ratio
-                
-                cte[:,comp][ind_comp[comp]] = 3*(alphaB**(2/3)) * (3*epsilon1[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
-            
-            lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
+    # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
+    lu = np.zeros(uu.shape); lu.fill(c.notnum)
+    lu[uu>0.] = np.log10(uu[uu>0.]) - np.log10(3)
 
     return lu
 
@@ -1092,9 +1047,7 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
             #epsilon = st.ensure_2d(epsilon)
 
         # Calculate the ionising factor
-        lu = get_U_panuzzo03(Q,filenom,
-                             lms_o,lssfr_o,lzgas_o,None,'Kennicut', ###here remove after testing
-                             epsilon=epsilon,origin='NLR') 
+        lu = get_U_panuzzo03(Q,filenom,epsilon=epsilon,origin='NLR') 
         #lu = st.ensure_2d(lu)
         
     return lu, epsilon

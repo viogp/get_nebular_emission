@@ -30,7 +30,7 @@ h    = 6.62607015e-34      # Planck constant, Js
 kB   = 1.380649e-23        # Boltzmann constant, J/K
 
 G_Ms = G*Msun/(kilo*kilo*parsec*mega) # 4.301e-9 km^2*Mpc/Msun/s^-2 
-c_cm = 2.998e10                       # Light velocity, cm/s
+c_cm = c*100.                         # Light velocity, cm/s
 h_erg= h*J2erg                        # Planck constant, erg s
 kB_Ms= kB/(Msun*(parsec*mega)**2)     # 7.29e-99 Mpc^2*Msun/s^2/K 
 
