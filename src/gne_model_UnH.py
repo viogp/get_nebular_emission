@@ -10,7 +10,6 @@ import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st
 
-
 def get_alphaB(T):
     
     '''
@@ -536,41 +535,64 @@ def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None):
     return Q
 
 
-def phot_rate_agn(lssfr=None, lms=None, IMF=None, Lagn=None):
+
+def get_Q_agn(Lagn,lssfr=None, lms=None, IMF=None,model_spec='feltre16',verbose=True):
+    #(Lagn,alpha,model_spec='feltre16',verbose=True):
     '''
-    Given log10(Mstar), log10(sSFR), log10(Z), Lagn and the assumed IMF,
-    get the rate of ionizing photons in photon per second.
+    Obtain the rate of ionizing photons in photon per second, Q,
+    given the bolometric luminosity and spectral index of the AGN.
 
     Parameters
     ----------
-    lssfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z)).
-    IMF : array of strings
-     Assumed IMF for the input data of each component.
-    Lagn : floats
-     Bolometric luminosity of the AGN (Lsun).
-     
+    Lagn : array of floats
+       Bolometric luminosity of the AGNs (erg/s).
+    alpha_NLR : array of floats
+        Spectral index assumed for the AGN.
+    model_spec_agn : string
+        Model for the spectral distribution for AGNs.
+    verbose : boolean
+       If True print out messages.
+
     Returns
     -------
-    Q : floats
+    Q : array of floats
     '''
-    Q = np.zeros(np.shape(lssfr))
-    ind = np.where(Lagn>0)[0]
-    # Q[ind,0] = Lagn[ind]*2.3e10 # Panda 2022
-    Q[ind,0] = Lagn[ind]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.h*c.J2erg) # Feltre 2016
-    # This implies that Lion = Lbol/5 aprox.
-            
+
+    Q = np.zeros(np.shape(Lagn))
+    
+    if model_spec not in c.model_spec_agn:
+        if verbose:
+            print('STOP (gne_model_UnH): Unrecognised spectral AGN model.')
+            print('                Possible options= {}'.format(c.model_spec_agn))
+        sys.exit()
+        
+    elif (model_spec == 'feltre16'):
+    #    lambdas = c.agn_spec_limits[model_spec]
+    #    nu3 = c.c/(lambdas[0]*1e-6)  # Hz
+    #    nu2 = c.c/(lambdas[1]*1e-6)
+    #    nu1 = c.c/(lambdas[2]*1e-6)
+    #    nuL = c.c/(lambdas[3]*1e-6)
+    #    
+    #    int_S = np.power(nu1,3)/3. +\
+    #        (np.power(nu2,0.5) - np.power(nu1,0.5))/0.5 +\
+    #        (np.power(nu3,alpha+1) - np.power(nu2,alpha+1))/(alpha+1)
+    #    
+    #    int_SL = (np.power(nu1,2) - np.power(nuL,2))/2. -\
+    #        (np.power(nu2,-0.5) - np.power(nu1,-0.5))/0.5 +\
+    #        (np.power(nu3,alpha) - np.power(nu2,alpha))/alpha
+    #    
+        mask = Lagn > 0.
+    #    Q[mask] = Lagn[mask]*Lagn[mask]*int_SL/(c.h_erg*int_S)
+    #
+        Q[mask] = Lagn[mask]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.h_erg) ###here Julen's eq 
     return Q
 
 
 def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     '''
-    Characterise the SF ionising region from global galactic properties,
-    using the model from
+    Calculate the ionising parameter, log10(Us), and
+    electron density, log10(nH), for ionising region(s),
+    connecting those to galactic properties with the model from
     Kashino & Inoue 2019 (https://arxiv.org/abs/1812.06939).
 
     Parameters
@@ -881,10 +903,7 @@ def get_U_panuzzo03(Q,filenom,epsilon=None,nH=None, origin='NLR'):
     const = (3/(4*c.c_cm))*np.power(3*alphaB*alphaB/(4*np.pi),1/3)
     
     # Calculate the average ionising parameter
-    #uu = const*np.power(Q*nH*epsilon*epsilon,1/3)
-    ###here to be removed once array sizes are checked
-    e = np.repeat(epsilon[np.newaxis,...], len(Q[0]), axis=0).T
-    uu = const*np.power(Q*nH*e*e,1/3)
+    uu = const*np.power(Q*nH*epsilon*epsilon,1/3)
     
     # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
     lu = np.zeros(uu.shape); lu.fill(c.notnum)
@@ -899,10 +918,11 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
                 IMF=['Kroupa','Kroupa'],
                 model_nH_sfr='kashino20',model_U_sfr='kashino20',verbose=True):
     '''
-    Given the global properties of a galaxy or a region
+    Calculate the ionising parameter, log10(Us),
+    electron density, log10(nH), and
+    filling factor, epsilon, if required,
+    for HII reions, given global properties of galaxy regions,
     (log10(Mstar), log10(sSFR) and log10(Zgas)),
-    characterise the HII region with its
-    ionising parameter, U, and electron density, ne.
 
     Parameters
     ----------
@@ -937,17 +957,17 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
 
     Returns
     -------
-    lu, lnH : floats
+    lu, lnH, epsilon : array of floats
     '''
 
-    # Read redshift
-    f = h5py.File(filenom, 'r')
-    header = f['header']
-    redshift = header.attrs['redshift']
-    f.close()
-    
-    # ncomp = len(lms[0])
-    
+    ## Read redshift
+    #f = h5py.File(filenom, 'r')
+    #header = f['header']
+    #redshift = header.attrs['redshift']
+    #f.close()
+    #
+    ## ncomp = len(lms[0])
+    #
     #epsilon = None
     #if epsilon_param_z0 is not None:
     #    # ng = calculate_ng_hydro_eq(2*epsilon_param[1],epsilon_param[0],epsilon_param[1],profile='exponential',verbose=True)
@@ -981,11 +1001,12 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
         lu = get_UnH_kashino20(lms,lssfr,lzgas,IMF,nhout=False)
     elif (model_U_sfr == 'orsi14'):
         lu = get_UnH_orsi14(lzgas,q0,z0,gamma)
-    elif (model_U_sfr == 'panuzzo03_sfr'):
-        Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
-        lu, lnH, lzgas = get_U_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
+    ####here to be adapted to new function
+    #elif (model_U_sfr == 'panuzzo03_sfr'):
+    #    Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
+    #    lu, lnH, lzgas = get_U_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
         
-    return lu, lnH # epsilon, ng_ratio
+    return lu, lnH #, epsilon
 
 
 def get_UnH_agn(Lagn, mgas, hr, filenom,
@@ -1026,12 +1047,19 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
             print('                Possible options= {}'.format(c.model_U_agn))
         sys.exit()
     elif (model_U_agn == 'panuzzo03'):
-        ##Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,IMF=IMF,Lagn=Lagn)
-        Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,Lagn=Lagn)
-        ##lu, lnH, lzgas = get_U_panuzzo03(Q,lms_o,lssfr_o,lzgas_o,T,epsilon,ng_ratio,'agn',IMF=IMF)
+        # Calculate the number of ionising photons
+        f = h5py.File(filenom, 'r')
+        header = f['header']
+        model_spec_agn = header.attrs['model_spec_NLR']
+        alpha_NLR = header.attrs['alpha_NLR']
+        f.close()
+        
+        #Q = get_Q_agn(Lagn,alpha_NLR,model_spec=model_spec_agn,verbose=verbose)
+        #Q = np.repeat(Q[np.newaxis,...], 2, axis=0).T ###here to be removed (match vectors)
 
-        #mgas = None ###here remove after testing
-        print('mgas, hr',mgas,hr) ###here remove after testing
+        #Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,Lagn=Lagn)
+        Q = get_Q_agn(Lagn,lssfr=lssfr_o,lms=lms_o)
+
         # Obtain the filling factor
         if (mgas is None or hr is None):
             epsilon = None
@@ -1048,6 +1076,6 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
 
         # Calculate the ionising factor
         lu = get_U_panuzzo03(Q,filenom,epsilon=epsilon,origin='NLR') 
-        #lu = st.ensure_2d(lu)
+        lu = st.ensure_2d(lu)
         
     return lu, epsilon

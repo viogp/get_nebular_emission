@@ -977,7 +977,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                 if not epsilon_is_constant:
                     epsilon = np.append(epsilon,epsilon1,axis=0)
                 else:
-                    epsilon = np.zeros(Lagn.shape); epsilon.fill(epsilon1)                   
+                    epsilon = np.zeros(Lagn.shape); epsilon.fill(epsilon1)
 
         # Check number of galaxies within model limits
         if (len(lusfr) != len(lzsfr)):
@@ -1386,9 +1386,6 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
         
         # Read AGN information if it exists
-        #AGN = True
-        #if 'agn_data' not in f.keys(): AGN = False
-
         if AGN:
             # Read AGN information from file
             lu_agn = f['agn_data/lu_agn'][:,0]

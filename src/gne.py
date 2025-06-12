@@ -312,17 +312,14 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             # Get total mass for Z corrections 
             lm_tot = components2tot(lms)
 
-            lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
+            lzgas_agn = get_zgasagn(infile,Zgas_NLR,selection=cut,inoh=inoh,
                                     Z_correct_grad=True,lm_tot=lm_tot,
                                     inputformat=inputformat,
                                     testing=testing,verbose=verbose)
         else:
-            lzgas_agn1 = get_zgasagn(infile,Zgas_NLR,selection=cut,
+            lzgas_agn = get_zgasagn(infile,Zgas_NLR,selection=cut,
                                     inoh=inoh,inputformat=inputformat,
                                     testing=testing,verbose=verbose)
-        ###here Duplicate lzgas_agn to the SFR components at the moment
-        lzgas_agn = np.repeat(lzgas_agn1[:, np.newaxis], ncomp, axis=1)
-        ##here to be removed once the NLR is consistently done on 1 component
 
         # Get the AGN bolometric luminosity
         Lagn = get_Lagn(infile,cut,inputformat=inputformat,
@@ -340,22 +337,13 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                    testing=testing,verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
-                                          lms,lssfr,lzgas_agn,
+                                          lms,lssfr,lzgas_agn, ###here to be removed?
                                           mgasr_type=mgasr_type_agn,
                                           verbose=verbose)
-        ###here remove commented lines below until VERBOSE
-        lnH_agn = np.zeros(shape=np.shape(lu_agn)); lnH_agn.fill(c.nH_NLR)
-        #Q_agn, lu_agn, lnH_agn, epsilon_agn, ng_ratio = \
-        #    get_UnH_agn(lms,lssfr,lzgas_agn, outfile,
-        #                Lagn=Lagn, T=T,
-        #                agn_nH_param=agn_nH_param,
-        #                model_nH_agn=model_nH_agn,
-        #                model_spec_agn=model_spec_agn,
-        #                model_U_agn=model_U_agn,verbose=verbose)
         if verbose: print(' U calculated.')
 
         # Calculate emission lines in adequate units
-        nebline_agn = get_lines(lu_agn.T,lzgas_agn.T,outfile,#lnH=lnH_agn.T,
+        nebline_agn = get_lines(lu_agn,lzgas_agn,outfile,
                                 photmod=photmod_agn,origin='NLR',
                                 verbose=verbose)
 
@@ -390,7 +378,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn_att = np.array(None)
 
         # Write output in a file            
-        io.write_agn_data(outfile,Lagn,lu_agn,lzgas_agn,
+        io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn=epsilon_agn,
