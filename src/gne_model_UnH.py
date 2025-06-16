@@ -536,8 +536,7 @@ def phot_rate_sfr(lssfr=None, lms=None, IMF=None, Lagn=None):
 
 
 
-def get_Q_agn(Lagn,lssfr=None, lms=None, IMF=None,model_spec='feltre16',verbose=True):
-    #(Lagn,alpha,model_spec='feltre16',verbose=True):
+def get_Q_agn(Lagn,alpha,model_spec='feltre16',verbose=True):
     '''
     Obtain the rate of ionizing photons in photon per second, Q,
     given the bolometric luminosity and spectral index of the AGN.
@@ -559,7 +558,8 @@ def get_Q_agn(Lagn,lssfr=None, lms=None, IMF=None,model_spec='feltre16',verbose=
     '''
 
     Q = np.zeros(np.shape(Lagn))
-    
+    nul = c.h_nul*c.eV/c.h   # Hz
+
     if model_spec not in c.model_spec_agn:
         if verbose:
             print('STOP (gne_model_UnH): Unrecognised spectral AGN model.')
@@ -567,11 +567,10 @@ def get_Q_agn(Lagn,lssfr=None, lms=None, IMF=None,model_spec='feltre16',verbose=
         sys.exit()
         
     elif (model_spec == 'feltre16'):
-    #    lambdas = c.agn_spec_limits[model_spec]
-    #    nu3 = c.c/(lambdas[0]*1e-6)  # Hz
-    #    nu2 = c.c/(lambdas[1]*1e-6)
-    #    nu1 = c.c/(lambdas[2]*1e-6)
-    #    nuL = c.c/(lambdas[3]*1e-6)
+        hnu = c.agn_spec_limits[model_spec]
+        nu1 = hnu[0]*c.eV/c.h
+        nu2 = hnu[1]*c.eV/c.h
+        nu3 = hnu[2]*c.eV/c.h      
     #    
     #    int_S = np.power(nu1,3)/3. +\
     #        (np.power(nu2,0.5) - np.power(nu1,0.5))/0.5 +\
@@ -584,7 +583,7 @@ def get_Q_agn(Lagn,lssfr=None, lms=None, IMF=None,model_spec='feltre16',verbose=
         mask = Lagn > 0.
     #    Q[mask] = Lagn[mask]*Lagn[mask]*int_SL/(c.h_erg*int_S)
     #
-        Q[mask] = Lagn[mask]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.h_erg) ###here Julen's eq 
+        Q[mask] = -Lagn[mask]*(nul**alpha)/(alpha*8.66e-11*c.h_erg) ###here Julen's eq 
     return Q
 
 
@@ -1054,11 +1053,11 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
         alpha_NLR = header.attrs['alpha_NLR']
         f.close()
         
-        #Q = get_Q_agn(Lagn,alpha_NLR,model_spec=model_spec_agn,verbose=verbose)
+        Q = get_Q_agn(Lagn,alpha_NLR,model_spec=model_spec_agn,verbose=verbose)
         #Q = np.repeat(Q[np.newaxis,...], 2, axis=0).T ###here to be removed (match vectors)
 
         #Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,Lagn=Lagn)
-        Q = get_Q_agn(Lagn,lssfr=lssfr_o,lms=lms_o)
+        #Q = get_Q_agn(Lagn)#,lssfr=lssfr_o,lms=lms_o)
 
         # Obtain the filling factor
         if (mgas is None or hr is None):

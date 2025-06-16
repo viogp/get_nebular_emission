@@ -9,7 +9,7 @@ Msun    = 1.989e30  # kg
 zsun = 0.0134       # Asplund 2009
 zsunK20 = 0.014     # Kashino 2020
 ohsun = 8.69        # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
-
+h_nul = 13.6        # Lyman limit (eV)
 parsec  = 3.085677581491367e+16 # m
 
 #--------------------------------------------
@@ -22,6 +22,7 @@ kilo      = 1000.0
 mega      = 1000000.0
 giga      = 1000000000.0
 J2erg     = 1e7
+eV        = 1.602e-19   #J=kg*m^2*s**-2
 #--------------------------------------------
 G    = 6.6743e-11          # Gravitational constant, Nm^2/kg^2=m^3/kg/s^2
 mp   = 1.67e-27            # Proton mass, kg
@@ -241,9 +242,9 @@ line_wavelength = {
                            1666,1883,1888,1907,1910])
     }
 
-# Wavelenghts in \AA for the piecewise AGN spectral approximation
+# Limits in h*nu for the piecewise AGN spectral approximation
 agn_spec_limits = {
-    "feltre16" : np.array([0.001,0.25,10,912])
+    "feltre16" : np.array([0.1,5,1240])
 } 
 
 def coef_att_line_model_func(z=0):
