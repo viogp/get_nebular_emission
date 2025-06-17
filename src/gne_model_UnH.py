@@ -571,21 +571,15 @@ def get_Q_agn(Lagn,alpha,model_spec='feltre16',verbose=True):
         nu1 = hnu[0]*c.eV/c.h
         nu2 = hnu[1]*c.eV/c.h
         nu3 = hnu[2]*c.eV/c.h      
-    #    
-    #    int_S = np.power(nu1,3)/3. +\
-    #        (np.power(nu2,0.5) - np.power(nu1,0.5))/0.5 +\
-    #        (np.power(nu3,alpha+1) - np.power(nu2,alpha+1))/(alpha+1)
-    #    
-    #    int_SL = (np.power(nu1,2) - np.power(nuL,2))/2. -\
-    #        (np.power(nu2,-0.5) - np.power(nu1,-0.5))/0.5 +\
-    #        (np.power(nu3,alpha) - np.power(nu2,alpha))/alpha
-    #    
-        mask = Lagn > 0.
-    #    Q[mask] = Lagn[mask]*Lagn[mask]*int_SL/(c.h_erg*int_S)
-    #
-        Q[mask] = -Lagn[mask]*(nul**alpha)/(alpha*8.66e-11*c.h_erg) ###here Julen's eq 
-    return Q
 
+        a1a3   = (nu1**2.5)/(nu2**(0.5+alpha))
+        a1_den = (nu1**3)/3 + 2*(nu1**2.5)*(nu2**0.5-nu1**0.5) +\
+            a1a3*(nu3**(alpha+1) - nu2**(alpha+1))/(alpha+1)
+        int_SL = (nu3**alpha - nul**alpha)/alpha
+
+        mask = Lagn > 0.
+        Q[mask] = (Lagn[mask]/c.h_erg)*(a1a3/a1_den)*int_SL
+    return Q
 
 def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     '''
