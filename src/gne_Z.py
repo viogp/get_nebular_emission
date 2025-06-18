@@ -4,55 +4,39 @@
 """
 import numpy as np
 import src.gne_const as c
+import src.gne_stats as st
+import src.gne_io as io
 
-def correct_Zagn(logMin,logz):
+def get_lzgas(zz,inoh=False):
     '''
-    Estimates the metallicity of the AGN from the global metallicity.
+    Get log10(Zgas=MZcold/Mcold) from input
 
     Parameters
     ----------
-    logMin : array of floats
-       Stellar mass of the galaxy or its components (log10(M*/Msun ???? )).
-    logz : array of floats
-       Cold gas metallicity (log10(Z)).
-     
+    zz : numpy array
+        Input metallicities
+    inoh : boolean
+        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
+
     Returns
     -------
-    lzout : array of floats
-        Metallicity of the AGN
+    lzgas : array of floats
     '''
-
-    rows = logMin.shape[0]
-    logM = np.zeros(shape=rows)
-    lzagn = np.zeros(shape=rows)
     
-    if logz.shape[1] >= 2:
-        ind = np.where(logz[:,1]>c.notnum)
-        lzagn[ind] = np.copy(logz[ind,1])
-    
-        Ms = 10**logMin
-        Ms = np.sum(Ms,axis=1)
-        ind = np.where(Ms>0)
-        logM[ind] = np.log10(Ms[ind])
+    lzgas = np.zeros(zz.shape); lzgas.fill(c.notnum)
+    if inoh: 
+        # Obtain log10(Zgas) from an input of 12+log10(O/H)
+        lzgas = np.log10(c.zsun) - c.ohsun + zz
+    else: 
+        ind = np.where(zz>0)
+        lzgas[ind] = np.log10(zz[ind])
 
-    else:
-        logM = logMin
-
-    ###here where is this justified?
-    lzagn[(logM>9.5) & (logM<=10)] = lzagn[(logM>9.5) & (logM<=10)] + 0.1
-    lzagn[(logM>10)  & (logM<=10.5)] = lzagn[(logM>10)  & (logM<=10.5)] + 0.3
-    lzagn[(logM>10.5)& (logM<=11)] = lzagn[(logM>10.5)& (logM<=11)] + 0.1
-
-    ###here input should directly be zbuldge and M* total
-    lzout = np.zeros(shape=(np.shape(logz))); lzout.fill(c.notnum)
-    lzout[:,0] = lzagn
-
-    return lzout
+    lzgas = st.ensure_2d(lzgas)
+    return lzgas
 
 
 def get_Ztremonti(logM,logZ,Lagn_param):
-    # Ms and Z scale relation from Tremonti et. al. 2004
-    
+    # Ms and Z scale relation from Tremonti et. al. 2004    
     try:
         if logZ.shape[1] > 1:
             if Lagn_param[-1][0] != None:
@@ -175,3 +159,82 @@ def correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param):
         znew = get_Zblanc(lms)
         
     return znew
+
+
+
+def correct_Zagn(lm_tot,lz):
+    '''
+    Corrects the global gas metallicity with gradients from Belfiore+2017
+
+    Parameters
+    ----------
+    lm_tot : array of floats
+       Stellar mass of the galaxy (log10(M*/Msun)).
+    lz : array of floats
+       Cold gas metallicity, log10(Z_gas).
+     
+    Returns
+    -------
+    lzout : array of floats
+        Central metallicity
+    '''
+
+    lzout = np.copy(lz)
+    
+    # Numbers approximated from Fig. 3 in
+    # Belfiore+2017 (https://arxiv.org/pdf/1703.03813)
+    mask = (lm_tot>9.5) & (lm_tot<=10) & (lz>c.notnum)
+    lzout[mask] = lzout[mask] + 0.1
+
+    mask = (lm_tot>10.) & (lm_tot<=11) & (lz>c.notnum)
+    lzout[mask] = lzout[mask] + 0.2
+
+    return lzout
+
+
+def get_zgasagn(infile,cols,selection=None,inoh=False,
+                Z_correct_grad=False,lm_tot=None,
+                inputformat='hdf5',testing=False,verbose=False):
+    '''
+    Get the central gas metallicity as log10(Zgas=MZcold/Mcold)
+
+    Parameters
+    ----------
+    infile : list of strings
+        Input file names.
+    cols : list of integer (text file) or strings (hdf5 file)
+        Location of the (central) metallicity in input files
+    selection : list of integers
+        Indices of selected galaxies from input files
+    inoh : boolean
+        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
+    Z_correct_gradrection : boolean
+        If True, corrects Zgas_NLR using gradients from the literature
+    lm_tot : numpy array
+        Total mass of the galaxy to apply gradient corrections if needed
+    inputformat : string
+        Format of the input file: 'hdf5' or 'txt'.
+    testing : boolean
+      If True only run over few entries for testing purposes
+    verbose : boolean
+        If True print out messages    
+
+    Returns
+    -------
+    lzgas_agn : array of floats
+    '''
+    ncomp = len(cols)
+    data = io.read_data(infile,selection,inputformat=inputformat,
+                     params=cols,testing=testing,verbose=verbose)
+    if ncomp>1: # Add components
+        zz = np.sum(data, axis=0)
+    else:
+        zz = data
+
+    lzgas = get_lzgas(zz,inoh=inoh)
+
+    if Z_correct_grad:
+        lzgas = correct_Zagn(lm_tot,lzgas)
+
+    lzgas = st.ensure_2d(lzgas)
+    return lzgas

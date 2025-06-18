@@ -178,47 +178,37 @@ def get_Zgrid(zgrid_str):
     return nz,zgrid,lzgrid
 
 
-def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
-                       co_phot=1,imf_cut_phot=100,verbose=True):
-    '''
-    Get the interpolations for the emission lines,
-    using the tables
-    from Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)
-
+def read_gutkin16_grids(xid_phot, co_phot, imf_cut_phot):
+    """
+    Read the photoionisation model tables from Gutkin+16
+    into matrices per each value of nH.
+    
     Parameters
     ----------
-    lu : floats
-     U of the galaxies per component.
-    lnH : floats
-     ne of the galaxies per component (cm^-3).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z))
     xid_phot : float
        Dust-to-metal ratio
     co_phot : float
        C/O ratio
     imf_cut_phot : float
        Solar mass high limit for the IMF
-    verbose : boolean
-       If True print out messages
-      
+        
     Returns
     -------
-    nebline : array of floats
-       Line luminosity per component
-       Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
-    '''
+    emline_grid1 : matrix, shape (nZ_reduced,nU,nELines)
+        Grid for nH = 10
+    emline_grid2 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 100
+    emline_grid3 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 1000
+    emline_grid4 : matrix, shape (nZ_reduced,nU,nELines)
+        Grid for nH = 10000
+    """
     
     photmod = 'gutkin16'
 
     # Read line names
     line_names = c.line_names[photmod]
     nemline = len(line_names)
-
-    # Initialize the matrix to store the emission lines
-    ndat = lu.shape[1]
-    ncomp = lu.shape[0]
-    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
 
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
@@ -237,17 +227,17 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     nHbins = c.nH_bins[photmod]
     nHedges = np.array([np.log10(val) for val in nHbins])
     nnH = len(nHbins)
-        
+
     # Store the photoionisation model tables into matrices
     emline_grid1 = np.zeros((nzmet_reduced,nu,nemline))
     emline_grid2 = np.zeros((nzmet,nu,nemline))
     emline_grid3 = np.zeros((nzmet,nu,nemline))
-    emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))
+    emline_grid4 = np.zeros((nzmet_reduced,nu,nemline))    
     for k, zname in enumerate(zmet_str):
-        infile = get_zfile(zname,photmod=photmod)
-        io.check_file(infile,verbose=True)
+        infile = get_zfile(zname, photmod=photmod)
+        io.check_file(infile, verbose=True)
         ih = io.get_nheader(infile)
-
+        
         # Read all lines after header and extract columns
         data = np.loadtxt(infile, skiprows=ih)
         u = data[:, 0]          # log(Us)
@@ -256,24 +246,26 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         co = data[:, 3]         # (C/O)/(C/O)sol
         imf_cut = data[:, 4]    # mup
         emission_lines = data[:, 5:]  # All emission line data
-
+        
         # Create mask for matching conditions
         mask = (xid == xid_phot) & (co == co_phot) & (imf_cut == imf_cut_phot)
         filtered_indices = np.where(mask)[0]
-
+        
         # Process filtered data
         for idx in filtered_indices:
-            if nH[idx] not in nHbins: continue
-
+            if nH[idx] not in nHbins:
+                continue
+                
             # Find index for the read u value
             l = np.where(uedges == u[idx])[0]
-            if len(l) == 0: continue
-            l = l[0] 
+            if len(l) == 0:
+                continue
+            l = l[0]
             
             # Get emission line values
             em_values = emission_lines[idx]
-
-            # Determine grid and index based on nH value
+            
+            # Fill appropriate grid based on nH value
             if nH[idx] == 10:
                 kred = k_to_kred.get(k)
                 emline_grid1[kred, l, :] = em_values
@@ -284,6 +276,72 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
             elif nH[idx] == 10000:
                 kred = k_to_kred.get(k)
                 emline_grid4[kred, l, :] = em_values
+                
+    return emline_grid1, emline_grid2, emline_grid3, emline_grid4
+
+
+def get_lines_gutkin16(lu, lzgas, filenom, lnH=None,
+                       origin='sfr', verbose=True):
+    '''
+    Get emission line luminosities, using tables from
+    Gutkin et al. (2016) (https://arxiv.org/pdf/1607.06086.pdf)
+    Units: Lbolsun per unit SFR(Msun/yr) for 10^8yr, assuming Chabrier
+    
+    Parameters
+    ----------
+    lu : array of floats
+       Ionising parameter of the ionising region(s), log10(Us)
+    lzgas : array of floats
+       Metallicity of the ionising region(s), log10(Zgas)
+    filenome : string
+        Name of the file with relevant information    
+    lnH : array of floats (or None)
+       Hydrogen or electron density, log10(nH/cm^-3)
+    origin : string
+        Type of ionising region.    
+    verbose : boolean
+       If True print out messages
+      
+    Returns
+    -------
+    nebline : array of floats      
+    '''
+
+    # Read relevant constanst from file
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    photmod  = header.attrs['photmod_'+origin]
+    xid_phot = header.attrs['xid_'+origin]
+    co_phot  = header.attrs['co_'+origin]
+    imf_cut  = header.attrs['imf_cut_'+origin]
+    if lnH is None: # Get constant value
+        nH = header.attrs['nH_'+origin+'_cm3']
+        lnH = np.zeros(lu.shape); lnH.fill(np.log10(nH))
+    f.close()
+
+    if (photmod != 'gutkin16'):
+        if verbose:
+            print('STOP (gne_lines_gutkin16): Photoionisation model mismatch.')
+        return None
+
+    emline_grid1, emline_grid2, \
+        emline_grid3, emline_grid4 = read_gutkin16_grids(
+            xid_phot, co_phot, imf_cut)
+
+    # Initialize the matrix to store the emission lines
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nemline = emline_grid1.shape[2]
+    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
+
+    # Edges of Z, U and nH grids
+    zmet_str = c.zmet_str[photmod]
+    nzmet, zmets, zedges = get_Zgrid(zmet_str)
+    zmet_str_reduced = c.zmet_str_reduced[photmod]
+    nzmet_reduced, zmets_reduced, zredges = get_Zgrid(zmet_str_reduced)
+    uedges = c.lus_bins[photmod]
+    nHbins = c.nH_bins[photmod]
+    nHedges = np.array([np.log10(val) for val in nHbins])
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
@@ -313,9 +371,9 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
         nn = nHcomp[ind]
         nHd, inH = st.interpl_weights(nn,nHedges)
         if verbose:
-            print(comp,'<logUs>=',np.average(uu),
-                  '<logZ>=',np.average(zz),
-                  '<lognH>=',np.average(nn))        
+            print('Comp ',comp,': <logUs>=',np.average(uu),
+                  '; <logZ>=',np.average(zz),
+                  '; <lognH>=',np.average(nn))        
 
         c0,c1 = [np.zeros((ngal,nemline)) for i in range(2)]
 
@@ -331,40 +389,32 @@ def get_lines_gutkin16(lu, lnH, lzgas, xid_phot=0.3,
     return nebline
 
 
-def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
-                     alpha_phot=-1.7,verbose=True):
-    '''
-    Get the interpolations for the emission lines,
-    using the tables from Feltre+2016 (https://arxiv.org/pdf/1511.08217)
+def read_feltre16_grids(xid_phot, alpha_phot):
+    """
+    Read the photoionisation model tables from Gutkin+16
+    into matrices per each value of nH.
     
-    lnH : floats
-     ne of the galaxies per component (cm^-3).
-    lzgas : floats
-     Metallicity of the galaxies per component (log10(Z))
+    Parameters
+    ----------
     xid_phot : float
      Dust-to-metal ratio for the Feltre et. al. photoionisation model.
     alpha_phot : float
      Alpha value for the Feltre et. al. photoionisation model.
-    verbose : boolean
-      If True print out messages
-      
+        
     Returns
     -------
-    nebline : array of floats
-       Line luminosities per galaxy component.
-       Units: Lsun for L_AGN = 10^45 erg/s
-    '''
-
+    emline_grid1 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 100
+    emline_grid2 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 1000
+    emline_grid3 : matrix, shape (nZ,nU,nELines)
+        Grid for nH = 10000
+    """
     photmod = 'feltre16'
     
     # Read line names
     line_names = c.line_names[photmod]
     nemline = len(line_names)
-
-    # Initialize the matrix to store the emission lines
-    ndat = lu.shape[1]
-    ncomp = lu.shape[0]
-    nebline = np.zeros((ncomp,nemline,ndat))
 
     # Read grid of Zs
     zmet_str = c.zmet_str[photmod]
@@ -420,6 +470,66 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
                 emline_grid2[k, l, :] = em_values
             elif nH[idx] == 10000:
                 emline_grid3[k, l, :] = em_values
+    return emline_grid1, emline_grid2, emline_grid3
+
+
+def get_lines_feltre16(lu, lzgas, filenom, lnH=None,
+                       origin='NLR',verbose=True):
+    '''
+    Get emission line luminosities, using tables from
+    Feltre+2016 (https://arxiv.org/pdf/1511.08217)
+    Units: Lsun for L_AGN = 10^45 erg/s
+    
+    Parameters
+    ----------
+    lu : array of floats
+       Ionising parameter of the ionising region(s), log10(Us)
+    lzgas : array of floats
+       Metallicity of the ionising region(s), log10(Zgas)
+    filenom : string
+        Name of the file with relevant information    
+    lnH : array of floats (or None)
+       Hydrogen or electron density, log10(nH/cm^-3)
+    origin : string
+        Type of ionising region.    
+    verbose : boolean
+       If True print out messages
+      
+    Returns
+    -------
+    nebline : array of floats      
+    '''
+    # Read relevant constanst from file
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    photmod    = header.attrs['photmod_'+origin]
+    alpha_phot = header.attrs['alpha_'+origin]    
+    xid_phot   = header.attrs['xid_'+origin]
+    if lnH is None: # Get constant value
+        nH = header.attrs['nH_'+origin+'_cm3']
+        lnH = np.zeros(lu.shape); lnH.fill(np.log10(nH))
+    f.close()
+
+    if (photmod != 'feltre16'):
+        if verbose:
+            print('STOP (gne_lines_feltre16): Photoionisation model mismatch.')
+        return None
+    
+    emline_grid1, emline_grid2, emline_grid3 = read_feltre16_grids(
+            xid_phot, alpha_phot)
+
+    # Initialize the matrix to store the emission lines
+    ndat = lu.shape[1]
+    ncomp = lu.shape[0]
+    nemline = emline_grid1.shape[2]
+    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
+
+    # Edges of Z, U and nH grids
+    zmet_str = c.zmet_str[photmod]
+    nzmet, zmets, zedges = get_Zgrid(zmet_str)
+    uedges = c.lus_bins[photmod]
+    nHbins = c.nH_bins[photmod]
+    nHedges = np.array([np.log10(val) for val in nHbins])
 
     # Interpolate in all three grids: logUs, logZ, nH
     for comp in range(ncomp):
@@ -459,41 +569,36 @@ def get_lines_feltre16(lu, lnH, lzgas, xid_phot=0.5,
         c0[mask1,:] = int2_zu[mask1,:]; c1[mask1,:] = int3_zu[mask1,:]
         
         nebline[comp,:,ind] = c0*(1-nHd[:, np.newaxis]) + c1*nHd[:, np.newaxis]
-                        
+
     return nebline
 
 
-def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
-              co_phot=1,imf_cut_phot=100,alpha_phot=-1.7, verbose=True):
+def get_lines(lu, lzgas, filenom, lnH=None, origin='sfr',
+              photmod='gutkin16', verbose=True):
     '''
-    Get the emission lines
+    Get the emission line luminosity per ionising region.
+    Units depend on the photoionisation model.
 
     Parameters
     ----------
-    lu : floats
-       U of the galaxies per component.
-    lnH : floats
-       ne of the galaxies per component (cm^-3).
-    lzgas : floats
-       Metallicity of the galaxies per component (log10(Z))
+    lu : array of floats
+       Ionising parameter of the ionising region(s), log10(Us)
+    lzgas : array of floats
+       Metallicity of the ionising region(s), log10(Zgas)
+    filenome : string
+        Name of the file with relevant information    
+    lnH : array of floats (or None)
+       Hydrogen or electron density, log10(nH/cm^-3)
+    origin : string
+        Type of ionising region.    
     photomod : string
-       Name of the considered photoionisation model.
-    xid_phot : float
-       Dust-to-metal ratio for the photoionisation model
-    co_phot : float
-       C/O ratio  for the photoionisation model
-    imf_cut_phot : float
-       Solar mass high limit for the IMF  for the photoionisation model
-    alpha_phot : float
-       Alpha value for the AGN photoionisation model.
+       Name of the considered photoionisation model
     verbose : boolean
        If True print out messages
 
     Returns
     -------
     nebline : array of floats
-        Line luminosity per galaxy component, if relevant.
-        Units depend on the photoionisation model.
     '''
 
     if photmod not in c.photmods:
@@ -502,12 +607,10 @@ def get_lines(lu, lnH, lzgas, photmod='gutkin16',xid_phot=0.3,
             print('                Possible photmod= {}'.format(c.photmods))
         sys.exit()
     elif (photmod == 'gutkin16'):
-        nebline = get_lines_gutkin16(lu,lnH,lzgas,xid_phot=xid_phot,
-                                     co_phot=co_phot,imf_cut_phot=imf_cut_phot,
-                                     verbose=verbose)
+        nebline = get_lines_gutkin16(lu,lzgas, filenom, lnH=lnH,
+                                     origin=origin,verbose=verbose)
     elif (photmod == 'feltre16'):
-        nebline = get_lines_feltre16(lu,lnH,lzgas,xid_phot=xid_phot,
-                                   alpha_phot=alpha_phot,verbose=verbose)
-
+        nebline = get_lines_feltre16(lu,lzgas, filenom, lnH=lnH,
+                                     origin=origin,verbose=verbose)
     return nebline
 

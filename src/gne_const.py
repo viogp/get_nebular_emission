@@ -1,34 +1,42 @@
 import numpy as np
 
-notnum = -999.
+notnum    = -999.
 testlimit = 50
 
-mp   = 1.67e-27            # Proton mass, kg
-c    = 2.998e8             # Light velocity, m/s
-c_cm = 2.998e10            # Light velocity, cm/s
-planck = 4.135e-15*1.6e-12 # Planck constant, erg*s
-G = 4.3e-9 # Gravitational constant, km^2 Mpc Ms^-1 s^-2
-nH_gal = 100  # cm^-3
-
-zsun = 0.0134 # Asplund 2009
-zsunK20 = 0.014 # Kashino 2020
-ohsun = 8.69  # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
-
-Lbolsun = 3.826e33 # erg/s
-Msun    = 1.989e30 # kg
-pc      = 3.086e16 # m
-
-re2rs_exp = 1.678
+#-------------------Solar constants
+Lbolsun = 3.826e33  # erg/s
+Msun    = 1.989e30  # kg
+zsun = 0.0134       # Asplund 2009
+zsunK20 = 0.014     # Kashino 2020
+ohsun = 8.69        # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
+h_nul = 13.6        # Lyman limit h*nu(eV)
+parsec  = 3.085677581491367e+16 # m
 
 #--------------------------------------------
 #   Conversion factors:
 #--------------------------------------------
 kg_to_Msun= 1./Msun
-Mpc_to_cm = pc*1e8
-yr_to_s   = 365*24*60*60
+Mpc_to_cm = parsec*1e8
+yr_to_s   = 365.*24.*60.*60.
+kilo      = 1000.0
+mega      = 1000000.0
+giga      = 1000000000.0
+J2erg     = 1e7
+eV        = 1.602e-19   #J=kg*m^2*s**-2
 #--------------------------------------------
-boltzmann = 1.38e-23 * 1e4 * kg_to_Msun/(Mpc_to_cm**2) # Boltzmann constant, Mpc^2 Ms s^-2 K^-1
+G    = 6.6743e-11          # Gravitational constant, Nm^2/kg^2=m^3/kg/s^2
+mp   = 1.67e-27            # Proton mass, kg
+c    = 2.998e8             # Light velocity, m/s
+h    = 6.62607015e-34      # Planck constant, Js
+kB   = 1.380649e-23        # Boltzmann constant, J/K
 
+G_Ms = G*Msun/(kilo*kilo*parsec*mega) # 4.301e-9 km^2*Mpc/Msun/s^-2 
+c_cm = c*100.                         # Light velocity, cm/s
+h_erg= h*J2erg                        # Planck constant, erg s
+kB_Ms= kB/(Msun*(parsec*mega)**2)     # 7.29e-99 Mpc^2*Msun/s^2/K 
+
+re2hr_exp = 1.678
+#--------------------------------------------
 sigma_1Dprobs = [0.682689492137086,    # 1 sigma
                  0.954499736103642,    # 2 sigma
                  0.997300203936740,    # 3 sigma
@@ -52,12 +60,11 @@ inputformats = ['txt','hdf5']
 
 zeq = ['tremonti2004','tremonti2004b','leblanc']
 
-une_sfr_nH = ['kashino20']
-une_sfr_U  = ['kashino20', 'orsi14', 'panuzzo03_sfr']
+model_nH_sfr = ['kashino20']
+model_U_sfr  = ['kashino20', 'orsi14']
 
-une_agn_nH   = ['exponential']
-une_agn_spec = ['feltre16']
-une_agn_U    = ['panuzzo03']
+model_spec_agn = ['feltre16']
+model_U_agn    = ['panuzzo03']
 
 photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
@@ -98,11 +105,11 @@ phot_to_sfr_kenn = 9.85e52 # phot/s
 # Reescaled to Kennicut, it gives our number.
 
 #-------------------------------------------
-
-# Mean ratio between global cold gas density at different redshift for GP20
-
-med_to_low = 1.74 # 0.8 to 0
-high_to_low = 1.58 # 1.5 to 0
+#    Scalelength:
+#-------------------------------------------
+re2hr    = 1/1.68 # Cole+2000, Leroy+2021
+r502re   = 1.     # Lima Neto+1999, Wolf+2010, Huang+2017
+rvir2r50 = 0.03   # Huang+2017, Yang+2025
 
 #-------------------------------------------
 #    Atenuation:
@@ -155,7 +162,7 @@ def line_att_coef_func(z=0):
 #    AGNs:
 #-------------------------------------------
 
-AGNinputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
+Lagn_inputs = ['Lagn', 'acc_rate', 'acc_rates', 'radio_mode', 'quasar_mode', 'complete']
 
 # Griffin et. al 2019:
 alpha_adaf = 0.1 # Viscosity parameter for ADAFs
@@ -179,23 +186,15 @@ e_f_agn = 0.15
 kagn = 5.44e-4 
 kagn_exp = 0.597
 
-#Lagos et. al 2008:
-# 1e-4  # Efficiency of cold gas accretion onto the BH during gas cooling (1e-4 in Lagos et. al)
+# Typical temperature of ionising regions (Hirschmann+2017):
+temp_ionising = 10000  # K
 
-# Lacey et. al 2016
-epsilon_heat = 0.02 # BH heating efficienty 
-
-nH_AGN = 1000 # cm^-3
-radius_NLR = 0.001 # Mpc
-
-# From Osterbrock and Ferland: typical filling factor for NLR AGN
-eNGC1976 = 0.03
-
-#------------------------------------------
-
-# Relationship between epsilon and M and Z
-epsilon_a_sfr = -0.1633
-epsilon_b_sfr = 0.3776
+# Typical values from Osterbrock and Ferland, 2006 book:
+nH_sfr =       100   # cm^-3
+nH_NLR =      1000   # cm^-3
+epsilon_NLR = 0.01
+radius_NLR = 0.001   # Mpc
+alphaB = {5000: 4.54e-13, 10000: 2.59e-13, 20000: 1.43e-13}  #cm^3/s
 
 #------------------------------------------
 nH_bins = {
@@ -242,6 +241,11 @@ line_wavelength = {
                            6717,6731,1240,1548,1551,1640,1661,
                            1666,1883,1888,1907,1910])
     }
+
+# Limits in h*nu for the piecewise AGN spectral approximation
+agn_spec_limits = {
+    "feltre16" : np.array([0.1,5,1240])
+} 
 
 def coef_att_line_model_func(z=0):
     line_att_coef = line_att_coef_func(z)

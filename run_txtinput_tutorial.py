@@ -6,7 +6,7 @@ The input of the code are global galactic properties.
 The intrinsic luminosities can be passed through an attenuation model 
 to also get the predicted attenuated luminosities.
 
-@authors: expox7, viogp
+@authors: viogp, expox7
 """
 
 import src.gne_const as const
@@ -14,12 +14,16 @@ from src.gne import gne
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False    # If True: use only the first 50 elements
+testing = False   # If True: use only the first 50 elements
 run_code = True
-make_plots = True
+plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
+
+###############################################################
+### OUTPUT FILES: Default output path is output/
+outpath = None
 
 ###############################################################
 ### INPUT FILES: given as a root, ending and number of subvolumes
@@ -44,9 +48,6 @@ mp     = 9.35e8
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'txt'
 
-### OUTPUT PATH (Default: output/)
-outpath = None  
-
 ### UNITS: 
 # units_h0=False if input units [Mass]=Msun, [Radius]=Mpc (default)
 # units_h0=True  if input units [Mass]=Msun/h, [Radius]=Mpc/h
@@ -65,8 +66,8 @@ units_L40h2=False
 # All available models can be seen in gne_const module.
 # NEBULAR model connecting global properties to ionising properties:
 # nH: number density of Hydrogen (or electrons); U: ionising parameter
-une_sfr_nH='kashino20'
-une_sfr_U='kashino20' #'orsi14'   
+model_nH_sfr='kashino20'
+model_U_sfr='kashino20' #'orsi14'   
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
@@ -109,62 +110,73 @@ IMF = ['Kennicut','Kennicut']
 # PHOTOIONIZATION model for AGN NLR to get line luminosities
 photmod_agn = 'feltre16'
 
-# Connecting global properties to AGN NLR characteristics:
-# nH: number density calculated assuming a profile for the gas ('exponential')
-#     and given a radius for the component.
-#     This is used to calculate the filling factor, using agn_nH_params.
-#     Ideally the scale radius of the bulge and/or disk ('rscale') is given,
-#     but otherwise this can be estimated from either the effective or
-#     half-mass radius ('reff') or simply the radius of the component ('r').
-#     If une_agn_nH=None, a constant filling factor will be assumed.
-une_agn_nH   = ['exponential','reff'] 
-# If une_age_nH is not None, agn_nH_params should specify
-# the location of the cold gas mass (Mg) and a radius.
-# agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
-agn_nH_params = [6,11,19,12]
-# spec: model for the spectral distribution of the AGN
-une_agn_spec = 'feltre16'
-# U: model to calculate the ionising parameter
-une_agn_U    = 'panuzzo03'
+# Columns to read either the central or global metallicity
+# If several components are given, they will be added
+Zgas_NLR = [4,5]
+# Z_correct_grad 
+#    False (default) if the central gas metallicity has been provided
+#    True to correct a global metallicity with the gradients from Belfiore+2017
+Z_correct_grad = True
 
-# Z_central=True indicates that the given Zgas is that for the NLR or
-#                at the center of the gal.
-# Z_central=False indicates that the given Zgas is not central,
-#           Z-gradients from the literature (f(M*_gal)) are used to estimate
-#           the Zgas at the galactic center
-Z_central=False
+# Connecting global properties to AGN NLR characteristics:
+# Model to calculate the ionising parameter, U
+model_U_agn    = 'panuzzo03'
+
+# Panuzzo's model requires the calculation of the filling factor
+# epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
+# n_NLR, T_NLR and r_NLR are taken as constants.
+# mgas_r is a list of lists with either the column number
+# for each parameters or the name of the HDF5 variable.
+# Each list can correspond to a different component:
+# mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
+#mgas_r = None ###here to be tested
+#mgas_r = [[19,12]]; mgasr_type=['sphere'] ###here To be tested
+mgas_r = [[6,11],[9,12]]
+
+# Type of component: 'disc', 'sphere' or None
+mgasr_type = ['disc','sphere'] ###here do I need this?
+
+# Type of radius input, per component:
+# 0: scalelength;
+# 1: effective radius, Re
+# 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
+# 3: radius of the galaxy or host halo
+r_type = [1,1]
+
+# spec: model for the spectral distribution of the AGN
+model_spec_agn = 'feltre16'
 
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
-# The way of obtaining Lagn is indicated in AGNinputs.
+# The way of obtaining Lagn is indicated in Lagn_inputs.
 # The calcultions require different black hole (BH) parameters.
-# AGNinputs='Lagn' if Lagn in input
+# Lagn_inputs='Lagn' if Lagn in input
 #            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
 #            Lagn_params=[Lagn, Mbh] 
-# AGNinputs='Mdot_hh' for a calculation from
+# Lagn_inputs='Mdot_hh' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
-# AGNinputs='Mdot_stb_hh' for a calculation from
+# Lagn_inputs='Mdot_stb_hh' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
-# AGNinputs='radio_mode' for a calculation from
+# Lagn_inputs='radio_mode' for a calculation from
 #            the mass of the hot gas, Mhot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
-# AGNinputs='quasar_mode' for a calculation from
+# Lagn_inputs='quasar_mode' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
 #            the circular velocity of the bulge, vbulge,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mbh,(Mspin)]
-# AGNinputs='complete' for a calculation from
+# Lagn_inputs='complete' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
 #            the circular velocity of the bulge, vbulge,
@@ -172,12 +184,12 @@ Z_central=False
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-AGNinputs = 'Lagn'; Lagn_params=[17,21]
-#AGNinputs = 'Mdot_hh'; Lagn_params=[16,8,21]
-#AGNinputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
-#AGNinputs = 'radio_mode'; Lagn_params=[9,8]
-#AGNinputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
-#AGNinputs = 'complete'; Lagn_params=[25,12,14,9,21]
+Lagn_inputs = 'Lagn'; Lagn_params=[17,21]
+#Lagn_inputs = 'Mdot_hh'; Lagn_params=[16,8,21]
+#Lagn_inputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
+#Lagn_inputs = 'radio_mode'; Lagn_params=[9,8]
+#Lagn_inputs = 'quasar_mode'; Lagn_params=[25,12,14,21]
+#Lagn_inputs = 'complete'; Lagn_params=[25,12,14,9,21]
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -198,7 +210,6 @@ root_z0 = None
 # Continuum and line attenuation calculation. If this option is selected 
     # the output file will have intrinsic AND attenuated values of
     # luminosity for the emission lines.
-
 # att=True to calculate the dust attenuation; False, otherwise
 att = False
     
@@ -246,7 +257,7 @@ extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
 # The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
 cutcols = [7]
 # List of minimum values. None for no inferior limit.
-mincuts = [20*mp]
+mincuts = [21*mp]
 # List of maximum values. None for no superior limit.
 maxcuts = [None]
 
@@ -255,6 +266,7 @@ maxcuts = [None]
 #############    Run the code and/or make plots   ################
 ##################################################################
 
+verbose = True
 for ivol in range(subvols):
     infile = root+str(ivol)+endf
 
@@ -266,22 +278,23 @@ for ivol in range(subvols):
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
-            une_sfr_nH=une_sfr_nH, une_sfr_U=une_sfr_U,
+            model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,une_agn_nH=une_agn_nH,une_agn_spec=une_agn_spec,
-            une_agn_U=une_agn_U,photmod_agn=photmod_agn,
-            agn_nH_params=agn_nH_params,
-            AGNinputs=AGNinputs, Lagn_params=Lagn_params,
-            Z_central=Z_central,
+            AGN=AGN,photmod_agn=photmod_agn,
+            Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
+            model_U_agn=model_U_agn,           
+            mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
+            model_spec_agn=model_spec_agn,
+            Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
-            testing=testing,verbose=True)
+            testing=testing,verbose=verbose)
 
-if make_plots:  # Make test plots
-    make_testplots(root,snapshot,subvols=subvols,
-                   outpath=outpath,verbose=True)
+if plot_tests:  # Make test plots
+    make_testplots(root,snapshot,subvols=subvols,gridplots=False,
+                   outpath=outpath,verbose=verbose)

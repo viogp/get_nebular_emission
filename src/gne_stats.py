@@ -1,17 +1,14 @@
 #! /usr/bin/env python
-
 """
 Some useful functions
   percentiles(xbins,xarray,yarray,per): obtains percentiles of yarray in xbins
   convert_to_stdev(grid): normalised a grid to cumulative standard deviations.
   n_gt_x(x,array): returns the number of elements in the array larger than each of the values in x.
   chi2(obs,model,err): returns the chi^2 for a model
-NOTE: this module requires the numpy and scipy libraries to be
-      available for import!
+ ...
 """
 import sys
 import numpy as np
-from scipy.ndimage import gaussian_filter
 import src.gne_const as c
 
 def percentiles(val, data, weights=None):
@@ -111,6 +108,13 @@ def perc_2arrays(xedges, xarray, yarray, val, weights=None, nmin=None):
                 apercentile[i] = percentiles(val, data, weights=ws)
 
     return apercentile
+
+
+def ensure_2d(arr, axis=0):
+    if len(arr.shape) == 1:
+        # If 1D array, expand along the specified axis
+        return np.expand_dims(arr, axis=axis)
+    return arr
 
 
 def av_2arrays(xbins, xarray, yarray, weights, nmin):
@@ -418,3 +422,88 @@ def get_err2Pk(k, Pk, dk, N, vol):
     err2Pk = norm * (Pk + vol / N) ** 2
 
     return err2Pk
+
+
+def components2tot(comps, log10input=True):
+    '''
+    Calculate the total property as log10(sum(comps)),
+    from provided information on components,
+    if log10input, otherwise return sum(comps).
+
+    Parameters
+    ----------
+    comps : array of floats
+        Array with properties
+    log10input: boolean
+        True if input components as log10(prop)
+    
+    Returns
+    -------
+    log_tot : array of floats
+        Total log10(sum(comps))
+    '''
+    ncomp = comps.shape[1]
+    if ncomp > 1:
+        log_tot = np.zeros(comps.shape[0]); log_tot.fill(c.notnum)
+        ptot = np.zeros(log_tot.shape)
+        for ii in range(ncomp):
+            props = np.copy(comps[:,ii])
+            mask = props>c.notnum
+            if log10input:
+                ptot[mask] = ptot[mask] + 10**props[mask]
+            else:
+                ptot[mask] = ptot[mask] + props[mask]
+
+        if log10input:
+            mask = ptot>0
+            log_tot[mask] = np.log10(ptot[mask])
+        else:
+            log_tot = ptot
+    else:
+        log_tot = np.copy(comps)
+        
+    return log_tot
+
+
+def romberg(f, a, b, max_steps=10, acc=1e-8):
+    """
+    Calculates the integral of a function using Romberg integration.
+    (Adapted from Wikipedia)
+    
+    Args:
+        f: The function to integrate.
+        a: Lower limit of integration.
+        b: Upper limit of integration.
+        max_steps: Maximum number of steps.
+        acc: Desired accuracy.
+
+    Returns:
+        The approximate value of the integral.
+    """
+    R1, R2 = [0] * max_steps, [0] * max_steps  # Buffers for storing rows
+    Rp, Rc = R1, R2  # Pointers to previous and current rows
+
+    h = b - a  # Step size
+    Rp[0] = 0.5 * h * (f(a) + f(b))  # First trapezoidal step
+
+    for i in range(1, max_steps+1):
+        h /= 2.0
+
+        # Compute Rc[0]=R(i,0)
+        ep = 2 ** (i - 1); sumf = 0.
+        for k in range(1, ep + 1):
+            sumf += f(a + (2*k - 1)*h)
+        Rc[0] = 0.5*Rp[0] + h*sumf  
+
+        # Compute Rc[j]=R(i,j)
+        for j in range(1, i + 1):
+            m4 = 4**j
+            Rc[j] = (m4*Rc[j - 1] - Rp[j - 1])/(m4 - 1)  
+
+        # Stop the calculation if the desired accuracy has been achieved
+        if i > 1 and abs(Rp[i - 1] - Rc[i]) < acc:
+            return Rc[i]
+
+        # Swap Rn and Rc for next iteration
+        Rp, Rc = Rc, Rp
+    return Rp[max_steps]  # Return our best guess

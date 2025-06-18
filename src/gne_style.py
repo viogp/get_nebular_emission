@@ -8,7 +8,7 @@ style1 = {
     'lines.antialiased': True,
 
     # Font
-    'font.size': 24.0,
+    'font.size': 32.0,
     'font.family': 'sans-serif',
 
     # Axes

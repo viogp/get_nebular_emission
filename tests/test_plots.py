@@ -11,6 +11,15 @@ import src.gne_plots as plt
 ex_root = 'output/iz61/GP20_31p25kpc_z0_example_vol'
 
 class TestPredict(TestCase):
+    def test_contour2Dsigma(self):
+        levels,colors = plt.contour2Dsigma()
+        assert_allclose(levels[1:],c.sigma_2Dprobs,rtol=0.01)
+        self.assertEqual(colors[0][-1],1.0)
+
+        nl=3
+        levels,colors = plt.contour2Dsigma(n_levels=nl)
+        assert_allclose(levels[1:],c.sigma_2Dprobs[0:nl],rtol=0.01)
+        
     def test_get_obs_bpt(self):
         z=0.1
         valx,valy,obsdata=plt.get_obs_bpt(z,'NII')

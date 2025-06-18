@@ -6,22 +6,6 @@ import numpy as np
 import src.gne_const as c
 from src.gne_io import read_data
 
-def bursttobulge(lms,Lagn_param):
-    '''
-    Changes the bulge component of the stellar mass from the mass of the starburst
-    to the total mass of the bulge.
-    lms : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    Lagn_params : floats
-     Parameters to calculate the AGN emission. 
-     The last one is always the stellar mass of the bulge.
-    '''
-    ind = np.where(Lagn_param[-1]>0)
-
-    lms[:,1] = c.notnum
-    lms[:,1][ind] = np.log10(Lagn_param[-1][ind])
-
-
 def get_Ledd(Mbh): # Eddington luminosity
     '''
     Calculate the Eddington luminosity for a black hole of mass Mbh,
@@ -203,10 +187,9 @@ def epsilon_td(spin):
     return epsilon_td
 
 
-
 def Rsch(Mbh):
     '''
-    Given the mass of the black hole, it calculates the Schwarzschild radius.
+    Schwarzschild radius (Mpc) given the mass of the black hole (Msun)
 
     Parameters
     ----------
@@ -217,12 +200,13 @@ def Rsch(Mbh):
     -------
     Rs : floats
     '''
-    
-    Rs = 2*c.G*Mbh/(c.c_cm**2) * 1e10 * 3.086e19 #km
+
+    Mbh_kg = Mbh*c.Msun
+    Rs = 2*c.G*Mbh_kg/(c.c**2)/(c.mega*c.parsec)
     return Rs
 
 
-def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
+def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
              h0=None,units_h0=False,units_Gyr=False,units_L40h2=False,
              kagn=c.kagn,kagn_exp=c.kagn_exp,testing=False,verbose=True):
     '''
@@ -238,7 +222,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
         Format of the input file.
     params : array of strings
         Names of the parameters to calculate the AGN emission. 
-    AGNinputs : string
+    Lagn_inputs : string
         Type of calculation to obtain Lagn
     units_h0: boolean
         True if input units with h
@@ -265,13 +249,13 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
                      params=params,
                      testing=testing,verbose=verbose)
     
-    if AGNinputs=='Lagn':
+    if Lagn_inputs=='Lagn':
         Lagn = vals[0]
         if units_L40h2:
             Lagn = Lagn*1e40/h0/h0
         return Lagn # erg/s
     
-    elif AGNinputs=='Mdot_hh':
+    elif Lagn_inputs=='Mdot_hh':
         Mdot = vals[0]
         Mbh = vals[1]
         if units_h0:
@@ -287,7 +271,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
 
-    elif AGNinputs=='Mdot_stb_hh':
+    elif Lagn_inputs=='Mdot_stb_hh':
         Mdot = vals[0] + vals[1]
         Mbh = vals[2]
         if units_h0:
@@ -303,7 +287,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
 
-    elif AGNinputs=='radio_mode':
+    elif Lagn_inputs=='radio_mode':
         Mhot = vals[0]
         Mbh = vals[1]
         if units_h0:
@@ -322,7 +306,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
             
-    elif AGNinputs=='quasar_mode':
+    elif Lagn_inputs=='quasar_mode':
         M_b = vals[0]
         r_b = vals[1]
         v_b = vals[2]
@@ -342,7 +326,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
             Lagn = get_Lagn_H14(Mdot,Mbh)
             return Lagn # erg/s
 
-    elif AGNinputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
+    elif Lagn_inputs=='complete': #Mbulg, rbulg, vbulg, Mhot, Mbh
         M_b = vals[0]
         r_b = vals[1]
         v_b = vals[2]
@@ -404,5 +388,5 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',AGNinputs='Lagn',
     # logLagn = np.log10(Lagn)
     # print(len(n1),len(n2),len(n3),len(n4))
     # print(np.mean(logLagn[n1]),np.mean(logLagn[n2]),np.mean(logLagn[n3]))
-        
+    
     return Lagn # erg s^-1
