@@ -1,8 +1,6 @@
 #python3 -m unittest tests/test_model_UnH.py 
 
 from unittest import TestCase
-import numpy as np
-
 import src.gne_const as c
 import src.gne_model_UnH as unh
 
@@ -22,12 +20,12 @@ class TestPredict(TestCase):
     #    vals = unh.get_Q_agn(Lagn,-1.7)
     #    np.testing.assert_allclose(vals,expected,atol=atol)
 
-    #def test_get_U_panuzzo(self):
-    #    atol = 1e-7
-    #    Q = np.array([1e50])
-    #    expected = Lagn
-    #    vals = unh.get_Q_agn(Lagn,-1.7)
-    #    np.testing.assert_allclose(vals,expected,atol=atol)
-        
+    def test_get_U_panuzzo(self):
+        atol = 1e-7
+        Q = np.array([1e50])
+        expected = Lagn
+        vals = unh.get_Q_agn(Lagn,-1.7)
+        np.testing.assert_allclose(vals,expected,atol=atol)
+ 
 if __name__ == '__main__':
     unittest.main()

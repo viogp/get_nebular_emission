@@ -115,6 +115,16 @@ class TestPredict(unittest.TestCase):
         val = st.romberg(func,0,1)
         self.assertAlmostEqual(val, expected)        
 
+
+    def test_ensure_2d(self):
+        a = np.zeros(3)
+        b = st.ensure_2d(a)
+        self.assertEqual(np.shape(b),(1,3))        
+        b = st.ensure_2d(a,axis=1)
+        self.assertEqual(np.shape(b),(3,1))        
+        a = np.zeros((2,3))
+        b = st.ensure_2d(a)
+        self.assertEqual(np.shape(b),(2,3))        
         
 if __name__ == '__main__':
     unittest.main()

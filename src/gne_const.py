@@ -9,7 +9,7 @@ Msun    = 1.989e30  # kg
 zsun = 0.0134       # Asplund 2009
 zsunK20 = 0.014     # Kashino 2020
 ohsun = 8.69        # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
-
+h_nul = 13.6        # Lyman limit h*nu(eV)
 parsec  = 3.085677581491367e+16 # m
 
 #--------------------------------------------
@@ -22,21 +22,21 @@ kilo      = 1000.0
 mega      = 1000000.0
 giga      = 1000000000.0
 J2erg     = 1e7
+eV        = 1.602e-19   #J=kg*m^2*s**-2
 #--------------------------------------------
-
 G    = 6.6743e-11          # Gravitational constant, Nm^2/kg^2=m^3/kg/s^2
 mp   = 1.67e-27            # Proton mass, kg
 c    = 2.998e8             # Light velocity, m/s
-h    = 6.62607015e-34      # Planck constant, Js 
+h    = 6.62607015e-34      # Planck constant, Js
 kB   = 1.380649e-23        # Boltzmann constant, J/K
 
 G_Ms = G*Msun/(kilo*kilo*parsec*mega) # 4.301e-9 km^2*Mpc/Msun/s^-2 
-c_cm = 2.998e10                       # Light velocity, cm/s
+c_cm = c*100.                         # Light velocity, cm/s
 h_erg= h*J2erg                        # Planck constant, erg s
 kB_Ms= kB/(Msun*(parsec*mega)**2)     # 7.29e-99 Mpc^2*Msun/s^2/K 
 
 re2hr_exp = 1.678
-
+#--------------------------------------------
 sigma_1Dprobs = [0.682689492137086,    # 1 sigma
                  0.954499736103642,    # 2 sigma
                  0.997300203936740,    # 3 sigma
@@ -105,11 +105,11 @@ phot_to_sfr_kenn = 9.85e52 # phot/s
 # Reescaled to Kennicut, it gives our number.
 
 #-------------------------------------------
-
-# Mean ratio between global cold gas density at different redshift for GP20
-
-med_to_low = 1.74 # 0.8 to 0
-high_to_low = 1.58 # 1.5 to 0
+#    Scalelength:
+#-------------------------------------------
+re2hr    = 1/1.68 # Cole+2000, Leroy+2021
+r502re   = 1.     # Lima Neto+1999, Wolf+2010, Huang+2017
+rvir2r50 = 0.03   # Huang+2017, Yang+2025
 
 #-------------------------------------------
 #    Atenuation:
@@ -242,9 +242,9 @@ line_wavelength = {
                            1666,1883,1888,1907,1910])
     }
 
-# Wavelenghts in \AA for the piecewise AGN spectral approximation
+# Limits in h*nu for the piecewise AGN spectral approximation
 agn_spec_limits = {
-    "feltre16" : np.array([0.001,0.25,10,912])
+    "feltre16" : np.array([0.1,5,1240])
 } 
 
 def coef_att_line_model_func(z=0):

@@ -939,7 +939,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     for ivol in range(subvols):
         filenom = root+str(ivol)+'.hdf5' #; print(filenom); exit()
         f = h5py.File(filenom, 'r'); header = f['header']
-        
+
         # Read information from file
         lms1 = f['data/lms'][:]
         lzsfr1 = f['sfr_data/lz_sfr'][:]
@@ -953,6 +953,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                 epsilon_is_constant = True
                 epsilon1 = header.attrs['epsilon_NLR']
             else:
+                epsilon_is_constant = False
                 epsilon1 = f['agn_data/epsilon_NLR'][:]
         f.close()
     
@@ -975,10 +976,9 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                 Lagn = np.append(Lagn,Lagn1,axis=0)
                 if not epsilon_is_constant:
                     epsilon = np.append(epsilon,epsilon1,axis=0)
+                else:
+                    epsilon = np.zeros(Lagn.shape); epsilon.fill(epsilon1)
 
-        if epsilon_is_constant:
-            epsilon = np.zeros(Lagn.shape); epsilon.fill(epsilon1)                   
-                
         # Check number of galaxies within model limits
         if (len(lusfr) != len(lzsfr)):
             print('WARNING plots.uzn, SFR: different length arrays U and Z')
@@ -1011,11 +1011,6 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                                (z>=zamin) & (z<=zamax))
                 ina[i] = ina[i] + np.shape(ind)[1]
 
-                #mask = (epsilon[:] > c.notnum)
-                #nn = epsilon[mask]            
-                ##ind = np.where((nn>=nmin) & (nn<=nmax))
-                #inna[i] = inna[i] + np.shape(nn)[0]        
-
     # Plot per component U versus Z
     proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
     if AGN:
@@ -1026,7 +1021,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     if AGN:
         leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
                 
-    ## Plot per component nH (or epsilon) versus M* (or Lagn)
+    ## Plot per component nH versus M* (or Lagn)
     #proxies, labels = plot_comp_quartiles(axn, lms, lnsfr,
     #                                      min_Ms, max_Ms, tots, inns)
     #if AGN:
@@ -1035,7 +1030,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     #    col[mask] = np.log10(Lagn[mask,0])
     #    lLagn = np.repeat(col[:, np.newaxis], nacomp, axis=1)
     #
-    #    aproxies, alabels = plot_comp_quartiles(axna, lLagn, epsilon,
+    #    aproxies, alabels = plot_comp_quartiles(axna, lLagn, lnagn,
     #                                            min_Lbol, max_Lbol, tota, inna)
 
     # Legend for nH plots
@@ -1385,6 +1380,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
         SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
         
+        # Read AGN information if it exists
         if AGN:
             # Read AGN information from file
             lu_agn = f['agn_data/lu_agn'][:,0]
@@ -1560,7 +1556,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
 
 
 def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
-                   xid_agn=0.5,alpha_agn=-1.7,verbose=True):
+                   xid_NLR=0.5,alpha_NLR=-1.7,verbose=True):
     '''
     Make plots for photoionisation tables
     
@@ -1575,7 +1571,7 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
                                      co=co_sfr,imf_cut=imf_cut_sfr,
                                      verbose=verbose)
     grids_agn = plot_model_bpt_grids(photmod='feltre16',
-                                     xid=xid_agn,alpha=alpha_agn,
+                                     xid=xid_NLR,alpha=alpha_NLR,
                                      verbose=verbose)
     
     return

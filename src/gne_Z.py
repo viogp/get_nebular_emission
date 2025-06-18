@@ -32,13 +32,11 @@ def get_lzgas(zz,inoh=False):
         lzgas[ind] = np.log10(zz[ind])
 
     lzgas = st.ensure_2d(lzgas)
-        
     return lzgas
 
 
 def get_Ztremonti(logM,logZ,Lagn_param):
-    # Ms and Z scale relation from Tremonti et. al. 2004
-    
+    # Ms and Z scale relation from Tremonti et. al. 2004    
     try:
         if logZ.shape[1] > 1:
             if Lagn_param[-1][0] != None:
@@ -239,5 +237,4 @@ def get_zgasagn(infile,cols,selection=None,inoh=False,
         lzgas = correct_Zagn(lm_tot,lzgas)
 
     lzgas = st.ensure_2d(lzgas)
-
     return lzgas

@@ -1,5 +1,5 @@
 """
-.. Moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
+.. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 .. contributions:: Olivia Vidal <ovive.pro@gmail.com>
 .. contributions:: Julen Expósito-Márquez <expox7@gmail.com>
 """
@@ -599,7 +599,7 @@ def read_sfrdata(infile, cols, cut, inputformat='hdf5',
 
 
 def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
-                   testing=False, verbose=True):    
+                 testing=False, verbose=True):    
     '''
     Read input Mgas and scalelenght for each component
     
@@ -659,12 +659,16 @@ def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
     for i in range(ncomp):
         outm[i,:] = mgas[i,selection]
         outr[i,:] = hr[i,selection]
+
     return outm, outr        
+
 
           
 def get_mgas_hr(infile,cols,r_type,selection,
-                   h0=None,units_h0=False,inputformat='hdf5',
-                   testing=False,verbose=False):
+                h0=None,units_h0=False,
+                re2hr=c.re2hr,r502re=c.r502re,rvir2r50=c.rvir2r50,
+                inputformat='hdf5',
+                testing=False,verbose=False):
     '''
     Get Mgas and scalelength in the adecuate units.
 
@@ -679,9 +683,18 @@ def get_mgas_hr(infile,cols,r_type,selection,
     selection : array of integers
        List of indexes of the selected galaxies from the samples.
     h0 : float
-        Hubble constant divided by 100 (only needed if units_h0 is True)
+       Hubble constant divided by 100 (only needed if units_h0 is True)
     units_h0: boolean
-        True if input units with h    
+       True if input units with h
+    re2hr: float
+       Constant, a, to get the scalength, hr, from
+       an effective radius (3D), Re, as hr=a*Re
+    r502re: float
+       Constant, a, to get the effective radius (3D), Re, from
+       a half-mass(light) radius (2D), R50, as Re=a*R50
+    rvir2r50: float
+       Constant, a, to get the half-mass(light) radius (2D), R50, from
+       the halo radius, Rvir, as R50=a*Rvir
     inputformat : string
        Format of the input file.
     testing : boolean
@@ -708,8 +721,22 @@ def get_mgas_hr(infile,cols,r_type,selection,
 
     # Check that rtype is adequate
     ncomp = np.shape(outr)[0]
-    if (min(r_type)<0 or max(r_type)>2 or len(r_type)!=ncomp):
-        print('WARNING! Input r_type should be 0, 1 or 2, per component.')
+    if (min(r_type)<0 or max(r_type)>3 or len(r_type)!=ncomp):
+        print('WARNING! Input r_type should be 0, 1, 2 or 3, per component.')
+
+    # Correct scalelenght for each component
+    for i in range(ncomp):
+        if r_type[i] == 1:
+            # Get the scalelenght from an effective (2D, projected) radius
+            outr[i,:] = re2hr*hr[i,:]
+        elif r_type[i] == 2:
+            # Get the scalelenght from the half-mass(light) 3D radius
+            outr[i,:] = re2hr*r502re*hr[i,:]
+        elif r_type[i] == 3:
+            # Get the scalelenght from the radius of the halo
+            outr[i,:] = re2hr*r502re*rvir2r50*hr[i,:]
+
+    return outm, outr
 
     # Assuming an exponential profile, get the scalelenght if not provided
     for i in range(ncomp):
@@ -722,7 +749,6 @@ def get_mgas_hr(infile,cols,r_type,selection,
 
     return outm, outr
 
-    
 
 def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
                nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
@@ -778,7 +804,8 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
 
         if extra_param[0][0] != None:
             for i in range(len(extra_param)):
-                gdat.create_dataset(extra_params_names[i], data=extra_param[i][:,None], maxshape=(None,None))
+                gdat.create_dataset(extra_params_names[i], data =\
+                                    extra_param[i][:,None], maxshape=(None,None))
                 if extra_params_labels:
                     gdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
 
@@ -802,19 +829,22 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
             if fluxes_sfr.any():
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
                                      data=fluxes_sfr[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = \
+                    'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_sfr_att.any():
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux_att', 
                                      data=fluxes_sfr_att[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = \
+                    'Lines units: egr s^-1 cm^-2'
 
             
             if nebline_sfr_att.any():
                 if nebline_sfr_att[0,i,0] > 0:
                     hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
                                          data=nebline_sfr_att[:,i], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = \
+                        'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
     
     return 
 
@@ -831,13 +861,11 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
     Parameters
     ----------
     filenom : string
-      Name of the output file.
+       Name of the output file.
     Lagn : numpy array
-        Bolometric luminosity (erg/s)
+       Bolometric luminosity (erg/s)
     lu_agn : floats
      U of the galaxies per component.
-    lnH_agn : floats
-     ne of the galaxies per component (cm^-3).
     lzgas_agn : floats
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_agn : array of floats
@@ -845,7 +873,7 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
     nebline_agn_att : array of floats
        Dust attenuated luminosities (erg/s)
     '''
-    
+
     # Read information on models
     f = h5py.File(filenom, 'r')   
     header = f['header']
@@ -861,35 +889,40 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
         
         hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
-    
+
         hfdat.create_dataset('lz_agn', data=lzgas_agn, maxshape=(None,None))
         hfdat['lz_agn'].dims[0].label = 'log10(Z)'
 
         if epsilon_agn is not None:
-            hfdat.create_dataset('epsilon_agn', data=epsilon_agn, maxshape=(None,None))
-            hfdat['epsilon_agn'].dims[0].label = 'NLRs volume filling factor (dimensionless)'
+            hfdat.create_dataset('epsilon_NLR', data=epsilon_agn, maxshape=(None))
+            hfdat['epsilon_NLR'].dims[0].label = \
+                'AGN NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
                                  data=nebline_agn[0,i][None,:], maxshape=(None,None))
-            hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = 'Lines units: egr s^-1'
+            hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
+                'Lines units: egr s^-1'
             
             if fluxes_agn.any():
                 hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
                                      data=fluxes_agn[0,i][None,:], maxshape=(None,None))
-                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
+                    'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_agn_att.any():
                 if fluxes_agn_att[0,i,0] >= 0:
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
                                          data=fluxes_agn_att[0,i][None,:], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = 'Lines units: egr s^-1 cm^-2'
+                    hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = \
+                        'Lines units: egr s^-1 cm^-2'
             
             if nebline_agn_att.any():
                 if nebline_agn_att[0,i,0] >= 0:
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
                                          data=nebline_agn_att[0,i][None,:], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = 'Lines units: egr s^-1'
+                    hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = \
+                        'Lines units: egr s^-1'
 
     return 
 

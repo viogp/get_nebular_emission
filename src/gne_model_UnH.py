@@ -226,89 +226,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
         
         return n
 
-
-def gamma_gas_func():
-    '''
-    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    gamma_gas = 10 #km s^-1, Lagos et al. 2011    
-    return gamma_gas
-
-
-def gamma_star_func(h_star,den_star):
-    '''
-    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
     
-    Parameters
-    ----------
-    h_star : float
-     Stellar scaleheight.
-    den_star : float
-     Stellar surface density.
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    
-    gamma_star = np.sqrt(np.pi*c.G_Ms*h_star*den_star) # GALFORM  ###here check units
-    return gamma_star
-    
-
-    
-def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
-    '''
-    Calculate the particle density at a distance x from the center,
-    given the mass of a galaxy (component) and the effective radius
-
-    Parameters
-    ----------
-    x : floats
-        Distance to the center in which surface density is going to be calculated (Mpc).
-    Ms : floats
-      Stellar mass of the galaxy (Msun).
-    Mg : floats
-      Cold gas mass of the galaxy (Msun).
-    r_hm : floats
-      Half-mass radius of the galaxy (Mpc)
-    T : float
-     Typical temperature of ionizing regions.
-    profile : string
-      Assumed density profile form for the surface density.
-    verbose : boolean
-      If True print out messages.
-     
-    Returns
-    -------
-    n : floats
-    '''
-
-    ###here to be checked: R50 vs Reff???
-    reff = c.halfmass_to_reff*r_hm
-    
-    den_gas = surface_density(x,M,reff,profile=profile,verbose=verbose)
-
-    ###here Julen's version
-    h_star = c.reff_to_scale_high*reff
-    den_star = surface_density(x,Ms,h_star,profile=profile,verbose=verbose)
-    gamma_gas = gamma_gas_func()
-    gamma_star = gamma_star_func(h_star,den_star)
-    Pext = 0.5*np.pi*c.G_Ms*den_gas*(den_gas + (gamma_gas/gamma_star)*den_star) * 1e10/(c.Mpc_to_cm**2)
-    ###here end
-    
-    ###here New to be checked: do I need the star commponent?
-    #Pext = 0.5*np.pi*c.G_Ms*den_gas**2 * 1e10/(c.Mpc_to_cm**2) ###here check units
-    #
-    ## P = nkT 
-    #n = Pext/(T*c.kB_Ms) / c.Mpc_to_cm**3 # cm^-3  ###here check units
-    
-    return n
-
-
 def mean_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     '''
     Given the mass of the desired component of the galaxy, the disk effective radius
@@ -417,7 +335,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
     return n, epsilon
 
 
-def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
+def calculate_epsilon(mgas,hr,max_r,filenom,nH=c.nH_NLR,
                       profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
@@ -442,9 +360,12 @@ def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
     -------
     epsilon : array of floats
     '''
-
-    if epsilon_param.shape[0] == 2: #2
-        Mg, r = epsilon_param
+    ncomp = io.get_ncomponents(mgas)
+    Mg = mgas[0,:]
+    r = hr[0,:]
+#    if epsilon_param.shape[0] == 2: #2
+#        Mg, r = epsilon_param
+    if ncomp == 1:
         # Mg = Mg + Mg_bulge
         ind_epsilon = np.where((Mg>5e-5)&(r>5e-5)) ###here why this arbitrary values?
         epsilon = np.zeros(Mg.shape)
@@ -454,7 +375,9 @@ def calculate_epsilon(epsilon_param,max_r,filenom,nH=c.nH_NLR,
         ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(max_r,
                                                                   Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
     else:
-        Mg, r, Mg_bulge, r_bulge = epsilon_param
+        #        Mg, r, Mg_bulge, r_bulge = epsilon_param
+        Mg_bulge = mgas[1,:]
+        r_bulge = hr[1,:]
         ind_epsilon = np.where((Mg>5e-5)&(r>5e-5))
         epsilon = np.zeros(Mg.shape)
         ng = np.zeros(Mg.shape)
@@ -552,8 +475,10 @@ def get_Q_agn(Lagn,alpha,model_spec='feltre16',verbose=True):
     -------
     Q : array of floats
     '''
+
     Q = np.zeros(np.shape(Lagn))
-    
+    nul = c.h_nul*c.eV/c.h   # Hz
+
     if model_spec not in c.model_spec_agn:
         if verbose:
             print('STOP (gne_model_UnH): Unrecognised spectral AGN model.')
@@ -561,26 +486,19 @@ def get_Q_agn(Lagn,alpha,model_spec='feltre16',verbose=True):
         sys.exit()
         
     elif (model_spec == 'feltre16'):
-        lambdas = c.agn_spec_limits[model_spec]
-        nu3 = c.c/(lambdas[0]*1e-6)  # Hz
-        nu2 = c.c/(lambdas[1]*1e-6)
-        nu1 = c.c/(lambdas[2]*1e-6)
-        nuL = c.c/(lambdas[3]*1e-6)
-        
-        int_S = np.power(nu1,3)/3. +\
-            (np.power(nu2,0.5) - np.power(nu1,0.5))/0.5 +\
-            (np.power(nu3,alpha+1) - np.power(nu2,alpha+1))/(alpha+1)
-        
-        int_SL = (np.power(nu1,2) - np.power(nuL,2))/2. -\
-            (np.power(nu2,-0.5) - np.power(nu1,-0.5))/0.5 +\
-            (np.power(nu3,alpha) - np.power(nu2,alpha))/alpha
-        
+        hnu = c.agn_spec_limits[model_spec]
+        nu1 = hnu[0]*c.eV/c.h
+        nu2 = hnu[1]*c.eV/c.h
+        nu3 = hnu[2]*c.eV/c.h      
+
+        a1a3   = (nu1**2.5)/(nu2**(0.5+alpha))
+        a1_den = (nu1**3)/3 + 2*(nu1**2.5)*(nu2**0.5-nu1**0.5) +\
+            a1a3*(nu3**(alpha+1) - nu2**(alpha+1))/(alpha+1)
+        int_SL = (nu3**alpha - nul**alpha)/alpha
+
         mask = Lagn > 0.
-        Q[mask] = Lagn[mask]*Lagn[mask]*int_SL/(c.h_erg*int_S)
-
-        #Q[mask] = Lagn[mask]*((3.28e15)**-1.7)/(1.7*8.66e-11*c.h_erg) ###here Julen's eq 
+        Q[mask] = (Lagn[mask]/c.h_erg)*(a1a3/a1_den)*int_SL
     return Q
-
 
 def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     '''
@@ -661,8 +579,8 @@ def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     #
     #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
-    output = lu
     # As nothing is stated in the paper, we assume this is U(Rs)
+    output = lu
     if nhout: output = lnH
     
     return output
@@ -824,9 +742,6 @@ def get_U_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF
         cte = np.zeros(np.shape(lssfr))
         
         if origin=='sfr':
-            # lu, lnH, lzgas = get_UnH_orsi14(Q, lms, lssfr, lzgas, T, q0=c.q0_orsi, z0=c.Z0_orsi, gamma=1.3)
-            lu, lnH, lzgas = get_UnH_kashino20(Q,lms,lssfr,lzgas_all,T,ng_ratio,IMF)
-            
             for comp in range(len(Q[0])):
                 epsilon[:,comp][ind_comp[comp]] = ((1/get_alphaB(T)) * ((4*c.c_cm*(10**lu[:,comp][ind_comp[comp]]))/3)**(3/2) * 
                                       ((4*np.pi)/(3*Q[:,comp][ind_comp[comp]]*(10**lnH[:,comp][ind_comp[comp]])))**(1/2))
@@ -858,7 +773,7 @@ def get_U_panuzzo03_sfr(Q, lms, lssfr, lzgas, T, epsilon0, ng_ratio, origin, IMF
     return lu, lnH, lzgas
 
 
-def get_U_panuzzo03(Q, filenom, epsilon=None, nH=None, origin='NLR'):
+def get_U_panuzzo03(Q,filenom,epsilon=None,nH=None, origin='NLR'):
     '''
     Calculate the ionising parameter, as log10(Us), from Eq.B.6, Panuzzo+2003.
     This requires as input the rate of ionising photons, Q,
@@ -886,7 +801,8 @@ def get_U_panuzzo03(Q, filenom, epsilon=None, nH=None, origin='NLR'):
     f = h5py.File(filenom, 'r')
     header = f['header']
     temp = header.attrs['T_'+origin+'_K']
-    if epsilon is None: # If is not provided, get constant value
+    # If epsilon and nH not provided, get constant values
+    if epsilon is None:
         epsilon = header.attrs['epsilon_'+origin]
     if nH is None:
         nH = header.attrs['nH_'+origin+'_cm3']
@@ -896,12 +812,11 @@ def get_U_panuzzo03(Q, filenom, epsilon=None, nH=None, origin='NLR'):
     alphaB = get_alphaB(temp)
 
     # Calculate the constant part of the equation
-    const = (3/(4*c.c))*np.power(3*alphaB*alphaB/(4*np.pi),1/3)
-    ###here check units     cte[:,comp][ind_comp[comp]] = 3*(get_alphaB(T)**(2/3)) * (3*epsilon[:,comp][ind_comp[comp]]**2*(10**lnH[:,comp][ind_comp[comp]])/(4*np.pi))**(1/3) / (4*c.c_cm)    
-
+    const = (3/(4*c.c_cm))*np.power(3*alphaB*alphaB/(4*np.pi),1/3)
+    
     # Calculate the average ionising parameter
     uu = const*np.power(Q*nH*epsilon*epsilon,1/3)
-
+    
     # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
     lu = np.zeros(uu.shape); lu.fill(c.notnum)
     lu[uu>0.] = np.log10(uu[uu>0.]) - np.log10(3)
@@ -975,9 +890,9 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
     #    # ng_z0 = calculate_ng_hydro_eq(2*epsilon_param_z0[1],epsilon_param_z0[0],epsilon_param_z0[1],profile='exponential',verbose=True)
     #    # ng_ratio = n_ratio(ng,ng_z0)
     #    if redshift==0.8:
-    #        ng_ratio = c.med_to_low
+    #        ng_ratio = 1.74
     #    elif redshift==1.5:
-    #        ng_ratio = c.high_to_low
+    #        ng_ratio = 1.58
     #    else:
     #        ng_ratio = 1.
                         
@@ -1002,12 +917,13 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
     ####here to be adapted to new function
     #elif (model_U_sfr == 'panuzzo03_sfr'):
     #    Q = phot_rate_sfr(lssfr=lssfr,lms=lms,IMF=IMF)
-    #    lu, nH, lzgas = get_U_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
+    #    lu, lnH, lzgas = get_U_panuzzo03_sfr(Q,lms,lssfr,lzgas,T,epsilon,ng_ratio,'sfr',IMF)
         
-    return lu, lnH, epsilon 
+    return lu, lnH #, epsilon
 
 
-def get_UnH_agn(Lagn, mgas, hr, filenom, 
+def get_UnH_agn(Lagn, mgas, hr, filenom,
+                lzgas_o,###here to be removed?
                 mgasr_type=None,verbose=True):
     '''
     Given the AGN bolometric luminosity,
@@ -1043,7 +959,6 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
             print('STOP (gne_model_UnH): Unrecognised model to get U (AGN).')
             print('                Possible options= {}'.format(c.model_U_agn))
         sys.exit()
-        
     elif (model_U_agn == 'panuzzo03'):
         # Calculate the number of ionising photons
         f = h5py.File(filenom, 'r')
@@ -1058,15 +973,18 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
         if (mgas is None or hr is None):
             epsilon = None
             nattrs = io.add2header(filenom,['epsilon_NLR'],[c.epsilon_NLR])
-        else:
-            ###here to check the epsilon calculation
-            epsilon = calculate_epsilon(agn_nH_param,[c.radius_NLR],
-                                    filenom,nH=c.nH_NLR,
-                                    profile=model_nH_agn,verbose=verbose)
-            epsilon = st.ensure_2d(epsilon)
-            
-        # Calculate the ionising factor
-        lu = get_U_panuzzo03(Q,filenom,epsilon=epsilon,origin='NLR')
-        lu = st.ensure_2d(lu)
+        else: ###here to check the epsilon calculation   
+            epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
+            model_nH_agn = ['exponential','reff'] ###here to be removed
+            if model_nH_agn is not None:
+                epsilon = calculate_epsilon(mgas,hr,[c.radius_NLR],
+                                            filenom,nH=c.nH_NLR,
+                                            profile=model_nH_agn,
+                                            verbose=verbose)
+            #epsilon = st.ensure_2d(epsilon)
 
+        # Calculate the ionising factor
+        lu = get_U_panuzzo03(Q,filenom,epsilon=epsilon,origin='NLR') 
+        lu = st.ensure_2d(lu)
+        
     return lu, epsilon

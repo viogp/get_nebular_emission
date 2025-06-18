@@ -609,10 +609,8 @@ def get_lines(lu, lzgas, filenom, lnH=None, origin='sfr',
     elif (photmod == 'gutkin16'):
         nebline = get_lines_gutkin16(lu,lzgas, filenom, lnH=lnH,
                                      origin=origin,verbose=verbose)
-
     elif (photmod == 'feltre16'):
         nebline = get_lines_feltre16(lu,lzgas, filenom, lnH=lnH,
                                      origin=origin,verbose=verbose)
-
     return nebline
 

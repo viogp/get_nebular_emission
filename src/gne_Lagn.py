@@ -187,7 +187,6 @@ def epsilon_td(spin):
     return epsilon_td
 
 
-
 def Rsch(Mbh):
     '''
     Schwarzschild radius (Mpc) given the mass of the black hole (Msun)
@@ -203,7 +202,7 @@ def Rsch(Mbh):
     '''
 
     Mbh_kg = Mbh*c.Msun
-    Rs = 2*c.G*Mbh_kg/(c.c**2)/(c.mega*c.parsec)  
+    Rs = 2*c.G*Mbh_kg/(c.c**2)/(c.mega*c.parsec)
     return Rs
 
 

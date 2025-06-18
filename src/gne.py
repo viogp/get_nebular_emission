@@ -186,7 +186,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
               nH_sfr,xid_sfr,co_sfr,imf_cut_sfr,
               q0,z0,gamma]
     nattrs = io.add2header(outfile,names,values,verbose=verbose)
-
+    
     # Number of components
     ncomp = io.get_ncomponents(m_sfr_z)
     
@@ -223,19 +223,20 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lzgas = correct_Z(zeq,lms,lzgas,minZ,maxZ,Lagn_param)
 
     # Characterise the HII regions from galaxy global properties
-    lu_sfr, lnH_sfr, epsilon = get_UnH_sfr(lms, lssfr, lzgas, outfile,
-                                          q0=q0, z0=z0,gamma=gamma, T=T,
-                                          epsilon_param_z0=epsilon_param_z0,
-                                          IMF=IMF,model_nH_sfr=model_nH_sfr,
-                                          model_U_sfr=model_U_sfr,verbose=verbose)
+    lu_sfr, lnH_sfr = get_UnH_sfr(lms, lssfr, lzgas, outfile,
+                                  q0=q0, z0=z0,gamma=gamma, T=T,
+                                  epsilon_param_z0=epsilon_param_z0,
+                                  IMF=IMF,model_nH_sfr=model_nH_sfr,
+                                  model_U_sfr=model_U_sfr,verbose=verbose)
 
-    if verbose: print(' U and nH calculated.')            
+    if verbose: print(' U and nH calculated.') 
+            
     lu_o_sfr = np.copy(lu_sfr)
     lnH_o_sfr = np.copy(lnH_sfr)
     lzgas_o_sfr = np.copy(lzgas)
 
     # Obtain spectral emission lines from HII regions
-    nebline_sfr = get_lines(lu_sfr.T, lzgas.T, outfile, lnH=lnH_sfr.T,
+    nebline_sfr = get_lines(lu_sfr.T,lzgas.T,outfile,lnH=lnH_sfr.T,
                             photmod=photmod_sfr,origin='sfr',verbose=verbose)
 
     # Change units into erg/s 
@@ -305,7 +306,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         values = [model_spec_agn,model_U_agn,photmod_agn,
                   nH_NLR,T_NLR,r_NLR,alpha_NLR,xid_NLR]
         nattrs = io.add2header(outfile,names,values)
-        
+
         # Get the central metallicity
         if Z_correct_grad:
             # Get total mass for Z corrections 
@@ -327,7 +328,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         testing=testing,verbose=verbose)
 
         # Get the ionising parameter, U, (and filling factor)
-        mgas = None; hr = None ###here line to be removed once epsilon calculation checked
+        mgas = None; hr = None
         if mgas_r_agn is not None:
             mgas, hr = io.get_mgas_hr(infile,mgas_r_agn,r_type_agn,cut,
                                    h0=h0,units_h0=units_h0,
@@ -335,13 +336,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                    testing=testing,verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
+                                          lzgas_agn, ###here to be removed?
                                           mgasr_type=mgasr_type_agn,
                                           verbose=verbose)
         if verbose: print(' U calculated.')
 
         # Calculate emission lines in adequate units
         nebline_agn = get_lines(lu_agn,lzgas_agn,outfile,
-                                photmod='feltre16',origin='NLR',verbose=verbose)
+                                photmod=photmod_agn,origin='NLR',
+                                verbose=verbose)
 
         if (photmod_agn == 'feltre16'):
             # Units: erg/s for a central Lacc=10^45 erg/s
@@ -352,7 +355,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if att:
             # Add relevant constants to header
             nattrs = io.add2header(outfile,['attmod'],[attmod])
-
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
                                                         att_ratio_lines=att_ratio_lines,
                                                         redshift=redshift,h0=h0,
@@ -374,7 +376,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             fluxes_agn_att = np.array(None)
 
         # Write output in a file            
-        io.write_agn_data(outfile,Lagn,lu_agn,lzgas_agn,
+        io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,
                           nebline_agn,nebline_agn_att,
                           fluxes_agn,fluxes_agn_att,
                           epsilon_agn=epsilon_agn,

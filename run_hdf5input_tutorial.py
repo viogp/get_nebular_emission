@@ -101,62 +101,69 @@ photmod_agn = 'feltre16'
 
 # Columns to read either the central or global metallicity 
 Zgas_NLR = ['data/Zgas_bulge','data/Zgas_disk']
-# Z_correct_grad = False (default)
-#    if the central gas metallicity has been provided
-# Z_correct_grad = True
-#    to correct a global metallicity with the gradients from Belfiore+2017
+# Z_correct_grad 
+#    False (default) if the central gas metallicity has been provided
+#    True to correct a global metallicity with the gradients from Belfiore+2017
 Z_correct_grad = True
 
 # Connecting global properties to AGN NLR characteristics:
-# nH: number density calculated assuming a profile for the gas ('exponential')
-#     and given a radius for the component.
-#     This is used to calculate the filling factor, using agn_nH_params.
-#     Ideally the scale radius of the bulge and/or disk ('rscale') is given,
-#     but otherwise this can be estimated from either the effective or
-#     half-mass radius ('reff') or simply the radius of the component ('r').
-#     If model_nH_agn=None, a constant filling factor will be assumed.
-model_nH_agn   = ['exponential','reff'] 
-# If une_age_nH is not None, agn_nH_params should specify
-# the location of the cold gas mass (Mg) and a radius.
-# agn_nH_params = [Mg_disk, R_disk, Mg_bulge, R_bulge]
-agn_nH_params = ['data/mgas_disk','data/rhm_disk',
-                 'data/mgas_bulge','data/rhm_bulge']
+# Model to calculate the ionising parameter, U
+model_U_agn    = 'panuzzo03'
+
+# Panuzzo's model requires the calculation of the filling factor
+# epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
+# n_NLR, T_NLR and r_NLR are taken as constants.
+# mgas_r is a list of lists with either the column number
+# for each parameters or the name of the HDF5 variable.
+# Each list can correspond to a different component:
+# mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
+mgas_r = [['data/mgas_disk','data/rhm_disk'],
+          ['data/mgas_bulge','data/rhm_bulge']]
+
+# Type of component: 'disc', 'sphere' or None
+mgasr_type = ['disc','sphere'] ###here do I need this?
+
+# Type of radius input, per component:
+# 0: scalelength;
+# 1: effective radius, Re
+# 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
+# 3: radius of the galaxy or host halo
+r_type = [1,1]
+
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'
-# U: model to calculate the ionising parameter
-model_U_agn    = 'panuzzo03'
     
 # The AGNs bolometric luminosity, Lagn, is needed.
 # This value can be either firectly input or calculated.
-# The way of obtaining Lagn is indicated in AGNinputs.
+# The way of obtaining Lagn is indicated in Lagn_inputs.
 # The calcultions require different black hole (BH) parameters.
-# AGNinputs='Lagn' if Lagn in input
+# Lagn_inputs='Lagn' if Lagn in input
 #            in erg/s,h^-2erg/s,1e40erg/s,1e40(h^-2)erg/s
 #            Lagn_params=[Lagn, Mbh] 
-# AGNinputs='Mdot_hh' for a calculation from
+# Lagn_inputs='Mdot_hh' for a calculation from
 #            the mass accretion rate of the BH, Mdot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot,Mbh] or [Mdot,Mbh,Mspin]
-# AGNinputs='Mdot_stb_hh' for a calculation from
+# Lagn_inputs='Mdot_stb_hh' for a calculation from
 #            the mass accretion rate during the last starburst, Mdot_stb,
 #            the hot halo or radio mass accretion, Mdot_hh,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mdot_stb,Mdot_hh,Mbh] or [Mdot_stb,Mdot_hh,Mbh,Mspin]
-# AGNinputs='radio_mode' for a calculation from
+# Lagn_inputs='radio_mode' for a calculation from
 #            the mass of the hot gas, Mhot,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mhot,Mbh] or [Mhot,Mbh,Mspin]
-# AGNinputs='quasar_mode' for a calculation from
+# Lagn_inputs='quasar_mode' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
 #            the circular velocity of the bulge, vbulge,
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mbh,(Mspin)]
-# AGNinputs='complete' for a calculation from
+# Lagn_inputs='complete' for a calculation from
 #            the mass of the bulge, Mbulge,
 #            the half-mass radius of the bulge, rbulge,
 #            the circular velocity of the bulge, vbulge,
@@ -164,7 +171,7 @@ model_U_agn    = 'panuzzo03'
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-AGNinputs = 'Lagn'; Lagn_params=['data/lagn','data/mstar_bulge']
+Lagn_inputs = 'Lagn'; Lagn_params=['data/lagn','data/mstar_bulge']
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -253,18 +260,19 @@ for ivol in range(subvols):
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
             inoh=inoh,IMF = IMF,
-            AGN=AGN,model_nH_agn=model_nH_agn,model_spec_agn=model_spec_agn,
-            model_U_agn=model_U_agn,photmod_agn=photmod_agn,
-            agn_nH_params=agn_nH_params,
-            AGNinputs=AGNinputs, Lagn_params=Lagn_params,
+            AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
+            model_U_agn=model_U_agn,           
+            mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
+            model_spec_agn=model_spec_agn,
+            Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=verbose)
-
+        
 if plot_tests:  # Make test plots
     make_testplots(root,snapshot,subvols=subvols,gridplots=False,
                    outpath=outpath,verbose=verbose)
