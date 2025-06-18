@@ -226,41 +226,6 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
         
         return n
 
-
-def gamma_gas_func():
-    '''
-    Calculates the velocity dispersion of the gas component (see Lagos et. al. 2011).
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    gamma_gas = 10 #km s^-1, Lagos et al. 2011
-    
-    return gamma_gas
-
-
-def gamma_star_func(h_star,den_star):
-    '''
-    Calculates the velocity disparsion of the star component (see Lagos et. al. 2011).
-    
-    Parameters
-    ----------
-    h_star : float
-     Stellar scaleheight.
-    den_star : float
-     Stellar surface density.
-     
-    Returns
-    -------
-    gamma_gas : float
-    '''
-    
-    gamma_star = np.sqrt(np.pi*c.G*h_star*den_star) # GALFORM
-    
-    return gamma_star
-    
-
     
 def particle_density(x,M,r_hm,T=10000,profile='exponential',verbose=True):
     '''
@@ -1003,7 +968,7 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
 
 
 def get_UnH_agn(Lagn, mgas, hr, filenom,
-                lms_o, lssfr_o,lzgas_o,###here line to be removed when  adapted
+                lzgas_o,###here to be removed?
                 mgasr_type=None,verbose=True):
     '''
     Given the AGN bolometric luminosity,
@@ -1048,10 +1013,6 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
         f.close()
         
         Q = get_Q_agn(Lagn,alpha_NLR,model_spec=model_spec_agn,verbose=verbose)
-        #Q = np.repeat(Q[np.newaxis,...], 2, axis=0).T ###here to be removed (match vectors)
-
-        #Q = phot_rate_agn(lssfr=lssfr_o,lms=lms_o,Lagn=Lagn)
-        #Q = get_Q_agn(Lagn)#,lssfr=lssfr_o,lms=lms_o)
 
         # Obtain the filling factor
         if (mgas is None or hr is None):

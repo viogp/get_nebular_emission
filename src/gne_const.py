@@ -9,7 +9,7 @@ Msun    = 1.989e30  # kg
 zsun = 0.0134       # Asplund 2009
 zsunK20 = 0.014     # Kashino 2020
 ohsun = 8.69        # Allende Prieto 2001 and Asplund 2009 (12 + log10(O/H))sun
-h_nul = 13.6        # Lyman limit (eV)
+h_nul = 13.6        # Lyman limit h*nu(eV)
 parsec  = 3.085677581491367e+16 # m
 
 #--------------------------------------------

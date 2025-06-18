@@ -1011,11 +1011,6 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                                (z>=zamin) & (z<=zamax))
                 ina[i] = ina[i] + np.shape(ind)[1]
 
-                #mask = (lnagn[:,i] > c.notnum)
-                #nn = lnagn[mask,i]            
-                #ind = np.where((nn>=nmin) & (nn<=nmax))
-                #inna[i] = inna[i] + np.shape(ind)[1]        
-
     # Plot per component U versus Z
     proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
     if AGN:
