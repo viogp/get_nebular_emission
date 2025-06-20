@@ -329,11 +329,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         # Get the ionising parameter, U, (and filling factor)
         mgas = None; hr = None
-        if mgas_r_agn is not None:
-            mgas, hr = io.get_mgas_hr(infile,mgas_r_agn,r_type_agn,cut,
-                                   h0=h0,units_h0=units_h0,
-                                   inputformat=inputformat,
-                                   testing=testing,verbose=verbose)
+        if mgas_r_agn is not None:    
+            mgas, hr = io.get_mgas_hr(infile,cut,
+                                      mgas_r_agn,r_type_agn,
+                                      h0=h0,units_h0=units_h0,
+                                      inputformat=inputformat,
+                                      testing=testing,verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           lzgas_agn, ###here to be removed?

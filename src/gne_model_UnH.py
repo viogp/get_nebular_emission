@@ -336,7 +336,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
 
 
 def calculate_epsilon(mgas,hr,max_r,filenom,nH=c.nH_NLR,
-                      profile='exponential',verbose=True):
+                      mgasr_type='disc',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
     the volume filling-factor within that distance.
@@ -941,6 +941,8 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
        Scalelenght of the central region or per component
     filenom : string
         File with information relevant for the calculation
+    mgasr_type : list of strings per component
+       'disc', 'sphere' or None
     verbose : boolean
        If True print out messages.
 
@@ -975,12 +977,11 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
             nattrs = io.add2header(filenom,['epsilon_NLR'],[c.epsilon_NLR])
         else: ###here to check the epsilon calculation   
             epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
-            model_nH_agn = ['exponential','reff'] ###here to be removed
-            if model_nH_agn is not None:
-                epsilon = calculate_epsilon(mgas,hr,[c.radius_NLR],
-                                            filenom,nH=c.nH_NLR,
-                                            profile=model_nH_agn,
-                                            verbose=verbose)
+            #if mgasr_type is not None:                
+            epsilon = calculate_epsilon(mgas,hr,[c.radius_NLR],
+                                        filenom,nH=c.nH_NLR,
+                                        mgasr_type=mgasr_type,
+                                        verbose=verbose)
             #epsilon = st.ensure_2d(epsilon)
 
         # Calculate the ionising factor

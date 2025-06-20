@@ -664,7 +664,7 @@ def read_mgas_hr(infile, cols, selection, inputformat='hdf5',
 
 
           
-def get_mgas_hr(infile,cols,r_type,selection,
+def get_mgas_hr(infile,selection,cols,r_type,
                 h0=None,units_h0=False,
                 re2hr=c.re2hr,r502re=c.r502re,rvir2r50=c.rvir2r50,
                 inputformat='hdf5',
