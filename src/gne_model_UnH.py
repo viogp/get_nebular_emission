@@ -56,19 +56,16 @@ def surface_density(x,M,reff,profile='exponential',verbose=True):
     -------
     surf_den : floats
     '''
-    
-    profiles = ['exponential']
-    
-    if profile not in profiles:
+    if profile not in 'exponential':
         if verbose:
-            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
-            print('                Possible profiles= {}'.format(profiles))
-        sys.exit()
-    elif profile=='exponential':
+            print('WARNING gne_model_UnH is only set to handle')
+            print('                      exponential profiles.')
+        profile == 'exponential'
+    else:
         central = M/(2*np.pi*(reff**2))
         
         surf_den = central*np.exp(-x/reff)
-        return surf_den
+    return surf_den
 
     
 def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
@@ -93,15 +90,12 @@ def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
     -------
     surf_den : floats
     '''
-    
-    profiles = [profile]
-    
-    if profile not in profiles:
+    if profile not in 'exponential':
         if verbose:
-            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
-            print('                Possible profiles= {}'.format(profiles))
-        sys.exit()
-    elif profile=='exponential':
+            print('WARNING gne_model_UnH is only set to handle')
+            print('                      exponential profiles.')
+        profile == 'exponential'
+    else:
         ind = np.where((M>1e-5)&(reff>1e-5))[0]  ###here limitis to 0
         mass_enclosed = np.zeros(M.shape)
         if len(x) > 1:
@@ -109,48 +103,45 @@ def enclosed_mass_disk(x,M,reff,profile='exponential',verbose=True):
         else:
             mass_enclosed[ind] = (M[ind]/reff[ind])*(reff[ind] - np.exp(-x[0]/reff[ind])*reff[ind] - x[0]*np.exp(-x[0]/reff[ind]))
             
-        return mass_enclosed
+    return mass_enclosed
     
 
     
-def enclosed_mass_sphere(x,M,reff,profile='exponential',verbose=True):
+def enclosed_mass_sphere(x,M,hB,profile='exponential',verbose=True):
     '''
-    Given the mass of the desired component of the galaxy, the disk effective radius
-    and a distance to the center, it calculates the surface density at that distance.
+    Calculate the mass enclosed within a radius x, for a
+    spehrical component of total mass M, and scaleheight hB.
 
     Parameters
     ----------
-    x : floats
-     Distance to the center in which surface density is going to be calculated (Mpc).
-    M : floats
-     Mass of the desired component of the galaxy (Msun).
-    reff : floats
-     Effective radius of the galaxy (Mpc)
+    x : float
+       Radius at which to calculate the enclosed mass (Mpc).
+    M : float
+       Mass of the spherical component (Msun).
+    hB : floats
+       Scaleheight of the component (Mpc)
     profile : string
-     Assumed density profile form for the surface density.
+       Assumed density profile type, 'exponential'.
     verbose : boolean
-     If True print out messages.
+       If True print out messages.
      
     Returns
     -------
-    surf_den : floats
-    '''
-    
-    profiles = ['exponential']
-    
-    if profile not in profiles:
+    mass_enclosed : float
+    '''    
+    if profile not in 'exponential':
         if verbose:
-            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
-            print('                Possible profiles= {}'.format(profiles))
-        sys.exit()
-    elif profile=='exponential':
-        ind = np.where((M>1e-5)&(reff>1e-5))[0] ###here limits, shouldn't be 0?
+            print('WARNING gne_model_UnH is only set to handle')
+            print('                      exponential profiles.')
+        profile == 'exponential'
+    else:
+        ind = np.where((M>1e-5)&(hB>1e-5))[0] ###here limits, shouldn't be 0?
         mass_enclosed = np.zeros(M.shape)
         if len(x) > 1:
-            mass_enclosed[ind] = (M[ind]/(2*reff[ind]**3))*(2*reff[ind]**3 - np.exp(-x[ind]/reff[ind])*reff[ind]*(2**reff[ind]**2 + 2*reff[ind]*x[ind] + x[ind]**2))
+            mass_enclosed[ind] = (M[ind]/(2*hB[ind]**3))*(2*hB[ind]**3 - np.exp(-x[ind]/hB[ind])*hB[ind]*(2**hB[ind]**2 + 2*hB[ind]*x[ind] + x[ind]**2))
         else:
-            mass_enclosed[ind] = (M[ind]/(2*reff[ind]**3))*(2*reff[ind]**3 - np.exp(-x[0]/reff[ind])*reff[ind]*(2**reff[ind]**2 + 2*reff[ind]*x[0] + x[0]**2)) ###here different eqs from mine
-        
+            mass_enclosed[ind] = (M[ind]/(2*hB[ind]**3))*(2*hB[ind]**3 - np.exp(-x[0]/hB[ind])*hB[ind]*(2**hB[ind]**2 + 2*hB[ind]*x[0] + x[0]**2)) ###here different eqs from mine
+
         return mass_enclosed
 
     
@@ -199,15 +190,12 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     -------
     n : floats
     '''
-    
-    profiles = ['exponential']
-    
-    if profile not in profiles:
+    if profile not in 'exponential':
         if verbose:
-            print('STOP (gne_model_UnH): Unrecognised profile for the surface density.')
-            print('                Possible profiles= {}'.format(profiles))
-        sys.exit()
-    elif profile=='exponential':
+            print('WARNING gne_model_UnH is only set to handle')
+            print('                      exponential profiles.')
+        profile == 'exponential'
+    else:
         reff = c.halfmass_to_reff*r_hm # GALFORM ###here not to be hardwired
         
         if bulge:
@@ -336,7 +324,7 @@ def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,
 
 
 def calculate_epsilon(mgas,hr,max_r,filenom,nH=c.nH_NLR,
-                      mgasr_type='disc',verbose=True):
+                      mgasr_type=None,verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
     the volume filling-factor within that distance.
@@ -361,6 +349,7 @@ def calculate_epsilon(mgas,hr,max_r,filenom,nH=c.nH_NLR,
     epsilon : array of floats
     '''
     ncomp = io.get_ncomponents(mgas)
+
     Mg = mgas[0,:]
     r = hr[0,:]
 #    if epsilon_param.shape[0] == 2: #2
@@ -977,7 +966,6 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
             nattrs = io.add2header(filenom,['epsilon_NLR'],[c.epsilon_NLR])
         else: ###here to check the epsilon calculation   
             epsilon = np.full(np.shape(lzgas_o)[0],c.epsilon_NLR)
-            #if mgasr_type is not None:                
             epsilon = calculate_epsilon(mgas,hr,[c.radius_NLR],
                                         filenom,nH=c.nH_NLR,
                                         mgasr_type=mgasr_type,
