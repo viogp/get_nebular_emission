@@ -128,7 +128,8 @@ def enclosed_mass_sphere(x,M,hB,profile='exponential',verbose=True):
     Returns
     -------
     mass_enclosed : float
-    '''    
+    '''
+    print(np.shape(x),np.shape(M),np.shape(hB)); exit() ###here
     if profile not in 'exponential':
         if verbose:
             print('WARNING gne_model_UnH is only set to handle')
