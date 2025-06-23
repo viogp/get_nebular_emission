@@ -97,7 +97,7 @@ class TestStringMethods(unittest.TestCase):
         incols = [['data/mgas_disk','data/rhm_disk']]
         expect_m = np.array([[6.69049152e+08]])
         expect_r = np.array([[3.02573503e-03]])
-        mm,rr = io.get_mgas_hr(hf5file,incols,[4],sel)
+        mm,rr = io.get_mgas_hr(hf5file,sel,incols,[4])
         assert_allclose(mm,expect_m,rtol=0.01)
         assert_allclose(rr,expect_r,rtol=0.01)
 
@@ -109,11 +109,11 @@ class TestStringMethods(unittest.TestCase):
                              [0,0,0]])
         expect_r = np.array([[3.02573503e-03,0.0017807,0.00372818],
                              [0,0,0.00125381]])
-        mm,rr = io.get_mgas_hr(hf5file,incols,rtype,sel)
+        mm,rr = io.get_mgas_hr(hf5file,sel,incols,rtype)
         assert_allclose(mm,expect_m,rtol=0.01)  
         assert_allclose(rr,expect_r,rtol=0.01)  
         
-        mm,rr = io.get_mgas_hr(hf5file,incols,[1,2],sel)
+        mm,rr = io.get_mgas_hr(hf5file,sel,incols,[1,2])
         assert_allclose(mm,expect_m,rtol=0.01)
         exp = np.copy(expect_r)
         exp[0,:] = c.re2hr*expect_r[0,:]
@@ -121,15 +121,15 @@ class TestStringMethods(unittest.TestCase):
         assert_allclose(rr,exp,rtol=0.01)  
         
         h=2.
-        mm,rr = io.get_mgas_hr(hf5file,incols,[0,3],sel,
+        mm,rr = io.get_mgas_hr(hf5file,sel,incols,[0,3],
                                h0=h,units_h0=True)
         assert_allclose(mm,expect_m/h,rtol=0.01)
         exp = np.copy(expect_r)/h
         exp[1,:] = c.re2hr*c.r502re*c.rvir2r50*exp[1,:]
         assert_allclose(rr,exp,rtol=0.01)  
-
+        
         re2hr=8.; r502re=300.
-        mm,rr = io.get_mgas_hr(hf5file,incols,[1,2],sel,
+        mm,rr = io.get_mgas_hr(hf5file,sel,incols,[1,2],
                                re2hr=re2hr,r502re=r502re)
         assert_allclose(mm,expect_m,rtol=0.01)
         exp = np.copy(expect_r)

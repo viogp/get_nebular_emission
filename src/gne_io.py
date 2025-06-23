@@ -704,7 +704,7 @@ def get_mgas_hr(infile,selection,cols,r_type,
 
     Returns
     -------
-    mgas, hr : array of floats
+    mgas, hr : array of floats (Msun, Mpc)
     '''
 
     # Read Mgas and hr
@@ -735,17 +735,6 @@ def get_mgas_hr(infile,selection,cols,r_type,
         elif r_type[i] == 3:
             # Get the scalelenght from the radius of the halo
             outr[i,:] = re2hr*r502re*rvir2r50*hr[i,:]
-
-    return outm, outr
-
-    # Assuming an exponential profile, get the scalelenght if not provided
-    for i in range(ncomp):
-        if r_type[i] == 1:
-            # Scalength from an effective or half-mass(light) radius
-            outr[i,:] = hr[i,:]/c.re2hr_exp
-        elif r_type[i] == 2:
-            # Scalength from the radius of the galaxy, R/2./1.678
-            outr[i,:] = hr[i,:]/2./c.re2hr_exp
 
     return outm, outr
 
