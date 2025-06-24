@@ -317,41 +317,33 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
     -------
     epsilon : array of floats
     '''
-    ncomp = io.get_ncomponents(mgas)
+    epsilon = np.zeros(mgas.shape[1])
     
-    nH=1000
-    Mg = mgas[0,:]
-    r = hr[0,:]
-#    if epsilon_param.shape[0] == 2: #2
-#        Mg, r = epsilon_param
-    if ncomp == 1:
-        # Mg = Mg + Mg_bulge
-        ind_epsilon = np.where((Mg>5e-5)&(r>5e-5)) ###here why this arbitrary values?
-        epsilon = np.zeros(Mg.shape)
+    ncomp = io.get_ncomponents(mgas)
+    for ii in range(ncomp):
+        Mi = mgas[ii,:]
+        hi = hr[ii,:]
+
+        ni = np.zeros(Mi.shape)
+        epi = np.zeros(Mi.shape)
+
+        ind = np.where((Mi>0)&(hi>0))
         if len(rmax) > 1:
-            rmax = rmax[ind_epsilon]
-        ng = np.zeros(Mg.shape)
-        ng[ind_epsilon] = number_density(rmax,Mg[ind_epsilon],r_hm[ind_epsilon],profile=profile,bulge=bulge,verbose=verbose)
-        epsilon[ind_epsilon] = ng[ind_epsilon]/nH
+            rmax = rmax[ind]
 
-    else:
-        #        Mg, r, Mg_bulge, r_bulge = epsilon_param
-        Mg_bulge = mgas[1,:]
-        r_bulge = hr[1,:]
-        ind_epsilon = np.where((Mg>5e-5)&(r>5e-5))
-        epsilon = np.zeros(Mg.shape)
-        ng = np.zeros(Mg.shape)
-        if len(rmax) > 1:
-            rmax = rmax[ind_epsilon]
-        ng_disk = number_density(rmax,Mg[ind_epsilon],r[ind_epsilon],verbose=verbose)
-        ep_disk = ng_disk/nH
+        itype = 'disc'
+        if mgasr_type is not None:
+            itype = mgasr_type[ii]
 
-        ng_bulge = number_density(rmax,Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],
-                                               bulge=True,verbose=verbose)
-        ep_bulge = ng_bulge/nH
+        bulge = False
+        if itype == 'sphere':
+            bulge = True
+            
+        ni[ind] = number_density(rmax,Mi[ind],hi[ind],profile=profile,
+                                 bulge=bulge,verbose=verbose)
+        epi[ind] = ni[ind]/nH
 
-        epsilon[ind_epsilon]= ep_disk + ep_bulge
-        ng[ind_epsilon]= ng_disk + ng_bulge
+        epsilon[ind] = epsilon[ind] + epi[ind]
     
     epsilon[epsilon>1] = 1
     return epsilon
