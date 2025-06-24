@@ -107,16 +107,16 @@ def enclosed_mass_disc(x,M,hD,profile='exponential',verbose=True):
     
 
     
-def enclosed_mass_sphere(x,M,hB,profile='exponential',verbose=True):
+def enclosed_mass_sphere(R,MB,hB,profile='exponential',verbose=True):
     '''
     Calculate the mass enclosed within a radius x, for a
     spehrical component of total mass M, and scalelength hB.
 
     Parameters
     ----------
-    x : float
+    R : float
        Radius at which to calculate the enclosed mass (Mpc).
-    M : array of floats
+    MB : array of floats
        Mass of the spherical component (Msun).
     hB : array of floats
        Scalelength of the component (Mpc)
@@ -129,19 +129,24 @@ def enclosed_mass_sphere(x,M,hB,profile='exponential',verbose=True):
     -------
     mass_enclosed : float
     '''
-    mass_enclosed = np.zeros(M.shape)
+    mass_enclosed = np.zeros(MB.shape)
+    
+    ind = np.where((MB>0)&(hB>0))[0]
+    a = R[0]/hB[ind]
+    if len(R) > 1:
+        a = R[ind]/hB[ind]
+
+    x = R[0]
+    if len(R) > 1:
+        x = R[ind]
+    
     if profile not in 'exponential':
         if verbose:
             print('WARNING gne_model_UnH is only set to handle')
             print('                      exponential profiles.')
         profile == 'exponential'
     
-    ind = np.where((M>0)&(hB>0))[0]
-    xx = x[0]
-    if len(x) > 1:
-        xx = x[ind]
-    mass_enclosed[ind] = (M[ind]/(2*hB[ind]**3))*(2*hB[ind]**3 - np.exp(-xx/hB[ind])*hB[ind]*(2**hB[ind]**2 + 2*hB[ind]*xx + xx**2))
-###here different eqs from mine
+    mass_enclosed[ind] = MB[ind] - 0.5*MB[ind]*np.exp(-a)*(a*a+2*a+2)
 
     return mass_enclosed
 
