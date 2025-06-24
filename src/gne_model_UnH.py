@@ -344,6 +344,39 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         epi[ind] = ni[ind]/nH
 
         epsilon[ind] = epsilon[ind] + epi[ind]
+#    #exit()###here
+#    Mg = mgas[0,:]
+#    r = hr[0,:]
+##    if epsilon_param.shape[0] == 2: #2
+##        Mg, r = epsilon_param
+#    if ncomp == 1:
+#        # Mg = Mg + Mg_bulge
+#        ind_epsilon = np.where((Mg>0)&(r>0))
+#        epsilon = np.zeros(Mg.shape)
+#        if len(rmax) > 1:
+#            rmax = rmax[ind_epsilon]
+#        ng = np.zeros(Mg.shape)
+#        ng[ind_epsilon] = number_density(rmax,Mg[ind_epsilon],r_hm[ind_epsilon],profile=profile,bulge=bulge,verbose=verbose)
+#        epsilon[ind_epsilon] = ng[ind_epsilon]/nH
+#
+#    else:
+#        #        Mg, r, Mg_bulge, r_bulge = epsilon_param
+#        Mg_bulge = mgas[1,:]
+#        r_bulge = hr[1,:]
+#        ind_epsilon = np.where((Mg>0)&(r>0))
+#        epsilon = np.zeros(Mg.shape)
+#        ng = np.zeros(Mg.shape)
+#        if len(rmax) > 1:
+#            rmax = rmax[ind_epsilon]
+#        ng_disk = number_density(rmax,Mg[ind_epsilon],r[ind_epsilon],verbose=verbose)
+#        ep_disk = ng_disk/nH
+#
+#        ng_bulge = number_density(rmax,Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],
+#                                               bulge=True,verbose=verbose)
+#        ep_bulge = ng_bulge/nH
+#
+#        epsilon[ind_epsilon]= ep_disk + ep_bulge
+#        ng[ind_epsilon]= ng_disk + ng_bulge
     
     epsilon[epsilon>1] = 1
     return epsilon
