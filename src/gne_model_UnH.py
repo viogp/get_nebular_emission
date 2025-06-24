@@ -302,7 +302,7 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
        Scalelenght of the central region or per component (Mpc)
     filenom : string
         File with information relevant for the calculation
-    rmax : array of floats
+    Rmax : array of floats
        Radius at which number densities will be calculated (Mpc).
     nH : float
        Assumed hydrogen density in the ionizing regions.
@@ -318,7 +318,7 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
     epsilon : array of floats
     '''
     ncomp = io.get_ncomponents(mgas)
-
+    
     nH=1000
     Mg = mgas[0,:]
     r = hr[0,:]
@@ -328,11 +328,9 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         # Mg = Mg + Mg_bulge
         ind_epsilon = np.where((Mg>5e-5)&(r>5e-5)) ###here why this arbitrary values?
         epsilon = np.zeros(Mg.shape)
-        ng = np.zeros(Mg.shape)
         if len(rmax) > 1:
             rmax = rmax[ind_epsilon]
-        #ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(rmax,
-        #                                                          Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
+        ng = np.zeros(Mg.shape)
         ng[ind_epsilon] = number_density(rmax,Mg[ind_epsilon],r_hm[ind_epsilon],profile=profile,bulge=bulge,verbose=verbose)
         epsilon[ind_epsilon] = ng[ind_epsilon]/nH
 
@@ -345,14 +343,9 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         ng = np.zeros(Mg.shape)
         if len(rmax) > 1:
             rmax = rmax[ind_epsilon]
-        #ng_disk, ep_disk = epsilon_simplemodel(rmax,
-        #                                       Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
         ng_disk = number_density(rmax,Mg[ind_epsilon],r[ind_epsilon],verbose=verbose)
         ep_disk = ng_disk/nH
 
-        #ng_bulge, ep_bulge = epsilon_simplemodel(rmax,
-        #                                         Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],nH=nH,
-        #                                         bulge=True,verbose=verbose)
         ng_bulge = number_density(rmax,Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],
                                                bulge=True,verbose=verbose)
         ep_bulge = ng_bulge/nH
