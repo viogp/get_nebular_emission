@@ -127,7 +127,7 @@ def enclosed_mass_sphere(R,MB,hB,profile='exponential',verbose=True):
      
     Returns
     -------
-    mass_enclosed : float
+    mass_enclosed : float (Msun)
     '''
     mass_enclosed = np.zeros(MB.shape)
     
@@ -165,7 +165,7 @@ def vol_sphere(r):
     return V
 
 
-def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
+def number_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     '''
     Given the mass of the desired component of the galaxy, the disk effective radius
     and a distance to the center, it calculates the particle density at that distance.
@@ -217,7 +217,7 @@ def mean_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
     return n
 
     
-def mean_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
+def number_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     '''
     Given the mass of the desired component of the galaxy, the disk effective radius
     and a distance to the center, it calculates the mean particle density within that distance.
@@ -280,49 +280,13 @@ def calculate_ng_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
     ng = np.zeros(M.shape)
     if len(max_r) > 1:
         for i in range(len(M)):
-            ng[i] = mean_density_hydro_eq(max_r[i],M[i],r_hm[i],profile=profile,verbose=verbose)
+            ng[i] = number_density_hydro_eq(max_r[i],M[i],r_hm[i],profile=profile,verbose=verbose)
     else:
         for i in range(len(M)):
-            ng[i] = mean_density_hydro_eq(max_r[0],M[i],r_hm[i],profile=profile,verbose=verbose)
+            ng[i] = number_density_hydro_eq(max_r[0],M[i],r_hm[i],profile=profile,verbose=verbose)
             
     return ng # cm^-3
         
-
-def epsilon_simplemodel(max_r,Mg,r_hm,nH=1000,profile='exponential',bulge=False,verbose=True):
-    '''
-    Given the mass of the desired component of the galaxy, the disk effective radius
-    and a distance to the center, it calculates the volume filling-factor within that distance.
-
-    Parameters
-    ----------
-    max_r : floats
-     Distance to the center within the surface density is going to be calculated (Mpc).
-    Ms : floats
-     Stellar mass of the galaxy (Msun).
-    Mg : floats
-     Cold gas mass of the galaxy (Msun).
-    r_hm : floats
-     Half-mass radius of the galaxy (Mpc).
-    nH : float
-     Assumed hydrogen density in the ionizing regions.
-    profile : string
-     Assumed density profile form for the surface density.
-    bulge : boolean
-     True if the calculation is being applied to a bulge.
-     False if the calculation is being applied to a disk.
-    verbose : boolean
-     If True print out messages.
-     
-    Returns
-    -------
-    epsilon : floats
-    '''
-    
-    n = mean_density(max_r,Mg,r_hm,profile=profile,bulge=bulge,verbose=verbose)
-    epsilon = n/nH
-    
-    return n, epsilon
-
 
 def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
                       mgasr_type=None,profile='exponential',verbose=True):
@@ -355,6 +319,7 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
     '''
     ncomp = io.get_ncomponents(mgas)
 
+    nH=1000
     Mg = mgas[0,:]
     r = hr[0,:]
 #    if epsilon_param.shape[0] == 2: #2
@@ -366,8 +331,11 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         ng = np.zeros(Mg.shape)
         if len(rmax) > 1:
             rmax = rmax[ind_epsilon]
-        ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(rmax,
-                                                                  Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
+        #ng[ind_epsilon], epsilon[ind_epsilon]=epsilon_simplemodel(rmax,
+        #                                                          Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
+        ng[ind_epsilon] = number_density(rmax,Mg[ind_epsilon],r_hm[ind_epsilon],profile=profile,bulge=bulge,verbose=verbose)
+        epsilon[ind_epsilon] = ng[ind_epsilon]/nH
+
     else:
         #        Mg, r, Mg_bulge, r_bulge = epsilon_param
         Mg_bulge = mgas[1,:]
@@ -377,11 +345,18 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         ng = np.zeros(Mg.shape)
         if len(rmax) > 1:
             rmax = rmax[ind_epsilon]
-        ng_disk, ep_disk = epsilon_simplemodel(rmax,
-                                               Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
-        ng_bulge, ep_bulge = epsilon_simplemodel(rmax,
-                                                 Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],nH=nH,
-                                                 bulge=True,verbose=verbose)
+        #ng_disk, ep_disk = epsilon_simplemodel(rmax,
+        #                                       Mg[ind_epsilon],r[ind_epsilon],nH=nH,verbose=verbose)
+        ng_disk = number_density(rmax,Mg[ind_epsilon],r[ind_epsilon],verbose=verbose)
+        ep_disk = ng_disk/nH
+
+        #ng_bulge, ep_bulge = epsilon_simplemodel(rmax,
+        #                                         Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],nH=nH,
+        #                                         bulge=True,verbose=verbose)
+        ng_bulge = number_density(rmax,Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],
+                                               bulge=True,verbose=verbose)
+        ep_bulge = ng_bulge/nH
+
         epsilon[ind_epsilon]= ep_disk + ep_bulge
         ng[ind_epsilon]= ng_disk + ng_bulge
     
