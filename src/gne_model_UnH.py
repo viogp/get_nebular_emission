@@ -135,10 +135,6 @@ def enclosed_mass_sphere(R,MB,hB,profile='exponential',verbose=True):
     a = R[0]/hB[ind]
     if len(R) > 1:
         a = R[ind]/hB[ind]
-
-    x = R[0]
-    if len(R) > 1:
-        x = R[ind]
     
     if profile not in 'exponential':
         if verbose:
