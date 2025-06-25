@@ -33,80 +33,7 @@ def get_alphaB(T):
     alphaB = np.interp(T,temps,vals)
     return alphaB
 
-
-def surface_density(x,M,reff,profile='exponential',verbose=True):
-    '''
-    Given the mass of a disk, M, its effective radius, reff,
-    the surface density is calculated at a given distance from the center, x.
-
-    Parameters
-    ----------
-    x : array of floats
-     Distance to the center in which surface density is going to be calculated (Mpc).
-    M : array of floats
-     Mass of the desired component of the galaxy (Msun).
-    reff : floats
-     Effective radius of the galaxy (Mpc)
-    profile : string
-     Assumed density profile form for the surface density.
-    verbose : boolean
-     If True print out messages.
-     
-    Returns
-    -------
-    surf_den : floats
-    '''
-    if profile not in 'exponential':
-        if verbose:
-            print('WARNING gne_model_UnH is only set to handle')
-            print('                      exponential profiles.')
-        profile == 'exponential'
-    
-    central = M/(2*np.pi*(reff**2))
         
-    surf_den = central*np.exp(-x/reff)
-    return surf_den
-
-    
-def enclosed_mass_disc(x,M,hD,profile='exponential',verbose=True):
-    '''
-    Calculate the mass enclosed within a radius x, for a
-    disc component of total mass M, and scalelength hD.
-
-    Parameters
-    ----------
-    x : float
-       Radius at which to calculate the enclosed mass (Mpc).
-    M : array of floats
-       Mass of the spherical component (Msun).
-    hB : array of floats
-       Scalelength of the component (Mpc)
-    profile : string
-       Assumed density profile type, 'exponential'.
-    verbose : boolean
-       If True print out messages.
-     
-    Returns
-    -------
-    mass_enclosed : float
-    '''
-    mass_enclosed = np.zeros(M.shape)
-    if profile not in 'exponential':
-        if verbose:
-            print('WARNING gne_model_UnH is only set to handle')
-            print('                      exponential profiles.')
-        profile == 'exponential'
-
-    ind = np.where((M>0)&(hD>0))[0]
-    xx = x[0]
-    if len(x) > 1:
-        xx = x[ind]
-    mass_enclosed[ind] = (M[ind]/hD[ind])*(hD[ind] - np.exp(-xx/hD[ind])*hD[ind] - xx*np.exp(-xx/hD[ind]))
-
-    return mass_enclosed
-    
-
-    
 def enclosed_mass_sphere(R,MB,hB,profile='exponential',verbose=True):
     '''
     Calculate the mass enclosed within a radius x, for a
@@ -168,7 +95,7 @@ def number_density_sphere(R,MB,hB,profile='exponential',verbose=True):
      
     Returns
     -------
-    mass_enclosed : float (Msun)
+    nB : array of floats (cm^-3)
     '''
     M_enclosed = enclosed_mass_sphere(R,MB,hB,profile=profile,verbose=verbose)
 
@@ -184,6 +111,82 @@ def number_density_sphere(R,MB,hB,profile='exponential',verbose=True):
     nB[ind] = (M_enclosed[ind]*c.Msun/c.mp)/st.vol_sphere(R_cm)
 
     return nB #cm^-3
+
+
+        
+def surface_density_disc(R,MD,hD,profile='exponential',verbose=True):
+    '''
+    Calculate the surface density at radius R, for a disc
+    with mass MD, and scalelength hD.
+
+    Parameters
+    ----------
+    R : float
+       Radius at which to calculate the surface density (Mpc).
+    MD : array of floats
+       Mass of the disc (Msun).
+    hD : array of floats
+       Scalelength of the disc (Mpc)
+    profile : string
+       Assumed density profile type, 'exponential'.
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    surface_density : array of float (kg/m^2)
+    '''
+    surface_density = np.zeros(MD.shape)
+    
+    ind = np.where((MD>0)&(hD>0))[0]
+    a = R[0]/hD[ind]
+    if len(R) > 1:
+        a = R[ind]/hD[ind]
+    
+    if profile not in 'exponential':
+        if verbose:
+            print('WARNING gne_model_UnH is only set to handle')
+            print('                      exponential profiles.')
+        profile == 'exponential'
+
+    m_kg = MD[ind]*c.Msun
+    h_m = hD[ind]*c.mega*c.parsec
+    surface_density[ind] = np.exp(-a)*m_kg/(2*np.pi*h_m*h_m)
+    
+    return surface_density #kg/m^2
+
+
+def number_density_disc(R,MD,hD,temp=c.temp_ionising,
+                        profile='exponential',verbose=True):
+    '''
+    Calculate the number density in a disc of radius R,
+    mass MD, and scalelength hD, assuming an ionising temperature.
+
+    Parameters
+    ----------
+    R : float
+       Radius at which to calculate the enclosed mass (Mpc).
+    MD : array of floats
+       Mass of the disc (Msun).
+    hD : array of floats
+       Scalelength of the disc (Mpc)
+    temp : float
+       Temperature of the ionising region (K).
+    profile : string
+       Assumed density profile type, 'exponential'.
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    nD : array of floats (cm^-3)
+    '''
+    sigma = surface_density_disc(R,MD,hD,profile=profile,verbose=verbose)
+
+    nD_m = sigma*sigma*c.G*np.pi/(2*c.kB*temp)
+    nD = nD_m*100**3
+    
+    return nD #cm^-3
 
 
 def number_density(R,M,hr,mgasr_type='disc',
@@ -216,17 +219,7 @@ def number_density(R,M,hr,mgasr_type='disc',
     n = None
     
     if mgasr_type == 'disc':
-        M_enclosed = enclosed_mass_disc(R,M,hr,profile=profile,verbose=verbose)
-        n = np.zeros(M_enclosed.shape)
-        
-        if len(R) > 1:
-            ind = np.where((M_enclosed>0)&(R>0))[0]
-            R_cm = R[ind]*c.Mpc_to_cm
-        else:
-            ind = np.where((M_enclosed>0))[0]
-            R_cm = R[0]*c.Mpc_to_cm
-    
-            n[ind] = (M_enclosed[ind]*c.Msun/c.mp)/st.vol_sphere(R_cm)
+        n = number_density_disc(R,M,hr,profile=profile,verbose=verbose)
     else:
         n = number_density_sphere(R,M,hr,profile=profile,verbose=verbose)
         
