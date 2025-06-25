@@ -303,54 +303,22 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
     epsilon = np.zeros(mgas.shape[1])
     
     ncomp = io.get_ncomponents(mgas)
-    print(ncomp,mgasr_type)
     for ii in range(ncomp):
         Mi = mgas[ii,:]
         hi = hr[ii,:]
-
+    
         ni = np.zeros(Mi.shape)
         epi = np.zeros(Mi.shape)
-
+    
         ind = np.where((Mi>0)&(hi>0))
         if len(rmax) > 1:
             rmax = rmax[ind]
-
+    
         ni[ind] = number_density(rmax,Mi[ind],hi[ind],profile=profile,
                                  mgasr_type=mgasr_type[ii],verbose=verbose)
         epi[ind] = ni[ind]/nH
-
+    
         epsilon[ind] = epsilon[ind] + epi[ind]
-######################################################
-#    Mg = mgas[0,:]
-#    r = hr[0,:]
-#    if ncomp == 1:
-#        # Mg = Mg + Mg_bulge
-#        ind = np.where((Mg>0)&(r>0))
-#        epsilon = np.zeros(Mg.shape)
-#        if len(rmax) > 1:
-#            rmax = rmax[ind]
-#        ng = np.zeros(Mg.shape)
-#        ng[ind] = number_density(rmax,Mg[ind],r[ind],bulge=True,verbose=verbose)
-#        epsilon[ind] = ng[ind]/nH
-#
-#    else:
-#        #        Mg, r, Mg_bulge, r_bulge = epsilon_param
-#        Mg_bulge = mgas[1,:]
-#        r_bulge = hr[1,:]
-#        ind = np.where((Mg>0)&(r>0))
-#        epsilon = np.zeros(Mg.shape)
-#        ng = np.zeros(Mg.shape)
-#        if len(rmax) > 1:
-#            rmax = rmax[ind]
-#        ng_disk = number_density(rmax,Mg[ind],r[ind],verbose=verbose)
-#        ep_disk = ng_disk/nH
-#
-#        ng_bulge = number_density(rmax,Mg_bulge[ind],r_bulge[ind],
-#                                               bulge=True,verbose=verbose)
-#        ep_bulge = ng_bulge/nH
-#
-#        epsilon[ind]= ep_disk + ep_bulge
-#        ng[ind]= ng_disk + ng_bulge
     
     epsilon[epsilon>1] = 1
     return epsilon
