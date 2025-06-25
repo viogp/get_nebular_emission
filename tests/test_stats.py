@@ -129,6 +129,12 @@ class TestPredict(unittest.TestCase):
         expected = (4/3)*np.pi
         val = st.vol_sphere(1)
         self.assertEqual(val,expected)
+
+        n=3
+        expected = np.zeros(n); expected.fill((4/3)*np.pi)
+        r = np.zeros(n); r.fill(1)
+        val = st.vol_sphere(r)
+        np.testing.assert_allclose(val,expected, atol=0.001)
         
 if __name__ == '__main__':
     unittest.main()

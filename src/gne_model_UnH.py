@@ -181,7 +181,7 @@ def number_density(R,M,hr,mgasr_type='disc',
             print('WARNING gne_model_UnH is only set to handle')
             print('                      exponential profiles.')
         profile == 'exponential'
-    
+        
     if mgasr_type == 'disc':
         M_enclosed = enclosed_mass_disc(R,M,hr,profile=profile,verbose=verbose)
     else:
@@ -191,13 +191,14 @@ def number_density(R,M,hr,mgasr_type='disc',
         
     if len(R) > 1:
         ind = np.where((M_enclosed>0)&(R>0))[0]
-        RR = R[ind]
+        R_cm = R[ind]*c.Mpc_to_cm
     else:
         ind = np.where((M_enclosed>0))[0]
-        RR = R[0]
-    n[ind] = M_enclosed[ind]/st.vol_sphere(RR) / (c.mp*c.kg_to_Msun*c.Mpc_to_cm**3)
+        R_cm = R[0]*c.Mpc_to_cm
+    
+    n[ind] = (M_enclosed[ind]*c.Msun/c.mp)/st.vol_sphere(R_cm)
         
-    return n
+    return n #cm^-3
 
     
 def number_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
@@ -234,8 +235,11 @@ def number_density_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
 
     return n # cm^-3
 
-    
-def calculate_ng_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
+
+#ni[ind] = number_density_hydro(rmax,Mi[ind],hi[ind],
+#                               mgasr_type=mgasr_type[ii],
+#                               profile=profile,verbose=verbose)
+def number_density_hydro(max_r,M,r_hm,profile='exponential',verbose=True):
     '''
     Given the mass of the desired component of the galaxy, the disk effective radius
     and a distance to the center, it calculates the mean particle density within that distance.
@@ -272,7 +276,8 @@ def calculate_ng_hydro_eq(max_r,M,r_hm,profile='exponential',verbose=True):
         
 
 def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
-                      mgasr_type=None,profile='exponential',verbose=True):
+                      mgasr_type=None,n_model='simple',
+                      profile='exponential',verbose=True):
     '''
     It reads the relevant parameters in the input file and calculates 
     the volume filling-factor within that distance.
@@ -291,6 +296,8 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
        Assumed hydrogen density in the ionizing regions.
     mgasr_type : list of strings per component
        'disc', 'sphere' or None
+    nmodel : list of strings
+       'simple', 'hydro' or None
     profile : string
        Assumed density profile form for the surface density.
     verbose : boolean
@@ -313,9 +320,14 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         ind = np.where((Mi>0)&(hi>0))
         if len(rmax) > 1:
             rmax = rmax[ind]
-    
-        ni[ind] = number_density(rmax,Mi[ind],hi[ind],profile=profile,
-                                 mgasr_type=mgasr_type[ii],verbose=verbose)
+
+        if n_model == 'hydro': ###here needs to be tested
+            ni[ind] = number_density_hydro(rmax,Mi[ind],hi[ind],
+                                           mgasr_type=mgasr_type[ii],
+                                           profile=profile,verbose=verbose)
+        else:
+            ni[ind] = number_density(rmax,Mi[ind],hi[ind],profile=profile,
+                                     mgasr_type=mgasr_type[ii],verbose=verbose)
         epi[ind] = ni[ind]/nH
     
         epsilon[ind] = epsilon[ind] + epi[ind]
