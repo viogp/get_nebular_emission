@@ -146,8 +146,44 @@ def enclosed_mass_sphere(R,MB,hB,profile='exponential',verbose=True):
 
     return mass_enclosed
 
-    
 
+
+def number_density_sphere(R,MB,hB,profile='exponential',verbose=True):
+    '''
+    Calculate the number density in a sphere of radius R,
+    mass MB, and scalelength hB.
+
+    Parameters
+    ----------
+    R : float
+       Radius at which to calculate the enclosed mass (Mpc).
+    MB : array of floats
+       Mass of the spherical component (Msun).
+    hB : array of floats
+       Scalelength of the component (Mpc)
+    profile : string
+       Assumed density profile type, 'exponential'.
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    mass_enclosed : float (Msun)
+    '''
+    M_enclosed = enclosed_mass_sphere(R,MB,hB,profile=profile,verbose=verbose)
+
+    nB = np.zeros(M_enclosed.shape)
+        
+    if len(R) > 1:
+        ind = np.where((M_enclosed>0)&(R>0))[0]
+        R_cm = R[ind]*c.Mpc_to_cm
+    else:
+        ind = np.where((M_enclosed>0))[0]
+        R_cm = R[0]*c.Mpc_to_cm
+    
+    nB[ind] = (M_enclosed[ind]*c.Msun/c.mp)/st.vol_sphere(R_cm)
+
+    return nB #cm^-3
 
 
 def number_density(R,M,hr,mgasr_type='disc',
@@ -176,27 +212,23 @@ def number_density(R,M,hr,mgasr_type='disc',
     -------
     n : array of floats (cm^-3)
     '''
-    if profile not in 'exponential':
-        if verbose:
-            print('WARNING gne_model_UnH is only set to handle')
-            print('                      exponential profiles.')
-        profile == 'exponential'
-        
+
+    n = None
+    
     if mgasr_type == 'disc':
         M_enclosed = enclosed_mass_disc(R,M,hr,profile=profile,verbose=verbose)
-    else:
-        M_enclosed = enclosed_mass_sphere(R,M,hr,profile=profile,verbose=verbose)
+        n = np.zeros(M_enclosed.shape)
         
-    n = np.zeros(M_enclosed.shape)
-        
-    if len(R) > 1:
-        ind = np.where((M_enclosed>0)&(R>0))[0]
-        R_cm = R[ind]*c.Mpc_to_cm
-    else:
-        ind = np.where((M_enclosed>0))[0]
-        R_cm = R[0]*c.Mpc_to_cm
+        if len(R) > 1:
+            ind = np.where((M_enclosed>0)&(R>0))[0]
+            R_cm = R[ind]*c.Mpc_to_cm
+        else:
+            ind = np.where((M_enclosed>0))[0]
+            R_cm = R[0]*c.Mpc_to_cm
     
-    n[ind] = (M_enclosed[ind]*c.Msun/c.mp)/st.vol_sphere(R_cm)
+            n[ind] = (M_enclosed[ind]*c.Msun/c.mp)/st.vol_sphere(R_cm)
+    else:
+        n = number_density_sphere(R,M,hr,profile=profile,verbose=verbose)
         
     return n #cm^-3
 
