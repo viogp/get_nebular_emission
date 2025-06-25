@@ -88,6 +88,15 @@ class TestPredict(unittest.TestCase):
         val = st.bilinear_interpl(eval_x, eval_y, xedges, yedges, zedges_3d)
         np.testing.assert_array_almost_equal(val, expval, decimal=7)
 
+    def test_ensure_2d(self):
+        a = np.zeros(3)
+        b = st.ensure_2d(a)
+        self.assertEqual(np.shape(b),(1,3))        
+        b = st.ensure_2d(a,axis=1)
+        self.assertEqual(np.shape(b),(3,1))        
+        a = np.zeros((2,3))
+        b = st.ensure_2d(a)
+        self.assertEqual(np.shape(b),(2,3))        
     
     def test_components2tot(self):
         # Test data with one components
@@ -116,15 +125,10 @@ class TestPredict(unittest.TestCase):
         self.assertAlmostEqual(val, expected)        
 
 
-    def test_ensure_2d(self):
-        a = np.zeros(3)
-        b = st.ensure_2d(a)
-        self.assertEqual(np.shape(b),(1,3))        
-        b = st.ensure_2d(a,axis=1)
-        self.assertEqual(np.shape(b),(3,1))        
-        a = np.zeros((2,3))
-        b = st.ensure_2d(a)
-        self.assertEqual(np.shape(b),(2,3))        
+    def test_vol_sphere(self):
+        expected = (4/3)*np.pi
+        val = st.vol_sphere(1)
+        self.assertEqual(val,expected)
         
 if __name__ == '__main__':
     unittest.main()

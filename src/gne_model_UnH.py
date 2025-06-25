@@ -147,72 +147,55 @@ def enclosed_mass_sphere(R,MB,hB,profile='exponential',verbose=True):
     return mass_enclosed
 
     
-def vol_sphere(r):
+
+
+
+def number_density(R,M,hr,mgasr_type='disc',
+                   profile='exponential',verbose=True):
     '''
-    Given the radius of a sphere, returns its value.
+    Calculate the number density (cm^-3) within a radius R,
+    for either a disc or a sphere (bulge) with mass M and
+    scalelength hr.
 
     Parameters
     ----------
-    r : float
-     Radius of the sphere.
-     
-    Returns
-    -------
-    V : float
-    '''
-    
-    V = (4./3.)*np.pi*r**3
-    return V
-
-
-def number_density(x,M,r_hm,profile='exponential',bulge=False,verbose=True):
-    '''
-    Given the mass of the desired component of the galaxy, the disk effective radius
-    and a distance to the center, it calculates the particle density at that distance.
-
-    Parameters
-    ----------
-    x : floats
-     Distance to the center in which surface density is going to be calculated (Mpc).
-    Ms : floats
-     Stellar mass of the galaxy (Msun).
-    Mg : floats
-     Cold gas mass of the galaxy (Msun).
-    r_hm : floats
-     Half-mass radius of the galaxy (Mpc)
+    R : array of floats
+       Radius at which number densities will be calculated (Mpc).
+    M : array of floats (or None)
+       Mass of the galaxy component (Msun)
+    hr : array of floats (or None)
+       Scalelenght of the component (Mpc)
+    mgasr_type : string
+       'disc', 'sphere' or None
     profile : string
-     Assumed density profile form for the surface density.
-    bulge : boolean
-     True if the calculation is being applied to a bulge.
-     False if the calculation is being applied to a disk.
+       Assumed density profile form for the surface density.
     verbose : boolean
-     If True print out messages.
+       If True print out messages.
      
     Returns
     -------
-    n : floats
+    n : array of floats (cm^-3)
     '''
     if profile not in 'exponential':
         if verbose:
             print('WARNING gne_model_UnH is only set to handle')
             print('                      exponential profiles.')
         profile == 'exponential'
-
-    reff = c.halfmass_to_reff*r_hm # GALFORM ###here not to be hardwired
     
-    if bulge:
-        M_enclosed = enclosed_mass_sphere(x,M,reff,profile=profile,verbose=verbose)
+    if mgasr_type == 'disc':
+        M_enclosed = enclosed_mass_disc(R,M,hr,profile=profile,verbose=verbose)
     else:
-        M_enclosed = enclosed_mass_disc(x,M,reff,profile=profile,verbose=verbose)
+        M_enclosed = enclosed_mass_sphere(R,M,hr,profile=profile,verbose=verbose)
         
     n = np.zeros(M_enclosed.shape)
         
-    if len(x) > 1:
-        ind = np.where((M_enclosed>0)&(x>0))[0]
-        n[ind] = M_enclosed[ind]/vol_sphere(x[ind]) / (c.mp*c.kg_to_Msun*c.Mpc_to_cm**3)
+    if len(R) > 1:
+        ind = np.where((M_enclosed>0)&(R>0))[0]
+        RR = R[ind]
     else:
         ind = np.where((M_enclosed>0))[0]
-        n[ind] = M_enclosed[ind]/vol_sphere(x[0]) / (c.mp*c.kg_to_Msun*c.Mpc_to_cm**3)
+        RR = R[0]
+    n[ind] = M_enclosed[ind]/st.vol_sphere(RR) / (c.mp*c.kg_to_Msun*c.Mpc_to_cm**3)
         
     return n
 
@@ -302,7 +285,7 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
        Scalelenght of the central region or per component (Mpc)
     filenom : string
         File with information relevant for the calculation
-    Rmax : array of floats
+    rmax : array of floats
        Radius at which number densities will be calculated (Mpc).
     nH : float
        Assumed hydrogen density in the ionizing regions.
@@ -320,6 +303,7 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
     epsilon = np.zeros(mgas.shape[1])
     
     ncomp = io.get_ncomponents(mgas)
+    print(ncomp,mgasr_type)
     for ii in range(ncomp):
         Mi = mgas[ii,:]
         hi = hr[ii,:]
@@ -331,52 +315,42 @@ def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
         if len(rmax) > 1:
             rmax = rmax[ind]
 
-        itype = 'disc'
-        if mgasr_type is not None:
-            itype = mgasr_type[ii]
-
-        bulge = False
-        if itype == 'sphere':
-            bulge = True
-            
         ni[ind] = number_density(rmax,Mi[ind],hi[ind],profile=profile,
-                                 bulge=bulge,verbose=verbose)
+                                 mgasr_type=mgasr_type[ii],verbose=verbose)
         epi[ind] = ni[ind]/nH
 
         epsilon[ind] = epsilon[ind] + epi[ind]
-#    #exit()###here
+######################################################
 #    Mg = mgas[0,:]
 #    r = hr[0,:]
-##    if epsilon_param.shape[0] == 2: #2
-##        Mg, r = epsilon_param
 #    if ncomp == 1:
 #        # Mg = Mg + Mg_bulge
-#        ind_epsilon = np.where((Mg>0)&(r>0))
+#        ind = np.where((Mg>0)&(r>0))
 #        epsilon = np.zeros(Mg.shape)
 #        if len(rmax) > 1:
-#            rmax = rmax[ind_epsilon]
+#            rmax = rmax[ind]
 #        ng = np.zeros(Mg.shape)
-#        ng[ind_epsilon] = number_density(rmax,Mg[ind_epsilon],r_hm[ind_epsilon],profile=profile,bulge=bulge,verbose=verbose)
-#        epsilon[ind_epsilon] = ng[ind_epsilon]/nH
+#        ng[ind] = number_density(rmax,Mg[ind],r[ind],bulge=True,verbose=verbose)
+#        epsilon[ind] = ng[ind]/nH
 #
 #    else:
 #        #        Mg, r, Mg_bulge, r_bulge = epsilon_param
 #        Mg_bulge = mgas[1,:]
 #        r_bulge = hr[1,:]
-#        ind_epsilon = np.where((Mg>0)&(r>0))
+#        ind = np.where((Mg>0)&(r>0))
 #        epsilon = np.zeros(Mg.shape)
 #        ng = np.zeros(Mg.shape)
 #        if len(rmax) > 1:
-#            rmax = rmax[ind_epsilon]
-#        ng_disk = number_density(rmax,Mg[ind_epsilon],r[ind_epsilon],verbose=verbose)
+#            rmax = rmax[ind]
+#        ng_disk = number_density(rmax,Mg[ind],r[ind],verbose=verbose)
 #        ep_disk = ng_disk/nH
 #
-#        ng_bulge = number_density(rmax,Mg_bulge[ind_epsilon],r_bulge[ind_epsilon],
+#        ng_bulge = number_density(rmax,Mg_bulge[ind],r_bulge[ind],
 #                                               bulge=True,verbose=verbose)
 #        ep_bulge = ng_bulge/nH
 #
-#        epsilon[ind_epsilon]= ep_disk + ep_bulge
-#        ng[ind_epsilon]= ng_disk + ng_bulge
+#        epsilon[ind]= ep_disk + ep_bulge
+#        ng[ind]= ng_disk + ng_bulge
     
     epsilon[epsilon>1] = 1
     return epsilon

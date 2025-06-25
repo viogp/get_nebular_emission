@@ -80,7 +80,6 @@ photmod_sfr='gutkin16'
 # m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
 # For a single component: m_sfr_z = [[M*,SFR,Zgas]]
 # For a HDF5 input file: m_sfr_z = [['Mstellar','SFR','Zgas']]
-
 #m_sfr_z = [[0,2,4]]
 m_sfr_z = [[0,2,4],[1,3,5]]
 
@@ -131,21 +130,21 @@ model_U_agn    = 'panuzzo03'
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
 #mgas_r = None
-#mgas_r = [[19,12]]
-mgas_r = [[6,11],[9,12]]
+mgas_r = [[19,12]]
+#mgas_r = [[6,11],[9,12]]
 
 # If mgas_r given, the type of component needs to be specified
 # mgasr_type = 'disc', 'sphere' or None
-#mgasr_type=['sphere']
-mgasr_type = ['disc','sphere']
+mgasr_type=['sphere']
+#mgasr_type = ['disc','sphere']
 
 # Type of radius input, per component:
 # 0: scalelength;
 # 1: effective radius, Re
 # 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
 # 3: radius of the galaxy or host halo
-#r_type = [1]
-r_type = [1,1]
+r_type = [1]
+#r_type = [1,1]
 
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'
