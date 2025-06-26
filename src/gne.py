@@ -337,7 +337,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                       testing=testing,verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
-                                          lzgas_agn, ###here to be removed?
                                           mgasr_type=mgasr_type_agn,
                                           verbose=verbose)
         if verbose: print(' U calculated.')

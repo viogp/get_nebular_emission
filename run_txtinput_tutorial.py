@@ -130,13 +130,13 @@ model_U_agn    = 'panuzzo03'
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
 #mgas_r = None
-#mgas_r = [[19,12]]
+#mgas_r = [[6,11]]
 mgas_r = [[6,11],[9,12]]
 
 # If mgas_r given, the type of component needs to be specified
-# mgasr_type = 'disc', 'sphere' or None
+# mgasr_type = 'disc', 'bulge' or None
 #mgasr_type=['disc']
-mgasr_type = ['disc','sphere']
+mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:
 # 0: scalelength;
