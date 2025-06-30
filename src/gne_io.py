@@ -815,20 +815,20 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
                 'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
             
-            if fluxes_sfr.any():
+            if fluxes_sfr is not None:
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
                                      data=fluxes_sfr[:,i], maxshape=(None,None))
                 hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = \
                     'Lines units: egr s^-1 cm^-2'
                 
-            if fluxes_sfr_att.any():
+            if fluxes_sfr_att is not None:
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux_att', 
                                      data=fluxes_sfr_att[:,i], maxshape=(None,None))
                 hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = \
                     'Lines units: egr s^-1 cm^-2'
 
             
-            if nebline_sfr_att.any():
+            if nebline_sfr_att is not None:
                 if nebline_sfr_att[0,i,0] > 0:
                     hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
                                          data=nebline_sfr_att[:,i], maxshape=(None,None))
@@ -893,20 +893,20 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
                 'Lines units: egr s^-1'
             
-            if fluxes_agn.any():
+            if fluxes_agn is not None:
                 hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
                                      data=fluxes_agn[0,i][None,:], maxshape=(None,None))
                 hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
                     'Lines units: egr s^-1 cm^-2'
                 
-            if fluxes_agn_att.any():
+            if fluxes_agn_att is not None:
                 if fluxes_agn_att[0,i,0] >= 0:
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
                                          data=fluxes_agn_att[0,i][None,:], maxshape=(None,None))
                     hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = \
                         'Lines units: egr s^-1 cm^-2'
             
-            if nebline_agn_att.any():
+            if nebline_agn_att is not None:
                 if nebline_agn_att[0,i,0] >= 0:
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
                                          data=nebline_agn_att[0,i][None,:], maxshape=(None,None))

@@ -10,6 +10,50 @@ import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st
 
+
+def surface_density_disc(R,MD,hD,profile='exponential',verbose=True):
+    '''
+    Calculate the surface density at radius R, for a disc
+    with mass MD, and scalelength hD.
+
+    Parameters
+    ----------
+    R : float
+       Radius at which to calculate the surface density (Mpc).
+    MD : array of floats
+       Mass of the disc (Msun).
+    hD : array of floats
+       Scalelength of the disc (Mpc)
+    profile : string
+       Assumed density profile type, 'exponential'.
+    verbose : boolean
+       If True print out messages.
+     
+    Returns
+    -------
+    surface_density : array of float (kg/m^2)
+    '''
+    surface_density = np.zeros(MD.shape)
+    
+    ind = np.where((MD>0)&(hD>0))[0]
+    a = R[0]/hD[ind]
+    if len(R) > 1:
+        a = R[ind]/hD[ind]
+    
+    if profile not in 'exponential':
+        if verbose:
+            print('WARNING gne_model_UnH is only set to handle')
+            print('                      exponential profiles.')
+        profile == 'exponential'
+
+    m_kg = MD[ind]*c.Msun
+    h_m = hD[ind]*c.mega*c.parsec
+    surface_density[ind] = np.exp(-a)*m_kg/(2*np.pi*h_m*h_m)
+    
+    return surface_density #kg/m^2
+
+
+
 def enclosed_mass(R,M,h,mgasr_type='disc',verbose=True):
     '''
     Calculate the mass enclosed within a radius x, for a

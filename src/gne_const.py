@@ -64,6 +64,9 @@ model_nH_sfr = ['kashino20']
 model_U_sfr  = ['kashino20', 'orsi14']
 
 model_spec_agn = ['feltre16']
+alpha_NLR_feltre16 = -1.7
+xid_NLR_feltre16 = 0.5
+
 model_U_agn    = ['panuzzo03']
 
 photmods = ['gutkin16', 'feltre16']

@@ -22,7 +22,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         model_nH_sfr='kashino19',model_U_sfr='kashino19',
         photmod_sfr='gutkin16',nH_sfr=c.nH_sfr,
         q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
-        T=10000,xid_sfr=0.3,co_sfr=1,
+        T=c.temp_ionising,xid_sfr=0.3,co_sfr=1,
         m_sfr_z=[None],mtot2mdisk=True,
         inoh=False,LC2sfr=False,
         IMF=['Kroupa','Kroupa'],imf_cut_sfr=100,
@@ -31,7 +31,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         model_U_agn='panuzzo03',
         mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
         model_spec_agn='feltre16',
-        alpha_NLR=-1.7,xid_NLR=0.5,
+        alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
         zeq=None,infile_z0=None,
@@ -266,7 +266,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if verbose:
             print(' Attenuation calculated.')
     else:
-        nebline_sfr_att = np.array(None)
+        nebline_sfr_att = None
 
     if flux:
         fluxes_sfr = calculate_flux(nebline_sfr,outfile,origin='sfr')
@@ -274,8 +274,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if verbose:
             print(' Flux calculated.')
     else:
-        fluxes_sfr = np.array(None)
-        fluxes_sfr_att = np.array(None)
+        fluxes_sfr = None
+        fluxes_sfr_att = None
 
     # Read any extra parameters and write them in the output file
     # together with the HII spectral lines
@@ -363,7 +363,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                                         photmod=photmod_agn,verbose=verbose)
             if verbose: print(' Attenuation calculated.')     
         else:
-            nebline_agn_att = np.array(None)
+            #nebline_agn_att = np.array(None)
+            nebline_agn_att = None
 
         # Calculate fluxes if required
         if flux:
@@ -372,8 +373,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             if verbose:
                 print(' Flux calculated.')
         else:
-            fluxes_agn = np.array(None)
-            fluxes_agn_att = np.array(None)
+            #fluxes_agn = np.array(None)
+            #fluxes_agn_att = np.array(None)
+            fluxes_agn = None
+            fluxes_agn_att = None
 
         # Write output in a file            
         io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,

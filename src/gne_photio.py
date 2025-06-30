@@ -118,7 +118,7 @@ def calculate_flux(nebline,filenom,origin='sfr'):
     '''
     
     if nebline.any():
-        # Read redshift and cosmo
+        # Read redshift and cosmological parameters
         f = h5py.File(filenom, 'r')
         header = f['header']
         redshift = header.attrs['redshift']
