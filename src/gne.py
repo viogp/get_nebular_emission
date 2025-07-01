@@ -339,6 +339,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           mgasr_type=mgasr_type_agn,
                                           verbose=verbose)
+
         if verbose: print(' U calculated.')
 
         # Calculate emission lines in adequate units

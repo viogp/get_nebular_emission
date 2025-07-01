@@ -876,40 +876,46 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
         hfdat.create_dataset('Lagn', data=Lagn, maxshape=(None))
         hfdat['Lagn'].dims[0].label = 'L_bol (erg/s)'
         
-        hfdat.create_dataset('lu_agn', data=lu_agn, maxshape=(None,None))
+        hfdat.create_dataset('lu_agn', data=np.squeeze(lu_agn), maxshape=(None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
 
-        hfdat.create_dataset('lz_agn', data=lzgas_agn, maxshape=(None,None))
+        hfdat.create_dataset('lz_agn', data=np.squeeze(lzgas_agn), maxshape=(None))
         hfdat['lz_agn'].dims[0].label = 'log10(Z)'
 
         if epsilon_agn is not None:
-            hfdat.create_dataset('epsilon_NLR', data=epsilon_agn, maxshape=(None))
+            hfdat.create_dataset('epsilon_NLR', data=np.squeeze(epsilon_agn),
+                                 maxshape=(None))
             hfdat['epsilon_NLR'].dims[0].label = \
                 'AGN NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
+            #ndata = nebline_agn[0,i][None,:]
+            ndata = np.squeeze(nebline_agn[0,i])
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
-                                 data=nebline_agn[0,i][None,:], maxshape=(None,None))
+                                 data=ndata, maxshape=(None))
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
                 'Lines units: egr s^-1'
             
             if fluxes_agn is not None:
+                ndata = np.squeeze(fluxes_agn[0,i])
                 hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
-                                     data=fluxes_agn[0,i][None,:], maxshape=(None,None))
+                                     data=ndata, maxshape=(None))
                 hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
                     'Lines units: egr s^-1 cm^-2'
                 
             if fluxes_agn_att is not None:
                 if fluxes_agn_att[0,i,0] >= 0:
+                    ndata = np.squeeze(fluxes_agn_att[0,i])
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
-                                         data=fluxes_agn_att[0,i][None,:], maxshape=(None,None))
+                                         data=ndata, maxshape=(None,None))
                     hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = \
                         'Lines units: egr s^-1 cm^-2'
             
             if nebline_agn_att is not None:
                 if nebline_agn_att[0,i,0] >= 0:
+                    ndata = np.squeeze(nebline_agn_att[0,i])
                     hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
-                                         data=nebline_agn_att[0,i][None,:], maxshape=(None,None))
+                                         data=ndata, maxshape=(None,None))
                     hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = \
                         'Lines units: egr s^-1'
 

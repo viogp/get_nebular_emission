@@ -429,7 +429,7 @@ def get_U_panuzzo03(Q,filenom,epsilon=None,nH=None, origin='NLR'):
     
     # Calculate the average ionising parameter
     uu = const*np.power(Q*nH*epsilon*epsilon,1/3)
-    
+
     # Get the Ionising Parameters at the Stromgren Radius: Us~<U>/3
     lu = np.zeros(uu.shape); lu.fill(c.notnum)
     lu[uu>0.] = np.log10(uu[uu>0.]) - np.log10(3)
@@ -538,19 +538,19 @@ def get_UnH_sfr(lms, lssfr, lzgas, filenom,
 def get_UnH_agn(Lagn, mgas, hr, filenom,
                 mgasr_type=None,verbose=True):
     '''
-    Given the AGN bolometric luminosity,
-    gas mass and scalelenght (per component)
-    get the ionizing parameter, U, and the
-    filling factor, epsilon, if needed.
+    Calculate the ionising parameter, U, and the
+    filling factor, epsilon, if needed, for a given
+    AGN bolometric luminosity, Lagn, and gas mass, mgas,
+    and scalelenght, hr, that can be given per component.
 
     Parameters
     ----------
     Lagn : array of floats
        Bolometric luminosity of the AGNs (erg/s).
     mgas : array of floats (or None)
-       Central gas mass or per galaxy component
+       Gas mass of a galaxy (component) (Msun).
     hr : array of floats (or None)
-       Scalelenght of the central region or per component
+       Scalelenght of the galaxy (component) (Mpc).
     filenom : string
         File with information relevant for the calculation
     mgasr_type : list of strings per component
@@ -580,19 +580,20 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
         model_spec_agn = header.attrs['model_spec_NLR']
         alpha_NLR = header.attrs['alpha_NLR']
         f.close()
-        
+
         Q = get_Q_agn(Lagn,alpha_NLR,model_spec=model_spec_agn,verbose=verbose)
 
         # Obtain the filling factor
         if (mgas is None or hr is None):
             epsilon = None
-            nattrs = io.add2header(filenom,['epsilon_NLR'],[c.epsilon_NLR])
+            nattrs = io.add2header(filenom,['epsilon_NLR'],[c.epsilon_NLR],
+                                   verbose=verbose)
         else: 
             epsilon = e.calculate_epsilon(mgas,hr,filenom,
                                           rmax=[c.radius_NLR],nH=c.nH_NLR,
                                           mgasr_type=mgasr_type,
                                           verbose=verbose)
-            #epsilon = st.ensure_2d(epsilon)
+            epsilon = st.ensure_2d(epsilon)
 
         # Calculate the ionising factor
         lu = get_U_panuzzo03(Q,filenom,epsilon=epsilon,origin='NLR') 
