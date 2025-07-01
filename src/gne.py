@@ -207,7 +207,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                     mtot2mdisk=mtot2mdisk,
                                     inputformat=inputformat,
                                     testing=testing,verbose=verbose)
-
+    
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
         epsilon_param_z0 = io.read_data(infile_z0,cut,
@@ -277,22 +277,23 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         fluxes_sfr = None
         fluxes_sfr_att = None
 
+    ### Write output
     # Read any extra parameters and write them in the output file
     # together with the HII spectral lines
     extra_param = io.read_data(infile,cut,
                                inputformat=inputformat,
                                params=extra_params,
                                testing=testing,
-                               verbose=verbose)
-        
-    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
-                      nebline_sfr,nebline_sfr_att,
-                      fluxes_sfr,fluxes_sfr_att,
+                               verbose=verbose)        
+    io.write_global_data(outfile,lms,lssfr=lssfr,
                       extra_param=extra_param,
                       extra_params_names=extra_params_names,
                       extra_params_labels=extra_params_labels,
                       verbose=verbose)
-    
+    io.write_sfr_data(outfile,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
+                      nebline_sfr,nebline_sfr_att,
+                      fluxes_sfr,fluxes_sfr_att,verbose=verbose)
+
     del lu_sfr, lnH_sfr
     del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
     del nebline_sfr, nebline_sfr_att
@@ -335,6 +336,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                       h0=h0,units_h0=units_h0,
                                       inputformat=inputformat,
                                       testing=testing,verbose=verbose)
+            io.write_global_data(outfile,mgas.T,mass_type='g',
+                                 scalelength=hr.T,verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           mgasr_type=mgasr_type_agn,

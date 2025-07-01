@@ -739,10 +739,70 @@ def get_mgas_hr(infile,selection,cols,r_type,
     return outm, outr
 
 
-def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
-               nebline_sfr,nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
-               extra_param=[[None]],extra_params_names=None,extra_params_labels=None,
-               verbose=True):
+def write_global_data(filenom,lmass,mass_type='s',
+                      lssfr=None,scalelength=None,
+                      extra_param=[[None]],extra_params_names=None,
+                      extra_params_labels=None,verbose=True):
+    '''
+    Write global data to output file
+
+    Parameters
+    ----------
+    filenom : string
+       Full path to the output file
+    mass : array of floats
+       Masses (log10(M) (Msun)).
+    mass_type : string
+       's' for stellar, 'g' for gas, etc. indicating the type of mass
+    ssfr : array of floats
+       sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
+    scalelength : array of floats
+        Scalelenth of the galaxies per component (log10(SFR/M*) (1/yr)).
+    extra_params : list of integers (txt files) or strings (hdf5 files)
+        Column number or names of the extra parameters to be saved.
+    extra_params_names : array of strings
+        Names of the datasets in the output files for the extra parameters.
+    extra_params_labels : array of strings
+        Descriptions (expected name and units) for the extra parameters.
+    '''     
+    # Open the file 
+    hf = h5py.File(filenom, 'a')
+    # Check if there is a group for global data and create it otherwise
+    if 'data' not in hf.keys():
+        gdat = hf.create_group('data')
+    else:
+        gdat = hf['data']
+
+    maxshape = tuple(None for _ in lmass.shape)
+    nom = 'lm'+mass_type
+    gdat.create_dataset(nom, data=lmass, maxshape=maxshape)
+    gdat[nom].dims[0].label = 'log10(M/Msun)'
+
+    if lssfr is not None:
+        maxshape = tuple(None for _ in lssfr.shape)
+        gdat.create_dataset('lssfr', data=lssfr, maxshape=maxshape)
+        gdat['lssfr'].dims[0].label = 'log10(SFR/M*/yr)'
+
+    if scalelength is not None:
+        maxshape = tuple(None for _ in scalelength.shape)
+        nom = 'h'+mass_type
+        gdat.create_dataset(nom, data=scalelength, maxshape=maxshape)
+        gdat[nom].dims[0].label = 'Mpc'
+
+    if extra_param[0][0] != None:
+        for i in range(len(extra_param)):
+            gdat.create_dataset(extra_params_names[i], data =\
+                                extra_param[i][:,None], maxshape=(None,None))
+            if extra_params_labels:
+                gdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
+
+    hf.close()
+    return 
+
+
+def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
+                   nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
+                   verbose=True):
     '''
     Write line data from star forming regions
 
@@ -750,10 +810,6 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
     ----------
     filenom : string
        Full path to the output file
-    lms_sfr : floats
-     Masses of the galaxies per component (log10(M*) (Msun)).
-    lssfr_sfr : floats
-     sSFR of the galaxies per component (log10(SFR/M*) (1/yr)).
     lu_sfr : floats
      U of the galaxies per component.
     lnH_sfr : floats
@@ -764,14 +820,6 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
     nebline_sfr_att : floats
       Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)    
-    extra_params : list
-     Parameters from the input files which will be saved in the output file.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    extra_params_names : strings
-     Names of the datasets in the output files for the extra parameters.
-    extra_params_labels : strings
-     Description labels of the datasets in the output files for the extra parameters.
     '''
 
     # Read information on models
@@ -782,22 +830,6 @@ def write_sfr_data(filenom,lms,lssfr,lu_sfr,lnH_sfr,lzgas_sfr,
 
     # Output data
     with h5py.File(filenom,'a') as hf:
-        # Global data
-        gdat = hf.create_group('data')
-        
-        gdat.create_dataset('lms', data=lms, maxshape=(None,None))
-        gdat['lms'].dims[0].label = 'log10(M*/Msun)'
-        
-        gdat.create_dataset('lssfr', data=lssfr, maxshape=(None,None))
-        gdat['lssfr'].dims[0].label = 'log10(SFR/M*/yr)'
-
-        if extra_param[0][0] != None:
-            for i in range(len(extra_param)):
-                gdat.create_dataset(extra_params_names[i], data =\
-                                    extra_param[i][:,None], maxshape=(None,None))
-                if extra_params_labels:
-                    gdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
-
         # SF data
         hfdat = hf.create_group('sfr_data')
         hfdat.create_dataset('lu_sfr', data=lu_sfr, maxshape=(None,None))
@@ -889,7 +921,6 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                 'AGN NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
-            #ndata = nebline_agn[0,i][None,:]
             ndata = np.squeeze(nebline_agn[0,i])
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
                                  data=ndata, maxshape=(None))
