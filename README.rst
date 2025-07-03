@@ -1,4 +1,4 @@
-|docs|
+|docs|  |coverage| 
 
 .. inclusion-marker-do-not-remove
 
