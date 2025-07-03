@@ -872,8 +872,6 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
 
     # Get number of components
     ncomp = np.shape(lu)[1]
-    if AGN:
-        nacomp = np.shape(lua)[1]
 
     # Prep plots
     side = 15
@@ -933,7 +931,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     # Initialise counters per component
     tots, ins, inns = [np.zeros(ncomp) for i in range(3)]
     if AGN:
-        tota, ina, inna = [np.zeros(nacomp) for i in range(3)]
+        tota, ina, inna = [np.zeros(1) for i in range(3)]
 
     # Read data in each subvolume
     for ivol in range(subvols):
@@ -1002,14 +1000,13 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
             inns[i] = inns[i] + np.shape(ind)[1]        
 
         if AGN:
-            for i in range(nacomp):
-                mask = (luagn[:,i] > c.notnum) & (lzagn[:,i] > c.notnum)
-                u = luagn[mask,i]
-                z = lzagn[mask,i]
-                tota[i] = tota[i] + len(u)
-                ind = np.where((u>=uamin) & (u<=uamax) &
-                               (z>=zamin) & (z<=zamax))
-                ina[i] = ina[i] + np.shape(ind)[1]
+            mask = (luagn[:] > c.notnum) & (lzagn[:] > c.notnum)
+            u = luagn[mask]
+            z = lzagn[mask]
+            tota = tota + len(u)
+            ind = np.where((u>=uamin) & (u<=uamax) &
+                           (z>=zamin) & (z<=zamax))
+            ina = ina + np.shape(ind)[1]
 
     # Plot per component U versus Z
     proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
@@ -1383,15 +1380,15 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
         # Read AGN information if it exists
         if AGN:
             # Read AGN information from file
-            lu_agn = f['agn_data/lu_agn'][:,0]
-            lz_agn = f['agn_data/lz_agn'][:,0]
-            Ha_agn = np.sum(f['agn_data/Halpha_agn'],axis=0)
-            Hb_agn = np.sum(f['agn_data/Hbeta_agn'],axis=0)
-            NII6548_agn = np.sum(f['agn_data/NII6584_agn'],axis=0)
-            OII3727_agn = np.sum(f['agn_data/OII3727_agn'],axis=0)
-            OIII5007_agn = np.sum(f['agn_data/OIII5007_agn'],axis=0)
-            SII6731_agn = np.sum(f['agn_data/SII6731_agn'],axis=0)
-            SII6717_agn = np.sum(f['agn_data/SII6717_agn'],axis=0)
+            lu_agn = f['agn_data/lu_agn'][:]
+            lz_agn = f['agn_data/lz_agn'][:]
+            Ha_agn = f['agn_data/Halpha_agn'][:]
+            Hb_agn = f['agn_data/Hbeta_agn'][:]
+            NII6548_agn = f['agn_data/NII6584_agn'][:]
+            OII3727_agn = f['agn_data/OII3727_agn'][:]
+            OIII5007_agn= f['agn_data/OIII5007_agn'][:]
+            SII6731_agn = f['agn_data/SII6731_agn'][:]
+            SII6717_agn = f['agn_data/SII6717_agn'][:]
         
         # Magnitudes for cuts
         ismagr = True

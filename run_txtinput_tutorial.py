@@ -80,7 +80,6 @@ photmod_sfr='gutkin16'
 # m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
 # For a single component: m_sfr_z = [[M*,SFR,Zgas]]
 # For a HDF5 input file: m_sfr_z = [['Mstellar','SFR','Zgas']]
-
 #m_sfr_z = [[0,2,4]]
 m_sfr_z = [[0,2,4],[1,3,5]]
 
@@ -125,22 +124,26 @@ model_U_agn    = 'panuzzo03'
 # Panuzzo's model requires the calculation of the filling factor
 # epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
 # n_NLR, T_NLR and r_NLR are taken as constants.
+# If mgas_r = None, a fixed volume-filling factor is assumed, otherwise
 # mgas_r is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
-# mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
-#mgas_r = None ###here to be tested
-#mgas_r = [[19,12]]; mgasr_type=['sphere'] ###here To be tested
+# mgas_r = [[mgas_comp1,R_comp1],...]
+#mgas_r = None
+#mgas_r = [[6,11]]
 mgas_r = [[6,11],[9,12]]
 
-# Type of component: 'disc', 'sphere' or None
-mgasr_type = ['disc','sphere'] ###here do I need this?
+# If mgas_r given, the type of component needs to be specified
+# mgasr_type = 'disc', 'bulge' or None
+#mgasr_type=['disc']
+mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:
 # 0: scalelength;
 # 1: effective radius, Re
 # 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
 # 3: radius of the galaxy or host halo
+#r_type = [1]
 r_type = [1,1]
 
 # spec: model for the spectral distribution of the AGN

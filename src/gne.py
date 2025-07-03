@@ -22,7 +22,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         model_nH_sfr='kashino19',model_U_sfr='kashino19',
         photmod_sfr='gutkin16',nH_sfr=c.nH_sfr,
         q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
-        T=10000,xid_sfr=0.3,co_sfr=1,
+        T=c.temp_ionising,xid_sfr=0.3,co_sfr=1,
         m_sfr_z=[None],mtot2mdisk=True,
         inoh=False,LC2sfr=False,
         IMF=['Kroupa','Kroupa'],imf_cut_sfr=100,
@@ -31,7 +31,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         model_U_agn='panuzzo03',
         mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
         model_spec_agn='feltre16',
-        alpha_NLR=-1.7,xid_NLR=0.5,
+        alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
         zeq=None,infile_z0=None,
@@ -207,7 +207,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                     mtot2mdisk=mtot2mdisk,
                                     inputformat=inputformat,
                                     testing=testing,verbose=verbose)
-
+    
     epsilon_param_z0 = [None]
     if infile_z0 is not None:
         epsilon_param_z0 = io.read_data(infile_z0,cut,
@@ -266,7 +266,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if verbose:
             print(' Attenuation calculated.')
     else:
-        nebline_sfr_att = np.array(None)
+        nebline_sfr_att = None
 
     if flux:
         fluxes_sfr = calculate_flux(nebline_sfr,outfile,origin='sfr')
@@ -274,25 +274,26 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if verbose:
             print(' Flux calculated.')
     else:
-        fluxes_sfr = np.array(None)
-        fluxes_sfr_att = np.array(None)
+        fluxes_sfr = None
+        fluxes_sfr_att = None
 
+    ### Write output
     # Read any extra parameters and write them in the output file
     # together with the HII spectral lines
     extra_param = io.read_data(infile,cut,
                                inputformat=inputformat,
                                params=extra_params,
                                testing=testing,
-                               verbose=verbose)
-        
-    io.write_sfr_data(outfile,lms,lssfr,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
-                      nebline_sfr,nebline_sfr_att,
-                      fluxes_sfr,fluxes_sfr_att,
+                               verbose=verbose)        
+    io.write_global_data(outfile,lms,lssfr=lssfr,
                       extra_param=extra_param,
                       extra_params_names=extra_params_names,
                       extra_params_labels=extra_params_labels,
                       verbose=verbose)
-    
+    io.write_sfr_data(outfile,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
+                      nebline_sfr,nebline_sfr_att,
+                      fluxes_sfr,fluxes_sfr_att,verbose=verbose)
+
     del lu_sfr, lnH_sfr
     del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
     del nebline_sfr, nebline_sfr_att
@@ -329,16 +330,19 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
         # Get the ionising parameter, U, (and filling factor)
         mgas = None; hr = None
-        if mgas_r_agn is not None:
-            mgas, hr = io.get_mgas_hr(infile,mgas_r_agn,r_type_agn,cut,
-                                   h0=h0,units_h0=units_h0,
-                                   inputformat=inputformat,
-                                   testing=testing,verbose=verbose)
+        if mgas_r_agn is not None:    
+            mgas, hr = io.get_mgas_hr(infile,cut,
+                                      mgas_r_agn,r_type_agn,
+                                      h0=h0,units_h0=units_h0,
+                                      inputformat=inputformat,
+                                      testing=testing,verbose=verbose)
+            io.write_global_data(outfile,mgas.T,mass_type='g',
+                                 scalelength=hr.T,verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
-                                          lzgas_agn, ###here to be removed?
                                           mgasr_type=mgasr_type_agn,
                                           verbose=verbose)
+
         if verbose: print(' U calculated.')
 
         # Calculate emission lines in adequate units
@@ -363,7 +367,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                                         photmod=photmod_agn,verbose=verbose)
             if verbose: print(' Attenuation calculated.')     
         else:
-            nebline_agn_att = np.array(None)
+            #nebline_agn_att = np.array(None)
+            nebline_agn_att = None
 
         # Calculate fluxes if required
         if flux:
@@ -372,8 +377,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             if verbose:
                 print(' Flux calculated.')
         else:
-            fluxes_agn = np.array(None)
-            fluxes_agn_att = np.array(None)
+            #fluxes_agn = np.array(None)
+            #fluxes_agn_att = np.array(None)
+            fluxes_agn = None
+            fluxes_agn_att = None
 
         # Write output in a file            
         io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,

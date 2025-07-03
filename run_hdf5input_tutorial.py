@@ -113,15 +113,15 @@ model_U_agn    = 'panuzzo03'
 # Panuzzo's model requires the calculation of the filling factor
 # epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
 # n_NLR, T_NLR and r_NLR are taken as constants.
+# If mgas_r = None, a fixed volume-filling factor is assumed, otherwise
 # mgas_r is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
-# mgas_r = [[mgas_comp1,R_comp1],...]  (or mgas_r = None)
+# mgas_r = [[mgas_comp1,R_comp1],...]
+# If mgas_r given, specify also mgasr_type = 'disc', 'sphere' or None
 mgas_r = [['data/mgas_disk','data/rhm_disk'],
           ['data/mgas_bulge','data/rhm_bulge']]
-
-# Type of component: 'disc', 'sphere' or None
-mgasr_type = ['disc','sphere'] ###here do I need this?
+mgasr_type = ['disc','sphere']
 
 # Type of radius input, per component:
 # 0: scalelength;

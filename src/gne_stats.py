@@ -507,3 +507,21 @@ def romberg(f, a, b, max_steps=10, acc=1e-8):
         # Swap Rn and Rc for next iteration
         Rp, Rc = Rc, Rp
     return Rp[max_steps]  # Return our best guess
+
+
+def vol_sphere(R):
+    '''
+    Calculate the volume of a sphere at a given a radius
+
+    Parameters
+    ----------
+    R : float
+      Radius of the sphere.
+     
+    Returns
+    -------
+    V : float
+    '''
+    
+    V = (4./3.)*np.pi*R**3
+    return V
