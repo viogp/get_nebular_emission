@@ -56,8 +56,8 @@ Brief tutorial going through all the main options of the code are available for 
 The example code make selections within the data, calculate emission line luminosities and make test plots. A line ratio diagram with the results from the example text file, without considering dust attenuation, can be seen below together with the local data from [Favole et al. 2023](https://arxiv.org/abs/2303.11031).
 
 
-|NII|
-|SII|
+|bpts|
+
 
 
 Citing
@@ -93,11 +93,9 @@ archivePrefix = {arXiv},
    :target: https://get-nebular-emission.readthedocs.io/en/latest/
    :alt: Documentation Status
    
-.. |NII| image:: src/example_data/NIIbpt_GP20_62.5kpc_z0_example.pdf
-
-.. |SII| image:: src/example_data/SIIbpt_GP20_62.5kpc_z0_example.pdf
+.. |bpts| image:: data/example_data/iz61/bpts.pdf
 		 
-.. |flowchart| image:: https://i.ibb.co/CsdZjgm/flow-chart.png
+.. |flowchart| image:: data/flow_chart.png
 
 
 
