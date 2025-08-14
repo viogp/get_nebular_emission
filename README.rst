@@ -1,4 +1,4 @@
-|docs| |tests|  |coverage| 
+|docs| |tests| |coverage| 
 
 .. inclusion-marker-do-not-remove
 
