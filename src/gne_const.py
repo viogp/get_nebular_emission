@@ -193,8 +193,8 @@ kagn_exp = 0.597
 temp_ionising = 10000  # K
 
 # Typical values from Osterbrock and Ferland, 2006 book:
-nH_sfr =       100   # cm^-3
-nH_NLR =      1000   # cm^-3
+nH_sfr_cm3 =   100   # cm^-3
+nH_NLR_cm3 =  1000   # cm^-3
 epsilon_NLR = 0.01
 radius_NLR = 0.001   # Mpc
 alphaB = {5000: 4.54e-13, 10000: 2.59e-13, 20000: 1.43e-13}  #cm^3/s

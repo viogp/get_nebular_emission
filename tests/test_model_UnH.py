@@ -14,20 +14,23 @@ class TestPredict(TestCase):
     decimals = 8
     atol = 1e-7
 
-    opath = 'data/example_data/iz61/'
-    root = 'GP20_31p25kpc_z0_example_vol0'
-    txtfile = opath+root+'.txt'
-    hf5file = opath+root+'.hdf5'
-    expath = 'output/test/'
-    zz = 0.
-    filenom = io.generate_header(hf5file,zz,100,0.7,
-                                 0.4,0.3,0.6,1,1e8,
-                                 outpath=expath,verbose=False)
-    noms = ['model_U_NLR','model_spec_NLR','alpha_NLR',
-            'T_NLR_K','epsilon_NLR','nH_NLR_cm3']
-    nval = ['panuzzo03',c.model_spec_agn,c.alpha_NLR_feltre16,5000,1,1]
-    num  = io.add2header(filenom,noms,nval,verbose=False)
-    
+    @classmethod
+    def setUpClass(cls):
+        """Set up test fixtures before running tests in the class"""
+        cls.opath = 'data/example_data/iz61/'
+        cls.root = 'GP20_31p25kpc_z0_example_vol0'
+        cls.txtfile = cls.opath + cls.root + '.txt'
+        cls.hf5file = cls.opath + cls.root + '.hdf5'
+        cls.expath = 'output/test/'
+        cls.zz = 0.
+        cls.filenom = io.generate_header(cls.hf5file, cls.zz, 100, 0.7,
+                                         0.4, 0.3, 0.6, 1, 1e8,
+                                         outpath=cls.expath, verbose=False)
+        cls.noms = ['model_U_NLR','model_spec_NLR','alpha_NLR',
+                    'T_NLR_K','epsilon_NLR','nH_NLR_cm3']
+        cls.nval = ['panuzzo03', c.model_spec_agn, c.alpha_NLR_feltre16, 5000, 1, 1]
+        cls.num = io.add2header(cls.filenom, cls.noms, cls.nval, verbose=False)
+   
     @classmethod
     def tearDownClass(cls):
         """Clean up after all tests in the class are finished"""

@@ -205,7 +205,7 @@ def number_density_hydro(max_r,M,r_hm,verbose=True):
     return ng # cm^-3
         
 
-def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR,
+def calculate_epsilon(mgas,hr,filenom,rmax=[c.radius_NLR],nH=c.nH_NLR_cm3,
                       mgasr_type=None,n_model='simple',
                       pressure=None,verbose=True):
     '''
