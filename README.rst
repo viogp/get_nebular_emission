@@ -1,4 +1,4 @@
-|docs|  |coverage| 
+|docs| |tests|  |coverage| 
 
 .. inclusion-marker-do-not-remove
 
@@ -75,10 +75,13 @@ If you use get_emission_lines, please cite the following paper:
 	     
 .. |docs| image:: https://readthedocs.org/projects/get-nebular-emission/badge/?version=latest
    :target: https://get-nebular-emission.readthedocs.io/en/latest/
-   :alt: Documentation Status
 
+.. |tests| image:: https://github.com/viogp/get_nebular_emission/workflows/Tests/badge.svg
+   :target: https://github.com/viogp/get_nebular_emission/actions
+
+	 
 .. |coverage| image:: https://codecov.io/gh/viogp/get_nebular_emission/graph/badge.svg?token=BLZUS5BORI 
- :target: https://codecov.io/gh/galform/get_nebular_emission
+ :target: https://codecov.io/gh/viogp/get_nebular_emission
 	 
 .. |bpts| image:: data/example_data/iz61/bpts.pdf
 		 
