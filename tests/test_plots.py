@@ -1,5 +1,6 @@
 #python3 -m unittest tests/test_plots.py 
 
+import pytest
 from unittest import TestCase
 import numpy as np
 from numpy.testing import assert_allclose
@@ -9,6 +10,10 @@ import src.gne_const as c
 import src.gne_plots as plt
 
 ex_root = 'output/iz61/GP20_31p25kpc_z0_example_vol'
+required_file = 'output/iz61/GP20_31p25kpc_z0_example_vol0.hdf5'
+
+@pytest.mark.skipif(not os.path.exists(required_file), 
+                   reason=f"Test data file not found: {required_file}")
 
 class TestPredict(TestCase):
     def test_contour2Dsigma(self):
