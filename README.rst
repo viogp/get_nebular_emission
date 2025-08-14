@@ -78,7 +78,7 @@ If you use get_emission_lines, please cite the following paper:
    :alt: Documentation Status
 
 .. |coverage| image:: https://codecov.io/gh/viogp/get_nebular_emission/graph/badge.svg?token=BLZUS5BORI 
- :target: https://codecov.io/gh/viogp/get_nebular_emission
+ :target: https://codecov.io/gh/galform/get_nebular_emission
 	 
 .. |bpts| image:: data/example_data/iz61/bpts.pdf
 		 
