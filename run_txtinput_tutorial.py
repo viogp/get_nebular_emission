@@ -90,7 +90,7 @@ m_sfr_z = [[0,2,4],[1,3,5]]
 mtot2mdisk = False
 
 # LC2sfr is True when Lyman Continuum photons are given instead of the SFR
-# LC2sfr = True; cols = [[M,m_LC,Z]]
+# LC2sfr = True; cols = [[M,m_LC,Z]] (NOT FINISHED)
 # LC2sfr = False; cols = [[M,SFR,Z]] (Default option)      
 LC2sfr = False
 
