@@ -590,7 +590,7 @@ def get_UnH_agn(Lagn, mgas, hr, filenom,
                                    verbose=verbose)
         else: 
             epsilon = e.calculate_epsilon(mgas,hr,filenom,
-                                          rmax=[c.radius_NLR],nH=c.nH_NLR,
+                                          rmax=[c.radius_NLR],nH=c.nH_NLR_cm3,
                                           mgasr_type=mgasr_type,
                                           verbose=verbose)
             epsilon = st.ensure_2d(epsilon)
