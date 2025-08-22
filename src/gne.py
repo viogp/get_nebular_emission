@@ -23,8 +23,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         photmod_sfr='gutkin16',nH_sfr=c.nH_sfr_cm3,
         q0=c.q0_orsi, z0=c.Z0_orsi, gamma=c.gamma_orsi,
         T=c.temp_ionising,xid_sfr=0.3,co_sfr=1,
-        m_sfr_z=[None],mtot2mdisk=True,
-        inoh=False,LC2sfr=False,
+        m_sfr_z=[None],mtot2mdisk=True,inoh=False,
         IMF=['Kroupa','Kroupa'],imf_cut_sfr=100,
         AGN=False,photmod_agn='feltre16',
         Zgas_NLR=None,Z_correct_grad=False,
@@ -53,7 +52,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     redshift : float
         Redshift of the input data.
     m_sfr_z : list of integers (txt input files) or strings (hdf5 files)
-        [[component1_stellar_mass,sfr/LC,Z],...]
+        [[component1_stellar_mass,sfr,Z],...]
     inputformat : string
         Format of the input file: 'hdf5' or 'txt'.
     infile_z0 : strings
@@ -112,8 +111,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         Photoionisation model to be used for look up tables.
     inoh : boolean
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas
-    LC2sfr : boolean
-     If True magnitude of Lyman Continuum photons expected as input for SFR.
     cutlimits : boolean
      If True the galaxies with U, ne and Z outside the photoionization model's grid limits won't be considered.
     mtot2mdisk : boolean
@@ -202,8 +199,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     # Read the input data and correct it to the adequate units, etc.
     lms, lssfr, lzgas = get_sfrdata(infile,m_sfr_z,selection=cut,
                                     h0=h0,units_h0=units_h0,
-                                    units_Gyr=units_Gyr,
-                                    inoh = inoh,LC2sfr=LC2sfr,
+                                    units_Gyr=units_Gyr,inoh = inoh,
                                     mtot2mdisk=mtot2mdisk,
                                     inputformat=inputformat,
                                     testing=testing,verbose=verbose)

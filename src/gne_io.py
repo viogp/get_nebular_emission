@@ -173,7 +173,6 @@ def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=Fals
     return outfile
 
 
-
 def print_h5attr(infile,inhead='header'):
     """
     Print out the group attributes of a hdf5 file

@@ -1,4 +1,4 @@
-#python3 -m unittest tests/test_stats.py 
+#python -m unittest tests/test_stats.py 
 
 import unittest
 import numpy as np
@@ -135,6 +135,7 @@ class TestPredict(unittest.TestCase):
         r = np.zeros(n); r.fill(1)
         val = st.vol_sphere(r)
         np.testing.assert_allclose(val,expected, atol=0.001)
+
         
 if __name__ == '__main__':
     unittest.main()

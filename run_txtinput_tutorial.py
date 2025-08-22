@@ -29,7 +29,7 @@ outpath = None
 ### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
-# Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
+# Star formation rate (SFR) or 12+log(O/H)
 # Mean metallicity of the cold gas (Z).
 root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
 endf   = '.txt'
@@ -73,7 +73,7 @@ photmod_sfr='gutkin16'
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
-# M*(units), SFR or m_LC and Zgas. 
+# M*(units), SFR or 12+log(O/H) and Zgas. 
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
 # Each list correspond to a different component: 
@@ -88,11 +88,6 @@ m_sfr_z = [[0,2,4],[1,3,5]]
 # mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
 # mtot2mdisk = False; cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
 mtot2mdisk = False
-
-# LC2sfr is True when Lyman Continuum photons are given instead of the SFR
-# LC2sfr = True; cols = [[M,m_LC,Z]] (NOT FINISHED)
-# LC2sfr = False; cols = [[M,SFR,Z]] (Default option)      
-LC2sfr = False
 
 # inoh True if the gas metallicity input as log(O/H)+12
 #      False if Zgas = MZcold/Mcold (Default option)
@@ -283,7 +278,7 @@ for ivol in range(subvols):
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
             model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
             photmod_sfr=photmod_sfr,
-            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk,
             inoh=inoh,IMF = IMF,
             AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,

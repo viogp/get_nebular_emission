@@ -32,9 +32,12 @@ outpath = None
 # Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
 # Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
 # Mean metallicity of the cold gas (Z).
+subvols = 2
 root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
 endf   = '.hdf5'
-subvols = 2
+
+#root = '/home/violeta/buds/emlines/gp19_iz39_ivol'
+#endf = '/gne_input.hdf5'
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -51,7 +54,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=False 
+units_L40h2=True 
 
 ####################################################
 ############  Emission from SF regions #############
@@ -67,22 +70,21 @@ photmod_sfr='gutkin16'
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
-# M*(units), SFR or m_LC and Zgas. 
+# M*(units), SFR and Zgas. 
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
+
 m_sfr_z = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
            ['data/mstar_bulge','data/SFR_bulge','data/Zgas_bulge']]
+#m_sfr_z = [[],[]
+#]
+
 
 # mtot2mdisk is True if the stellar mass of discs is calculated 
 # from the total and buldge values (False by default)
 # mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
 # mtot2mdisk = False; cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
 mtot2mdisk = False
-
-# LC2sfr is True when Lyman Continuum photons are given instead of the SFR
-# LC2sfr = True; cols = [[M,m_LC,Z]]
-# LC2sfr = False; cols = [[M,SFR,Z]] (Default option)      
-LC2sfr = False
 
 # inoh True if the gas metallicity input as log(O/H)+12
 #      False if Zgas = MZcold/Mcold (Default option)
@@ -258,7 +260,7 @@ for ivol in range(subvols):
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
             model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
             photmod_sfr=photmod_sfr,
-            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk,
             inoh=inoh,IMF = IMF,
             AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,

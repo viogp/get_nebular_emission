@@ -7,12 +7,16 @@
 import os.path
 import h5py
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib import colors as mcol
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
+import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+import matplotlib.colors as mcol
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.offsetbox as moffbox
+
+
 import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st 

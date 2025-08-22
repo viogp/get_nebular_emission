@@ -1,4 +1,4 @@
-#python3 -m unittest tests/test_io.py 
+#python -m unittest tests/test_io.py 
 
 import shutil
 import unittest
@@ -53,17 +53,17 @@ class TestStringMethods(unittest.TestCase):
                          expath+root+'.hdf5')
         shutil.rmtree(expath)
         
-
+            
     def test_hdf5_headers(self):
         expath = 'output/test/'
         h0 = 0.7
         filenom = io.generate_header(hf5file,0,100,h0,0.4,0.3,0.6,1,1e8,
-                                  outpath=expath,verbose=True)
+                                     outpath=expath,verbose=False)
         self.assertEqual(filenom,expath+root+'.hdf5')
         
         names = ['a','b',None]
         values = [1,'b',3]
-        num = io.add2header(filenom,names,values)
+        num = io.add2header(filenom,names,values,verbose=False)
 
         hf = h5py.File(filenom, 'r')
         self.assertEqual(hf['header'].attrs['h0'], h0)
@@ -87,7 +87,7 @@ class TestStringMethods(unittest.TestCase):
                   ['data/mgas_bulge','data/rhm_bulge']]
         expect_m = np.array([[6.69049152e+08,2.09834368e+08],[0,0]])
         expect_r = np.array([[3.02573503e-03,0.0017807],[0,0]])
-        mm,rr = io.read_mgas_hr(hf5file,incols,sel)
+        mm,rr = io.read_mgas_hr(hf5file,incols,sel,verbose=False)
         assert_allclose(mm,expect_m,rtol=0.01)  
         assert_allclose(rr,expect_r,rtol=0.01)  
 
@@ -113,7 +113,7 @@ class TestStringMethods(unittest.TestCase):
         assert_allclose(mm,expect_m,rtol=0.01)  
         assert_allclose(rr,expect_r,rtol=0.01)  
         
-        mm,rr = io.get_mgas_hr(hf5file,sel,incols,[1,2])
+        mm,rr = io.get_mgas_hr(hf5file,sel,incols,[1,2],verbose=False)
         assert_allclose(mm,expect_m,rtol=0.01)
         exp = np.copy(expect_r)
         exp[0,:] = c.re2hr*expect_r[0,:]
@@ -122,7 +122,7 @@ class TestStringMethods(unittest.TestCase):
         
         h=2.
         mm,rr = io.get_mgas_hr(hf5file,sel,incols,[0,3],
-                               h0=h,units_h0=True)
+                               h0=h,units_h0=True,verbose=False)
         assert_allclose(mm,expect_m/h,rtol=0.01)
         exp = np.copy(expect_r)/h
         exp[1,:] = c.re2hr*c.r502re*c.rvir2r50*exp[1,:]
@@ -130,7 +130,7 @@ class TestStringMethods(unittest.TestCase):
         
         re2hr=8.; r502re=300.
         mm,rr = io.get_mgas_hr(hf5file,sel,incols,[1,2],
-                               re2hr=re2hr,r502re=r502re)
+                               re2hr=re2hr,r502re=r502re,verbose=False)
         assert_allclose(mm,expect_m,rtol=0.01)
         exp = np.copy(expect_r)
         exp[0,:] = re2hr*expect_r[0,:]

@@ -8,7 +8,7 @@ from src.gne_Z import get_lzgas
 
 def get_sfrdata(infile,cols,selection=None,
                 h0=None,units_h0=False, units_Gyr=False,
-                inoh = False, LC2sfr=False, mtot2mdisk=True, 
+                inoh = False, mtot2mdisk=True, 
                 inputformat='hdf5',testing=False,verbose=False):
     '''
     Get stellar mass as log10(M/Msun),
@@ -41,8 +41,6 @@ def get_sfrdata(infile,cols,selection=None,
     inoh : boolean
        If true, the input is assumed to be 12+log10(O/H), otherwise Zgas    
     units_h0 : bool
-    LC2sfr : boolean
-      If True magnitude of Lyman Continuum photons expected as input for SFR.
     mtot2mdisk : boolean
       If True transform the total mass into the disk mass. disk mass = total mass - bulge mass.
     verbose : boolean
@@ -100,24 +98,6 @@ def get_sfrdata(infile,cols,selection=None,
     for comp in range(ncomp):
         ind = np.where(ms[comp,:] > 0.)
         lms[comp,ind] = np.log10(ms[comp,ind])
-
-    # Calculate SFR from LC photons if necessary
-    if LC2sfr:
-        for comp in range(ncomp):
-            ins = np.zeros(len(sfr))
-            ind = np.where(sfr[:, comp] != c.notnum)
-            ins[ind] = 1.02*(10.**(-0.4*sfr[ind,comp]-4.))
-
-            ind = np.where(ins > 0)
-            lssfr[ind,comp] = np.log10(ins[ind]) - lms[ind,comp]
-    
-            ind = np.where(lssfr[:, comp] == c.notnum)
-            lssfr[ind,comp] = c.notnum
-        ####here is this correct? does not seem to make sense
-        # Avoid positive magnitudes of LC photons
-        #    ind = np.where(lssfr>0)
-        #    lssfr[ind] = c.notnum ; lzgas[ind] = c.notnum
-        # np.log10(Q[i,comp]/(c.IMF_SFR[IMF[comp]] * c.phot_to_sfr_kenn)) - lms[i,comp]
 
     # Obtain log10(sSFR/yr)
     lssfr = np.zeros(np.shape(sfr)); lssfr.fill(c.notnum)
