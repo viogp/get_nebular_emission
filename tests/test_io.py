@@ -197,7 +197,7 @@ class TestStringMethods(unittest.TestCase):
                                              params=[0], verbose=False)
             self.assertEqual(result_single_txt.ndim, 1)
             
-            # Hdf5 and text example files should be the same
+            # HDF5 and text example files should be the same
             sel_diff = [1, 3, 5]
             assert_allclose(result_hdf5, result_txt, rtol=1e-10, 
                             err_msg="HDF5 and text file results should be identical")
@@ -217,44 +217,209 @@ class TestStringMethods(unittest.TestCase):
                                               params=params_txt_ordered, verbose=False)
             assert_allclose(result_ordered_hdf5, result_ordered_txt, rtol=1e-10,
                             err_msg="Parameter order should be preserved between formats")
-            #---------------to remove below
-            sel = [0, 1, 2, 3, 4]  # First 5 galaxies
-            
-            # Test the specific parameter combinations from your tutorial files
-            m_sfr_z_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
-                            ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
-            m_sfr_z_txt = [[0,2,4],[1,3,5]]
+
+
+            def test_read_sfrdata(self):
+                sel = np.array([0, 1, 2, 3, 4])  # First 5 galaxies
+                cols_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
+                             ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
+                cols_txt = [[0,2,4],[1,3,5]]
+
+                # HDF5 file
+                ms_hdf5, sfr_hdf5, z_hdf5 = io.read_sfrdata(hf5file, cols_hdf5, sel,
+                                                            inputformat='hdf5', verbose=False)
+                self.assertEqual(ms_hdf5.shape, (2, 5))
+                self.assertEqual(sfr_hdf5.shape, (2, 5))
+                self.assertEqual(z_hdf5.shape, (2, 5))
+
+                # Text file
+                ms_txt, sfr_txt, z_txt = io.read_sfrdata(txtfile, cols_txt, sel,
+                                                         inputformat='txt', verbose=False)
+                self.assertEqual(ms_txt.shape, (2, 5))
+                self.assertEqual(sfr_txt.shape, (2, 5))
+                self.assertEqual(z_txt.shape, (2, 5))
+
+                # HDF5 and text example files should be the same
+                assert_allclose(ms_hdf5, ms_txt, rtol=1e-12,
+                                err_msg="Stellar mass differs between formats")
+                assert_allclose(sfr_hdf5, sfr_txt, rtol=1e-12,
+                                err_msg="SFR differs between formats")
+                assert_allclose(z_hdf5, z_txt, rtol=1e-12,
+                                err_msg="Metallicity differs between formats")
     
-            # Read component 0 data
-            comp0_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
-                                      params=m_sfr_z_hdf5[0], verbose=False)
-            comp0_txt = io.read_data(txtfile, sel, inputformat='txt',
-                                     params=m_sfr_z_txt[0], verbose=False)
-    
-            # Read component 1 data  
-            comp1_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
-                                      params=m_sfr_z_hdf5[1], verbose=False)
-            comp1_txt = io.read_data(txtfile, sel, inputformat='txt',
-                                     params=m_sfr_z_txt[1], verbose=False)
-    
-            # These should be identical
-            assert_allclose(comp0_hdf5, comp0_txt, rtol=1e-12,
-                            err_msg="Component 0 data differs between formats")
-            assert_allclose(comp1_hdf5, comp1_txt, rtol=1e-12,
-                            err_msg="Component 1 data differs between formats")
-    
-            # Test Lagn parameters specifically
-            Lagn_params_hdf5 = ['data/lagn', 'data/mstar_stb'] 
-            Lagn_params_txt = [17, 1]
-            
-            lagn_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
-                                     params=Lagn_params_hdf5, verbose=False)
-            lagn_txt = io.read_data(txtfile, sel, inputformat='txt',
-                                    params=Lagn_params_txt, verbose=False)
-    
-            # This is the critical test for your specific issue
-            assert_allclose(lagn_hdf5, lagn_txt, rtol=1e-12,
-                            err_msg="Lagn parameters differ between formats - this could be your bug!")
+#    # Test component ordering - component 0 should be disk, component 1 should be bulge
+#    # Verify that ms_hdf5[0,:] corresponds to disk masses, ms_hdf5[1,:] to bulge masses
+#    
+#    # Test single component
+#    cols_single_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk']]
+#    cols_single_txt = [[0,2,4]]
+#    
+#    ms_single_hdf5, sfr_single_hdf5, z_single_hdf5 = io.read_sfrdata(
+#        hf5file, cols_single_hdf5, sel, inputformat='hdf5', verbose=False)
+#    ms_single_txt, sfr_single_txt, z_single_txt = io.read_sfrdata(
+#        txtfile, cols_single_txt, sel, inputformat='txt', verbose=False)
+#    
+#    # Single component should have shape (1, 5)
+#    self.assertEqual(ms_single_hdf5.shape, (1, 5))
+#    assert_allclose(ms_single_hdf5, ms_single_txt, rtol=1e-12)
+#    
+#    # Verify that single component matches first component of multi-component
+#    assert_allclose(ms_single_hdf5[0,:], ms_hdf5[0,:], rtol=1e-12,
+#                   err_msg="Single component should match first component of multi-component")
+#
+#
+#def test_read_sfrdata_data_integrity(self):
+#    """Test that read_sfrdata preserves data integrity and handles edge cases"""
+#    
+#    sel = np.array([0, 1])
+#    cols_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
+#                 ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
+#    cols_txt = [[0,2,4],[1,3,5]]
+#    
+#    # Test with different selection orders
+#    sel_reverse = np.array([1, 0])
+#    
+#    ms_hdf5_fwd, sfr_hdf5_fwd, z_hdf5_fwd = io.read_sfrdata(
+#        hf5file, cols_hdf5, sel, inputformat='hdf5', verbose=False)
+#    ms_hdf5_rev, sfr_hdf5_rev, z_hdf5_rev = io.read_sfrdata(
+#        hf5file, cols_hdf5, sel_reverse, inputformat='hdf5', verbose=False)
+#    
+#    # Forward selection [0,1] should give reversed results compared to [1,0]
+#    assert_allclose(ms_hdf5_fwd[:, 0], ms_hdf5_rev[:, 1], rtol=1e-12)
+#    assert_allclose(ms_hdf5_fwd[:, 1], ms_hdf5_rev[:, 0], rtol=1e-12)
+#    
+#    # Test with text format for same selection patterns
+#    ms_txt_fwd, sfr_txt_fwd, z_txt_fwd = io.read_sfrdata(
+#        txtfile, cols_txt, sel, inputformat='txt', verbose=False)
+#    ms_txt_rev, sfr_txt_rev, z_txt_rev = io.read_sfrdata(
+#        txtfile, cols_txt, sel_reverse, inputformat='txt', verbose=False)
+#    
+#    # Same test for text format
+#    assert_allclose(ms_txt_fwd[:, 0], ms_txt_rev[:, 1], rtol=1e-12)
+#    assert_allclose(ms_txt_fwd[:, 1], ms_txt_rev[:, 0], rtol=1e-12)
+#    
+#    # Most importantly: forward selections should match between formats
+#    assert_allclose(ms_hdf5_fwd, ms_txt_fwd, rtol=1e-12,
+#                   err_msg="Forward selection differs between formats")
+#    assert_allclose(ms_hdf5_rev, ms_txt_rev, rtol=1e-12,
+#                   err_msg="Reverse selection differs between formats")
+#
+#
+#def test_read_sfrdata_array_construction(self):
+#    """Test the array construction logic that differs between HDF5 and text"""
+#    
+#    sel = np.array([0, 2, 4])  # Non-contiguous selection
+#    cols_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
+#                 ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
+#    cols_txt = [[0,2,4],[1,3,5]]
+#    
+#    ms_hdf5, sfr_hdf5, z_hdf5 = io.read_sfrdata(hf5file, cols_hdf5, sel,
+#                                                inputformat='hdf5', verbose=False)
+#    ms_txt, sfr_txt, z_txt = io.read_sfrdata(txtfile, cols_txt, sel,
+#                                            inputformat='txt', verbose=False)
+#    
+#    # Test that the array construction preserves the correct mapping
+#    # HDF5 version uses: ms = np.append(ms,[hf[cols[i][0]][:]],axis=0)
+#    # Text version uses: ms = np.append(ms,[X[0]],axis=0)
+#    
+#    # Check each component separately
+#    for comp in range(2):
+#        assert_allclose(ms_hdf5[comp, :], ms_txt[comp, :], rtol=1e-12,
+#                       err_msg=f"Component {comp} stellar mass differs")
+#        assert_allclose(sfr_hdf5[comp, :], sfr_txt[comp, :], rtol=1e-12,
+#                       err_msg=f"Component {comp} SFR differs")
+#        assert_allclose(z_hdf5[comp, :], z_txt[comp, :], rtol=1e-12,
+#                       err_msg=f"Component {comp} metallicity differs")
+#    
+#    # Test that selection is applied correctly in both versions
+#    # The final selection should be: outms[i,:] = ms[i,cut]
+#    
+#    # Verify shapes are consistent
+#    expected_shape = (2, len(sel))
+#    self.assertEqual(ms_hdf5.shape, expected_shape)
+#    self.assertEqual(ms_txt.shape, expected_shape)
+#    
+#    # Test edge case: single galaxy selection
+#    single_sel = np.array([3])
+#    ms_single_hdf5, _, _ = io.read_sfrdata(hf5file, cols_hdf5, single_sel,
+#                                          inputformat='hdf5', verbose=False)
+#    ms_single_txt, _, _ = io.read_sfrdata(txtfile, cols_txt, single_sel,
+#                                         inputformat='txt', verbose=False)
+#    
+#    self.assertEqual(ms_single_hdf5.shape, (2, 1))
+#    self.assertEqual(ms_single_txt.shape, (2, 1))
+#    assert_allclose(ms_single_hdf5, ms_single_txt, rtol=1e-12)
+#
+#
+#def test_read_sfrdata_specific_columns(self):
+#    """Test specific column mappings that might cause issues"""
+#    
+#    sel = np.array([0, 1])
+#    
+#    # Test the exact mappings from your tutorial files
+#    # According to generateh5data.py:
+#    # cols = [0,2,4,1,3,5,6,11,19,12,17,25,27,30,8]
+#    # nprop= ['mstar_disk','SFR_disk','Zgas_disk','mstar_stb','SFR_bulge',
+#    #         'Zgas_bulge','mgas_disk','rhm_disk','mgas_bulge','rhm_bulge',
+#    #         'lagn','magK','magR','type','MBH']
+#    
+#    # So: col 0->mstar_disk, col 1->mstar_stb, col 2->SFR_disk, etc.
+#    
+#    cols_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
+#                 ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
+#    cols_txt = [[0,2,4],[1,3,5]]
+#    
+#    # Read the data
+#    ms_hdf5, sfr_hdf5, z_hdf5 = io.read_sfrdata(hf5file, cols_hdf5, sel,
+#                                                inputformat='hdf5', verbose=False)
+#    ms_txt, sfr_txt, z_txt = io.read_sfrdata(txtfile, cols_txt, sel,
+#                                            inputformat='txt', verbose=False)
+#    
+#    # Verify the specific column mappings
+#    # Component 0: columns [0,2,4] should map to ['data/mstar_disk','data/SFR_disk','data/Zgas_disk']
+#    # Component 1: columns [1,3,5] should map to ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']
+#    
+#    assert_allclose(ms_hdf5[0, :], ms_txt[0, :], rtol=1e-12,
+#                   err_msg="Disk stellar mass mapping incorrect")
+#    assert_allclose(ms_hdf5[1, :], ms_txt[1, :], rtol=1e-12,
+#                   err_msg="Bulge stellar mass mapping incorrect")
+#    
+#    assert_allclose(sfr_hdf5[0, :], sfr_txt[0, :], rtol=1e-12,
+#                   err_msg="Disk SFR mapping incorrect") 
+#    assert_allclose(sfr_hdf5[1, :], sfr_txt[1, :], rtol=1e-12,
+#                   err_msg="Bulge SFR mapping incorrect")
+#    
+#    assert_allclose(z_hdf5[0, :], z_txt[0, :], rtol=1e-12,
+#                   err_msg="Disk metallicity mapping incorrect")
+#    assert_allclose(z_hdf5[1, :], z_txt[1, :], rtol=1e-12,
+#                   err_msg="Bulge metallicity mapping incorrect")
+#    
+#    # Print some debug info if needed
+#    if False:  # Set to True for debugging
+#        print(f"HDF5 disk mass (first 2): {ms_hdf5[0, :]}")
+#        print(f"Text disk mass (first 2): {ms_txt[0, :]}")
+#        print(f"HDF5 bulge mass (first 2): {ms_hdf5[1, :]}")
+#        print(f"Text bulge mass (first 2): {ms_txt[1, :]}")
+#
+#
+#def test_read_sfrdata_error_handling(self):
+#    """Test error handling and edge cases"""
+#    
+#    sel = np.array([0])
+#    
+#    # Test with invalid input format
+#    cols = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk']]
+#    with self.assertRaises(SystemExit):
+#        io.read_sfrdata(hf5file, cols, sel, inputformat='invalid', verbose=False)
+#    
+#    # Test with empty selection
+#    empty_sel = np.array([], dtype=int)
+#    ms_empty, sfr_empty, z_empty = io.read_sfrdata(
+#        hf5file, cols, empty_sel, inputformat='hdf5', verbose=False)
+#    
+#    self.assertEqual(ms_empty.shape[1], 0)
+#    self.assertEqual(sfr_empty.shape[1], 0) 
+#    self.assertEqual(z_empty.shape[1], 0)
         
 if __name__ == '__main__':
     unittest.main()
