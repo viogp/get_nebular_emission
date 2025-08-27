@@ -57,7 +57,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=False 
+units_L40h2=False
 
 ####################################################
 ############  Emission from SF regions #############
@@ -73,13 +73,12 @@ photmod_sfr='gutkin16'
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
-# M*(units), SFR or 12+log(O/H) and Zgas. 
+# M*(units), SFR or 12+log(O/H), and Zgas. 
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
 # Each list correspond to a different component: 
 # m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
-# For a single component: m_sfr_z = [[M*,SFR,Zgas]]
-# For a HDF5 input file: m_sfr_z = [['Mstellar','SFR','Zgas']]
+# For a single component: m_sfr_z = [[Mstellar,SFR,Zgas]]
 #m_sfr_z = [[0,2,4]]
 m_sfr_z = [[0,2,4],[1,3,5]]
 
@@ -182,7 +181,7 @@ model_spec_agn = 'feltre16'
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-Lagn_inputs = 'Lagn'; Lagn_params=[17,21]
+Lagn_inputs = 'Lagn'; Lagn_params=[17,1]
 #Lagn_inputs = 'Mdot_hh'; Lagn_params=[16,8,21]
 #Lagn_inputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
 #Lagn_inputs = 'radio_mode'; Lagn_params=[9,8]
@@ -253,6 +252,8 @@ extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
 # Cuts can be made on the input file
 # In this example, location 7 correspond to the halo mass.
 # The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
+
+# Paramter to impose cuts
 cutcols = [7]
 # List of minimum values. None for no inferior limit.
 mincuts = [21*mp]

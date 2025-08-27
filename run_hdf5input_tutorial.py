@@ -15,7 +15,7 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = False    # If True: use only the first 50 elements
+testing = False   # If True: use only the first 50 elements
 run_code = True
 plot_tests = True
 
@@ -30,7 +30,7 @@ outpath = None
 ### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
-# Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
+# Star formation rate (SFR) or 12+log(O/H)
 # Mean metallicity of the cold gas (Z).
 subvols = 2
 root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
@@ -54,7 +54,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=True 
+units_L40h2=False
 
 ####################################################
 ############  Emission from SF regions #############
@@ -64,16 +64,18 @@ units_L40h2=True
 # NEBULAR model connecting global properties to ionising properties:
 # nH: number density of Hydrogen (or electrons); U: ionising parameter
 model_nH_sfr='kashino20'
-model_U_sfr='kashino20'
+model_U_sfr='kashino20' #'orsi14'   
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
-# M*(units), SFR and Zgas. 
+# M*(units), SFR or 12+log(O/H), and Zgas. 
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
-
+# Each list correspond to a different component: 
+# m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
+# For a single component: m_sfr_z = [[Mstellar,SFR,Zgas]]
 m_sfr_z = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
            ['data/mstar_bulge','data/SFR_bulge','data/Zgas_bulge']]
 #m_sfr_z = [[],[]
@@ -101,7 +103,8 @@ IMF = ['Kennicut','Kennicut']
 # PHOTOIONIZATION model for AGN NLR to get line luminosities
 photmod_agn = 'feltre16'
 
-# Columns to read either the central or global metallicity 
+# Columns to read either the central or global metallicity
+# If several components are given, they will be added
 Zgas_NLR = ['data/Zgas_bulge','data/Zgas_disk']
 # Z_correct_grad 
 #    False (default) if the central gas metallicity has been provided
@@ -120,10 +123,13 @@ model_U_agn    = 'panuzzo03'
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
-# If mgas_r given, specify also mgasr_type = 'disc', 'sphere' or None
 mgas_r = [['data/mgas_disk','data/rhm_disk'],
           ['data/mgas_bulge','data/rhm_bulge']]
-mgasr_type = ['disc','sphere']
+
+# If mgas_r given, the type of component needs to be specified
+# mgasr_type = 'disc', 'bulge' or None
+#mgasr_type=['disc']
+mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:
 # 0: scalelength;
@@ -222,7 +228,11 @@ extra_params_names = ['mh','magK','magR','type','MBH']
 extra_params_labels = extra_params_names
 extra_params = ['data/mh','data/magK','data/magR','data/type','data/MBH']
 
-# Make the calculation on a subsample based on selection cuts
+### SELECTION CRITERIA ###
+# Cuts can be made on the input file
+# In this example, location 7 correspond to the halo mass.
+# The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
+
 # Paramter to impose cuts
 cutcols = ['data/mh']
 # List of minimum values. None for no inferior limit.

@@ -137,6 +137,124 @@ class TestStringMethods(unittest.TestCase):
         exp[1,:] = re2hr*r502re*expect_r[1,:]
         assert_allclose(rr,exp,rtol=0.01)  
         
+
+        def test_read_data(self):
+            params_txt = [0, 2] 
+            params_hdf5 = ['data/mstar_disk', 'data/SFR_disk']
+
+            sel = [0, 1, 2] # Select 3 first galaxies
+            expect_mstar = np.array([2.54168512e8,6.0441748e7,1.0511475712e10])
+            expect_sfr = np.array([4.521084e7,1.2074103e7,1.006248e9])
+
+            # Test hdf5 file            
+            result_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5', 
+                                       params=params_hdf5, verbose=False)
+            self.assertEqual(result_hdf5.shape, (2, 3))
+            assert_allclose(result_hdf5[0], expect_mstar, rtol=0.01)
+            assert_allclose(result_hdf5[1], expect_sfr, rtol=0.01)
+
+            result_single_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
+                                              params=['data/mstar_disk'], verbose=False)
+            self.assertEqual(result_single_hdf5.ndim, 1)
+
+            params_with_none = ['data/mstar_disk', None, 'data/SFR_disk']
+            result_none = io.read_data(hf5file, sel, inputformat='hdf5',
+                                       params=params_with_none, verbose=False)
+            self.assertEqual(result_none.shape, (2, 3))
+
+            with self.assertRaises(SystemExit):
+                io.read_data(hf5file, sel, inputformat='invalid', 
+                             params=['data/mstar_disk'], verbose=False)
+    
+
+            result_missing = io.read_data(hf5file, sel, inputformat='hdf5',
+                                          params=['data/nonexistent'], verbose=False)
+            assert_allclose(result_missing, np.zeros(3), rtol=0.01)
+
+            empty_sel = np.array([], dtype=int)
+            result_empty = io.read_data(hf5file, empty_sel, inputformat='hdf5',
+                                        params=['data/mstar_disk'], verbose=False)
+            self.assertEqual(len(result_empty), 0)
+    
+            single_sel = [0]
+            result_single = io.read_data(hf5file, single_sel, inputformat='hdf5',
+                                         params=['data/mstar_disk'], verbose=False)
+            self.assertEqual(len(result_single), 1)
+
+            large_sel = list(range(min(50, 100))) 
+            result_large = io.read_data(hf5file, large_sel, inputformat='hdf5',
+                                        params=['data/mstar_disk'], verbose=False)
+            self.assertEqual(len(result_large), len(large_sel))
+            
+            # Test text file
+            result_txt = io.read_data(txtfile, sel, inputformat='txt', 
+                                      params=params_txt, verbose=False)
+            self.assertEqual(result_txt.shape, (2, 3))
+            assert_allclose(result_txt[0], expect_mstar, rtol=0.01)
+            assert_allclose(result_txt[1], expect_sfr, rtol=0.01)
+
+            result_single_txt = io.read_data(txtfile, sel, inputformat='txt',
+                                             params=[0], verbose=False)
+            self.assertEqual(result_single_txt.ndim, 1)
+            
+            # Hdf5 and text example files should be the same
+            sel_diff = [1, 3, 5]
+            assert_allclose(result_hdf5, result_txt, rtol=1e-10, 
+                            err_msg="HDF5 and text file results should be identical")
+            assert_allclose(result_single_hdf5, result_single_txt, rtol=1e-10)
+            result_diff_hdf5 = io.read_data(hf5file, sel_diff, inputformat='hdf5',
+                                            params=['data/mstar_disk'], verbose=False)
+            result_diff_txt = io.read_data(txtfile, sel_diff, inputformat='txt',
+                                           params=[0], verbose=False)
+            assert_allclose(result_diff_hdf5, result_diff_txt, rtol=1e-10)
+    
+            params_ordered = ['data/mstar_disk', 'data/SFR_disk', 'data/Zgas_disk']
+            params_txt_ordered = [0, 2, 4]
+   
+            result_ordered_hdf5 = io.read_data(hf5file, sel_diff, inputformat='hdf5',
+                                               params=params_ordered, verbose=False)
+            result_ordered_txt = io.read_data(txtfile, sel_diff, inputformat='txt',
+                                              params=params_txt_ordered, verbose=False)
+            assert_allclose(result_ordered_hdf5, result_ordered_txt, rtol=1e-10,
+                            err_msg="Parameter order should be preserved between formats")
+            #---------------to remove below
+            sel = [0, 1, 2, 3, 4]  # First 5 galaxies
+            
+            # Test the specific parameter combinations from your tutorial files
+            m_sfr_z_hdf5 = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
+                            ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
+            m_sfr_z_txt = [[0,2,4],[1,3,5]]
+    
+            # Read component 0 data
+            comp0_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
+                                      params=m_sfr_z_hdf5[0], verbose=False)
+            comp0_txt = io.read_data(txtfile, sel, inputformat='txt',
+                                     params=m_sfr_z_txt[0], verbose=False)
+    
+            # Read component 1 data  
+            comp1_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
+                                      params=m_sfr_z_hdf5[1], verbose=False)
+            comp1_txt = io.read_data(txtfile, sel, inputformat='txt',
+                                     params=m_sfr_z_txt[1], verbose=False)
+    
+            # These should be identical
+            assert_allclose(comp0_hdf5, comp0_txt, rtol=1e-12,
+                            err_msg="Component 0 data differs between formats")
+            assert_allclose(comp1_hdf5, comp1_txt, rtol=1e-12,
+                            err_msg="Component 1 data differs between formats")
+    
+            # Test Lagn parameters specifically
+            Lagn_params_hdf5 = ['data/lagn', 'data/mstar_stb'] 
+            Lagn_params_txt = [17, 1]
+            
+            lagn_hdf5 = io.read_data(hf5file, sel, inputformat='hdf5',
+                                     params=Lagn_params_hdf5, verbose=False)
+            lagn_txt = io.read_data(txtfile, sel, inputformat='txt',
+                                    params=Lagn_params_txt, verbose=False)
+    
+            # This is the critical test for your specific issue
+            assert_allclose(lagn_hdf5, lagn_txt, rtol=1e-12,
+                            err_msg="Lagn parameters differ between formats - this could be your bug!")
         
 if __name__ == '__main__':
     unittest.main()
