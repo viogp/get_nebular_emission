@@ -481,8 +481,9 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
                         ###here what if Pos/vel as matrix?
                         prop = hf[nomparam][cut]
                     except:
-                        print('\n WARNING (gne_io): no {} found in {}'.format(
-                            nomparam,infile))
+                        if verbose:
+                            print('\n WARNING (gne_io): no {} found in {}'.format(
+                                nomparam,infile))
 
                     if (ii == 0):
                         outparams = prop
@@ -490,7 +491,7 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
                         outparams = np.vstack((outparams,prop))
                     ii += 1
 
-    elif inputformat=='txt': ###need to adapt to the generalisation and test
+    elif inputformat=='txt':
         ih = get_nheader(infile)
         outparams = np.loadtxt(infile,skiprows=ih,usecols=params)[cut].T
 

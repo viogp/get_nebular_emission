@@ -302,7 +302,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                   'nH_NLR_cm3','T_NLR_K','r_NLR_Mpc','alpha_NLR','xid_NLR']
         values = [model_spec_agn,model_U_agn,photmod_agn,
                   nH_NLR,T_NLR,r_NLR,alpha_NLR,xid_NLR]
-        nattrs = io.add2header(outfile,names,values)
+        nattrs = io.add2header(outfile,names,values,verbose=verbose)
 
         # Get the central metallicity
         if Z_correct_grad:
@@ -354,7 +354,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         # Calculate attenuation if required
         if att:
             # Add relevant constants to header
-            nattrs = io.add2header(outfile,['attmod'],[attmod])
+            nattrs = io.add2header(outfile,['attmod'],[attmod],verbose=verbose)
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
                                                         att_ratio_lines=att_ratio_lines,
                                                         redshift=redshift,h0=h0,

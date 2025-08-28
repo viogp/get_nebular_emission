@@ -124,12 +124,10 @@ model_U_agn    = 'panuzzo03'
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
 #mgas_r = None
-#mgas_r = [[6,11]]
 mgas_r = [[6,11],[9,12]]
 
 # If mgas_r given, the type of component needs to be specified
 # mgasr_type = 'disc', 'bulge' or None
-#mgasr_type=['disc']
 mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:
@@ -137,7 +135,6 @@ mgasr_type = ['disc','bulge']
 # 1: effective radius, Re
 # 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
 # 3: radius of the galaxy or host halo
-#r_type = [1]
 r_type = [1,1]
 
 # spec: model for the spectral distribution of the AGN
@@ -265,7 +262,7 @@ maxcuts = [None]
 #############    Run the code and/or make plots   ################
 ##################################################################
 
-verbose = True
+verbose = False
 for ivol in range(subvols):
     infile = root+str(ivol)+endf
 

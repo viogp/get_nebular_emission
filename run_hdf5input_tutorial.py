@@ -77,7 +77,7 @@ photmod_sfr='gutkin16'
 # m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
 # For a single component: m_sfr_z = [[Mstellar,SFR,Zgas]]
 m_sfr_z = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
-           ['data/mstar_bulge','data/SFR_bulge','data/Zgas_bulge']]
+           ['data/mstar_stb','data/SFR_bulge','data/Zgas_bulge']]
 #m_sfr_z = [[],[]
 #]
 
@@ -123,12 +123,12 @@ model_U_agn    = 'panuzzo03'
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
+#mgas_r = None
 mgas_r = [['data/mgas_disk','data/rhm_disk'],
           ['data/mgas_bulge','data/rhm_bulge']]
 
 # If mgas_r given, the type of component needs to be specified
 # mgasr_type = 'disc', 'bulge' or None
-#mgasr_type=['disc']
 mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:
@@ -244,7 +244,7 @@ maxcuts = [None]
 #############    Run the code and/or make plots   ################
 ##################################################################
 
-verbose = True
+verbose = False
 for ivol in range(subvols):
     infile = root+str(ivol)+endf
 
