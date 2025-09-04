@@ -721,7 +721,7 @@ def get_mgas_hr(infile,selection,cols,r_type,
 
     # Check that rtype is adequate
     ncomp = np.shape(outr)[0]
-    if (min(r_type)<0 or max(r_type)>3 or len(r_type)!=ncomp):
+    if ((min(r_type)<0 or max(r_type)>3 or len(r_type)!=ncomp) and verbose):
         print('WARNING! Input r_type should be 0, 1, 2 or 3, per component.')
 
     # Correct scalelenght for each component
