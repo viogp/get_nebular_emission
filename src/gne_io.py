@@ -6,6 +6,7 @@
 import h5py
 import sys
 import os
+import glob
 import numpy as np
 import src.gne_const as c
 
@@ -65,7 +66,7 @@ def create_dir(outdir):
     return True
 
 
-def get_outroot(root,snap,outpath=None,verbose=False):
+def get_outroot(root,ending,snap,outpath=None,verbose=False):
     '''
     Get path to output line data and the file root name
 
@@ -73,6 +74,8 @@ def get_outroot(root,snap,outpath=None,verbose=False):
     -------
     root : string
         Root for input files
+    ending : string
+        Ending for input files
     snap: integer
         Simulation snapshot number
     outpath : string
@@ -82,56 +85,57 @@ def get_outroot(root,snap,outpath=None,verbose=False):
 
     Returns
     -------
-    outroot : string
-        Path to output line data files
+    dirf, endf : string
+        Path and ending of output line data files
     '''
 
-    nom = os.path.splitext(root.split('/')[-1])[0]
+    endf = ending
+    if ending.endswith('.txt'):
+        endf = ending[:-4] + '.hdf5'
 
+    nom = os.path.splitext(root.split('iz')[-1])[0]
     if outpath is None:
-        dirf = 'output/iz' + str(snap) + '/'
+        dirf = 'output/iz' + nom
     else:
-        dirf = outpath + '/iz' + str(snap) + '/'
+        dirf = outpath + '/iz' + nom
 
-    create_dir(dirf)    
-    outroot = dirf + nom 
+    if not glob.glob(dirf + '*'):
+        print('STOP: no adequate output directories {}'.format(dirf+'*')) 
+        sys.exit()
 
     if verbose:
-        print(f'* Root to output: {outroot}')
-    return outroot
+        print(f'* Root to output: {dirf}')
+    return dirf, endf
 
 
-def get_plotpath(root,verbose=False):
+def get_plotfile(root,ending,plot_type):
     '''
-    Get path to plots given the output data
+    Get the path and name to a plot
 
     Parameters
     -------
     root : string
         Root to data to use for plotting
-    verbose : boolean
-        If True print out messages
+    plot_type : string
+        Type of plot: bpt, etc
 
     Returns
     -------
-    plotpath : string
+    plotfile : string
         Path to plots
     '''
+    plotpath = root.split('ivol')[0]+'plots/'
+    create_dir(plotpath)
 
-    if ('/' in root):
-        index = root.rfind('/')
-        plotpath = root[:index]+'/plots/'
-    else:
-        plotpath = 'plots/'
-    create_dir(plotpath)    
+    nom = ending.split('.')[0].split('/')[-1]
+    plotfile = plotpath + plot_type + '_' + nom + '.pdf'
 
-    if verbose:
-        print(f'* Path to plots: {plotpath}')
-    return plotpath
+    return plotfile
 
 
 
-def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=False):
+def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',
+               verbose=False):
     '''
     Get output from a given filename
 
@@ -157,12 +161,14 @@ def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',verbose=Fals
     '''
 
     nom = os.path.splitext(filenom.split('/')[-1])[0]
+    ivol = os.path.splitext(filenom.split('/')[-2])[0]
 
     if dirf is None:
-        dirf = 'output/iz' + str(snap) + '/'
-        if ftype == 'plots': dirf = dirf + ftype + '/'
+        dir1 = 'output/iz' + str(snap) + '/'
+        dirf = dir1 + ivol + '/'
+        if ftype == 'plots': dirf = dir1 + ftype + '/'
     create_dir(dirf)    
-
+    
     if ftype == 'line_data':
         outfile = dirf + nom + '.hdf5'
     elif ftype == 'plots':

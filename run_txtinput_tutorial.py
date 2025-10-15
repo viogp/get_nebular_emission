@@ -31,8 +31,8 @@ outpath = None
 # Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
 # Star formation rate (SFR) or 12+log(O/H)
 # Mean metallicity of the cold gas (Z).
-root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
-endf   = '.txt'
+root = 'data/example_data/iz61/ivol'
+endf   = '/ex.txt'
 subvols = 2
 
 # Redshifts, cosmology and volume of the simulation
@@ -42,7 +42,7 @@ h0     = 0.704
 omega0 = 0.307
 omegab = 0.0482
 lambda0= 0.693
-vol    = pow(31.25,3) 
+vol    = 12500000.0
 mp     = 9.35e8       
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
@@ -79,8 +79,8 @@ photmod_sfr='gutkin16'
 # Each list correspond to a different component: 
 # m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
 # For a single component: m_sfr_z = [[Mstellar,SFR,Zgas]]
-#m_sfr_z = [[0,2,4]]
-m_sfr_z = [[0,2,4],[1,3,5]]
+#m_sfr_z = [[20,15,6]]
+m_sfr_z = [[20,15,6],[18,17,5]]
 
 # mtot2mdisk is True if the stellar mass of discs is calculated 
 # from the total and buldge values (False by default)
@@ -105,7 +105,7 @@ photmod_agn = 'feltre16'
 
 # Columns to read either the central or global metallicity
 # If several components are given, they will be added
-Zgas_NLR = [4,5]
+Zgas_NLR = [6,5]
 # Z_correct_grad 
 #    False (default) if the central gas metallicity has been provided
 #    True to correct a global metallicity with the gradients from Belfiore+2017
@@ -124,7 +124,7 @@ model_U_agn    = 'panuzzo03'
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
 #mgas_r = None
-mgas_r = [[6,11],[9,12]]
+mgas_r = [[11,23],[12,21]]
 
 # If mgas_r given, the type of component needs to be specified
 # mgasr_type = 'disc', 'bulge' or None
@@ -178,7 +178,7 @@ model_spec_agn = 'feltre16'
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-Lagn_inputs = 'Lagn'; Lagn_params=[17,1]
+Lagn_inputs = 'Lagn'; Lagn_params=[0,1]
 #Lagn_inputs = 'Mdot_hh'; Lagn_params=[16,8,21]
 #Lagn_inputs = 'Mdot_stb_hh'; Lagn_params=[15,16,8,21]
 #Lagn_inputs = 'radio_mode'; Lagn_params=[9,8]
@@ -221,29 +221,17 @@ att = False
     # att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
 
 attmod='cardelli89'
-att_params= [11,6,4]
+att_params= []
 
 ####################################################
 ##########      Other calculations     #############
 ####################################################
-
 # Include other parameters in the output files
-extra_params_names = ['Type','Mbh','Mhalo','Ms_bulge','magK','magR',
-                      'magR_SDSS','magI','Mdot_stb','Mdot_hh','Mhot','Lagn']
-extra_params_labels = ['Gal. type (central = 0)',
-                       r'Black hole mass ($M_\odot \ h^{-1}$)',
-                       r'Halo mass ($M_\odot \ h^{-1}$)',
-                       r'Stellar mass of bulge ($M_\odot \ h^{-1}$)',
-                       'K band (Apparent magnitude, attenuated)',
-                       'R band (Apparent magnitude, attenuated)',
-                       'R band SDSS (Apparent magnitude, attenuated)',
-                       'I band (Apparent magnitude, attenuated)',
-                       'SMBH mass accretion rate (starburst mode)',
-                       'SMBH mass accretion rate (hot halo mode)',
-                       r'Hot gas mass ($M_\odot \ h^{-1}$)',
-                       r'AGN bolometric luminosity (erg $s^{-1}$)']
-extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
-
+extra_params_names = ['type','mh','xgal','ygal','zgal',
+                      'vxgal','vygal','vzgal',
+                      'magK','magR','M_SMBH']
+extra_params_labels = extra_params_names
+extra_params = [24,13,29,30,31,26,27,28,10,9,1]
 
 ### SELECTION CRITERIA ###
 # Cuts can be made on the input file
@@ -251,7 +239,7 @@ extra_params = [30,8,7,21,25,27,18,29,15,16,9,17]
 # The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
 
 # Paramter to impose cuts
-cutcols = [7]
+cutcols = [13]
 # List of minimum values. None for no inferior limit.
 mincuts = [21*mp]
 # List of maximum values. None for no superior limit.
@@ -262,7 +250,7 @@ maxcuts = [None]
 #############    Run the code and/or make plots   ################
 ##################################################################
 
-verbose = False
+verbose = True
 for ivol in range(subvols):
     infile = root+str(ivol)+endf
 
@@ -292,5 +280,6 @@ for ivol in range(subvols):
             testing=testing,verbose=verbose)
 
 if plot_tests:  # Make test plots
-    make_testplots(root,snapshot,subvols=subvols,gridplots=False,
+    make_testplots(root,endf,snapshot,subvols=subvols,
+                   gridplots=False,
                    outpath=outpath,verbose=verbose)
