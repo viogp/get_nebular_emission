@@ -260,26 +260,3 @@ def coef_att_line_model_func(z=0):
 
     return coef_att_line_model
 
-#------------------------------------------
-#   GALFORM:
-#------------------------------------------
-reff_to_scale_high = 0.0875
-halfmass_to_reff = 1/1.67
-
-line_headers = ['L_tot_', 'L_disk_', 'L_bulge_']
-att_ext = '_ext'
-
-gal_headers = ['mag_LC_r_disk', 'mag_LC_r_bulge', 'zcold', 'mcold', 
-           'zcold_burst', 'mcold_burst', 'mstardot_average', 'L_tot_Halpha',
-           'L_tot_NII6583', 'L_tot_Hbeta', 'L_tot_OIII5007', 'mstars_total', 'is_central',
-           'mstardot', 'mstardot_burst', 'mstars_bulge', 'L_tot_OII3727', 'L_tot_SII6716',
-           'L_tot_SII6731', 'mag_SDSS_r_o_t', 'L_tot_Halpha_ext', 'L_tot_Hbeta_ext', 
-           'L_tot_OII3727_ext', 'L_tot_OIII5007_ext', 'L_disk_Halpha', 
-           'L_disk_Halpha_ext', 'L_bulge_Halpha', 'L_bulge_Halpha_ext', 
-           'L_disk_Hbeta', 'L_disk_Hbeta_ext', 'L_bulge_Hbeta', 'L_bulge_Hbeta_ext',
-           'L_disk_OIII5007', 'L_disk_OIII5007_ext', 'L_bulge_OIII5007', 'L_bulge_OIII5007_ext', 
-           'L_disk_NII6583', 'L_disk_NII6583_ext', 'L_bulge_NII6583', 'L_bulge_NII6583_ext', 
-           'L_disk_OII3727', 'L_disk_OII3727_ext', 'L_bulge_OII3727', 'L_bulge_OII3727_ext', 
-           'L_disk_SII6717', 'L_disk_SII6717_ext', 'L_bulge_SII6717', 'L_bulge_SII6717_ext', 
-           'L_disk_SII6731', 'L_disk_SII6731_ext', 'L_bulge_SII6731', 'L_bulge_SII6731_ext']
-# For using the attenuation from precomputed lines, new ones can be added here

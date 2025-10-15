@@ -7,12 +7,16 @@
 import os.path
 import h5py
 import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib import colors as mcol
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
+import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+import matplotlib.colors as mcol
 import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.offsetbox as moffbox
+
+
 import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st 
@@ -837,7 +841,7 @@ def plot_comp_quartiles(ax, xx, yy, xmin, xmax, tots, ins, cm=plt.cm.tab20):
     return proxies, labels
 
 
-def plot_uzn(root, subvols=1, outpath=None, verbose=True):
+def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
     '''
     Make plots of the ionizing parameter versus Zgas,
     and electron density as a function of stellar mass,
@@ -847,6 +851,8 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     ----------
     root : string
        Path to files with calculated data (lines, etc)
+    endf : string
+       Ending of input files. 
     subvols: integer
         Number of subvolumes to be considered
     outpath : string
@@ -855,7 +861,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
        If True print out messages.
     '''
     # Get redshift and model information from data
-    filenom = root+'0.hdf5'    
+    filenom = root+'0'+endf
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -935,7 +941,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
 
     # Read data in each subvolume
     for ivol in range(subvols):
-        filenom = root+str(ivol)+'.hdf5' #; print(filenom); exit()
+        filenom = root+'0'+endf #; print(filenom); exit()
         f = h5py.File(filenom, 'r'); header = f['header']
 
         # Read information from file
@@ -954,7 +960,7 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                 epsilon_is_constant = False
                 epsilon1 = f['agn_data/epsilon_NLR'][:]
         f.close()
-    
+
         if ivol == 0:
             lusfr = lusfr1; lzsfr = lzsfr1
             lnsfr = lnsfr1; lms = lms1
@@ -1008,16 +1014,18 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
                            (z>=zamin) & (z<=zamax))
             ina = ina + np.shape(ind)[1]
 
-    # Plot per component U versus Z
-    proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
-    if AGN:
-        aproxies, alabels = plot_comp_contour(axua, lzagn, luagn, tota, ina)
-
-    # Legend for U vs Z
-    leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
-    if AGN:
-        leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
-                
+    ###here to check as not working
+    ## Plot per component U versus Z
+    #proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
+    #if AGN:
+    #    aproxies, alabels = plot_comp_contour(axua, lzagn, luagn, tota, ina)
+    #
+    ## Legend for U vs Z
+    #leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
+    #if AGN:
+    #    leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
+    #print(leg); exit()
+    ###here end
     ## Plot per component nH versus M* (or Lagn)
     #proxies, labels = plot_comp_quartiles(axn, lms, lnsfr,
     #                                      min_Ms, max_Ms, tots, inns)
@@ -1030,17 +1038,22 @@ def plot_uzn(root, subvols=1, outpath=None, verbose=True):
     #    aproxies, alabels = plot_comp_quartiles(axna, lLagn, lnagn,
     #                                            min_Lbol, max_Lbol, tota, inna)
 
-    # Legend for nH plots
-    leg = axn.legend(proxies,labels, loc=0); leg.draw_frame(False)
-    #if AGN:
-    #    leg = axna.legend(aproxies,alabels, loc=0); leg.draw_frame(False)
+    ## Legend for nH plots
+    #leg = axn.legend(proxies,labels, loc=0); leg.draw_frame(False)
+    ##if AGN:
+    ##    leg = axna.legend(aproxies,alabels, loc=0); leg.draw_frame(False)
         
     # Output
-    pltpath = io.get_plotpath(root)
-    plotnom = pltpath+'uzn.pdf'
+    plotnom = io.get_plotfile(root,endf,'uzn')
     plt.savefig(plotnom)
     if verbose:
          print(f'* U plots: {plotnom}')
+
+#    pltpath = io.get_plotpath(root)
+#    plotnom = pltpath+'uzn.pdf'
+#    plt.savefig(plotnom)
+#    if verbose:
+#         print(f'* U plots: {plotnom}')
     
     return plotnom
 
@@ -1288,7 +1301,7 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
     return bptnom
 
 
-def plot_bpts(root, subvols=1, outpath=None, verbose=True):
+def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
     
@@ -1296,6 +1309,8 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     ----------
     root : string
        Path to input files. 
+    endf : string
+       Ending of input files. 
     subvols: integer
         Number of subvolumes to be considered
     outpath : string
@@ -1305,7 +1320,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
     '''
 
     # Get redshift and cosmology from data
-    filenom = root+'0.hdf5'
+    filenom = root+'0'+endf
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -1362,8 +1377,8 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
 
     # Read data in each subvolume and add data to plots
     seltot = 0
-    for ivol in range(subvols):
-        filenom = root+str(ivol)+'.hdf5'
+    for ivol in range(subvols): ###here to go over subvols, not a range
+        filenom = root+str(ivol)+endf
         f = h5py.File(filenom, 'r')
         
         # Read SF information from file
@@ -1543,8 +1558,7 @@ def plot_bpts(root, subvols=1, outpath=None, verbose=True):
             axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
     # Output
-    pltpath = io.get_plotpath(root)
-    bptnom = pltpath+'bpts.pdf'
+    bptnom = io.get_plotfile(root,endf,'bpt')
     plt.savefig(bptnom)
     if verbose:
          print(f'* BPT plots: {bptnom}')
@@ -1574,15 +1588,17 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
     return
 
 
-def make_testplots(rootf,snap,subvols=1,gridplots=False,
+def make_testplots(root,ending,snap,subvols=1,gridplots=False,
                    outpath=None,verbose=True):
     '''
     Make test plots
     
     Parameters
     ----------
-    rootf : string
-       Path to files with calculated data (lines, etc)
+    root : string
+       Path to input files
+    ending : string
+       End name of input files
     snap: integer
         Simulation snapshot number
     subvols: integer
@@ -1593,15 +1609,15 @@ def make_testplots(rootf,snap,subvols=1,gridplots=False,
        If True print out messages.
     '''
 
-    root = io.get_outroot(rootf,snap,outpath=outpath,verbose=True)
+    root, endf = io.get_outroot(root,ending,snap,outpath=outpath,verbose=True)
 
     # U vs Z
-    #uzn = plot_uzn(root,subvols=subvols,verbose=verbose) 
+    #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
     if gridplots:
-        make_gridplots()
+        make_gridplots() ###here work in progress
     
     return

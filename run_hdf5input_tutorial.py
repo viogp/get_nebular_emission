@@ -15,8 +15,8 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = False    # If True: use only the first 50 elements
-run_code = True
+testing = False   # If True: use only the first 50 elements
+run_code = False
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
@@ -30,11 +30,11 @@ outpath = None
 ### INPUT FILES: given as a root, ending and number of subvolumes
 # Input files are expected to have, AT LEAST:
 # Stellar mass (M*) of the galaxy (or disc, SF burst, buldge, etc).
-# Star formation rate (SFR) OR magnitude of Lyman Continuum photons (m_LC).
+# Star formation rate (SFR) or 12+log(O/H)
 # Mean metallicity of the cold gas (Z).
-root = 'data/example_data/iz61/GP20_31p25kpc_z0_example_vol'
-endf   = '.hdf5'
 subvols = 2
+root = 'data/example_data/iz61/ivol'
+endf   = '/ex.hdf5'
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -51,7 +51,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=False 
+units_L40h2=True
 
 ####################################################
 ############  Emission from SF regions #############
@@ -61,28 +61,26 @@ units_L40h2=False
 # NEBULAR model connecting global properties to ionising properties:
 # nH: number density of Hydrogen (or electrons); U: ionising parameter
 model_nH_sfr='kashino20'
-model_U_sfr='kashino20'
+model_U_sfr='kashino20' #'orsi14'   
 # PHOTOIONIZATION model for SF regions to get line luminosities
 photmod_sfr='gutkin16'
 
 ### INPUT PARAMETERS
 # m_sfr_z has the location in the input files of the three mandatory parameters:
-# M*(units), SFR or m_LC and Zgas. 
+# M*(units), SFR or 12+log(O/H), and Zgas. 
 # m_sfr_z is a list of lists with either the column number
 # for each parameters or the name of the HDF5 variable.
-m_sfr_z = [['data/mstar_disk','data/SFR_disk','data/Zgas_disk'],
-           ['data/mstar_bulge','data/SFR_bulge','data/Zgas_bulge']]
+# Each list correspond to a different component: 
+# m_sfr_z = [[mstar_disk,SFR_disk,Zgas_disk],[mstar_stb,SFR_stb,Zgas_stb]]
+# For a single component: m_sfr_z = [[Mstellar,SFR,Zgas]]
+m_sfr_z = [['data/mstars_disk','data/mstardot','data/Zgas_disc'],
+           ['data/mstars_bulge','data/mstardot_burst','data/Zgas_bst']]
 
 # mtot2mdisk is True if the stellar mass of discs is calculated 
 # from the total and buldge values (False by default)
 # mtot2mdisk = True; cols = [[M,SFR,Z],[M_bulge,SFR_bulge,Z_bulge]]
 # mtot2mdisk = False; cols = [[M_disk,SFR_disk,Z_disk],[M_bulge,SFR_bulge,Z_bulge]]        
 mtot2mdisk = False
-
-# LC2sfr is True when Lyman Continuum photons are given instead of the SFR
-# LC2sfr = True; cols = [[M,m_LC,Z]]
-# LC2sfr = False; cols = [[M,SFR,Z]] (Default option)      
-LC2sfr = False
 
 # inoh True if the gas metallicity input as log(O/H)+12
 #      False if Zgas = MZcold/Mcold (Default option)
@@ -99,8 +97,9 @@ IMF = ['Kennicut','Kennicut']
 # PHOTOIONIZATION model for AGN NLR to get line luminosities
 photmod_agn = 'feltre16'
 
-# Columns to read either the central or global metallicity 
-Zgas_NLR = ['data/Zgas_bulge','data/Zgas_disk']
+# Columns to read either the central or global metallicity
+# If several components are given, they will be added
+Zgas_NLR = ['data/Zgas_bst','data/Zgas_disc']
 # Z_correct_grad 
 #    False (default) if the central gas metallicity has been provided
 #    True to correct a global metallicity with the gradients from Belfiore+2017
@@ -118,17 +117,20 @@ model_U_agn    = 'panuzzo03'
 # for each parameters or the name of the HDF5 variable.
 # Each list can correspond to a different component:
 # mgas_r = [[mgas_comp1,R_comp1],...]
-# If mgas_r given, specify also mgasr_type = 'disc', 'sphere' or None
-mgas_r = [['data/mgas_disk','data/rhm_disk'],
-          ['data/mgas_bulge','data/rhm_bulge']]
-mgasr_type = ['disc','sphere']
+#mgas_r = None
+mgas_r = [['data/mcold','data/rdisk'],
+          ['data/mcold_burst','data/rbulge']]
+
+# If mgas_r given, the type of component needs to be specified
+# mgasr_type = 'disc', 'bulge' or None
+mgasr_type = ['disc','bulge']
 
 # Type of radius input, per component:
 # 0: scalelength;
 # 1: effective radius, Re
 # 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
 # 3: radius of the galaxy or host halo
-r_type = [1,1]
+r_type = [2,2]
 
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'
@@ -171,11 +173,12 @@ model_spec_agn = 'feltre16'
 #            the BH mass, Mbh,
 #            and, as an optional input, the BH spin, Mspin. 
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
-Lagn_inputs = 'Lagn'; Lagn_params=['data/lagn','data/mstar_bulge']
+Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN','data/mstars_bulge']
 
 ####################################################
 ########  Redshift evolution parameters  ###########
 ####################################################
+# WARNING: Evolution calculation has not been fully tested
 
 ### HIGH REDSHIFT CORRECTION ###
 # Empirical relationships to connect global galaxy properties and nebular
@@ -188,6 +191,7 @@ root_z0 = None
 ####################################################
 ##########       Dust attenuation      #############
 ####################################################
+# WARNING: Attenuation calculation has not been fully tested
 
 # Continuum and line attenuation calculation. If this option is selected 
     # the output file will have intrinsic AND attenuated values of
@@ -209,20 +213,31 @@ att = False
     # att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
 
 attmod='cardelli89'
-att_params=['data/rhm_disk','data/mgas_disk','data/Zgas_disk'] 
+att_params=['data/rdisk','data/mcold','data/Zgas_disc'] 
 
 ####################################################
 ##########      Other calculations     #############
 ####################################################
-
 # Include other parameters in the output files
-extra_params_names = ['mh','magK','magR','type','MBH']
+# WARNING: magK and magR are the dataset names used
+#          for selections in plots (optional)
+extra_params_names = ['type','mh','xgal','ygal','zgal',
+                      'vxgal','vygal','vzgal',
+                      'magK','magR','M_SMBH']
 extra_params_labels = extra_params_names
-extra_params = ['data/mh','data/magK','data/magR','data/type','data/MBH']
+extra_params = ['data/type','data/mhhalo',
+                'data/xgal','data/ygal','data/zgal',
+                'data/vxgal','data/vygal','data/vzgal',
+                'data/mag_UKIRT-K_o_tot_ext','data/mag_SDSSz0.1-r_o_tot_ext',
+                'data/M_SMBH']
 
-# Make the calculation on a subsample based on selection cuts
+### SELECTION CRITERIA ###
+# Cuts can be made on the input file
+# In this example, location 7 correspond to the halo mass.
+# The dark matter particles of the simulations has a mass of 9.35e8 Msun/h
+
 # Paramter to impose cuts
-cutcols = ['data/mh']
+cutcols = ['data/mhhalo']
 # List of minimum values. None for no inferior limit.
 mincuts = [21*9.35e8]
 # List of maximum values. None for no superior limit.
@@ -241,24 +256,30 @@ for ivol in range(subvols):
         infile_z0 = root_z0+str(ivol)+endf
     
     # Get the redshift, cosmology and volume of the model galaxies
-    f = h5py.File(infile)
-    header = f['header']
+    f = h5py.File(infile) 
+    header = f['header'] #; print(list(header.attrs.keys()))
     redshift = header.attrs['redshift']
     snapshot = header.attrs['snapnum']
-    vol = header.attrs['bside_Mpch']**3
+    boxside = header.attrs['bside_Mpch']
     h0 = header.attrs['h0']
     omega0 = header.attrs['omega0']
     omegab = header.attrs['omegab']
     lambda0 = header.attrs['lambda0']
-    mp = header.attrs['mp_Msunh']        
-    
+    mp = header.attrs['mp_Msunh']
+    try:
+        p = header.attrs['percentage']/100.
+    except:
+        p = 1
+    f.close()
+    vol = p*boxside**3
+
     if run_code:  # Run the code
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
             model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
             photmod_sfr=photmod_sfr,
-            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk, LC2sfr=LC2sfr,
+            m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk,
             inoh=inoh,IMF = IMF,
             AGN=AGN,photmod_agn=photmod_agn,
             Zgas_NLR=Zgas_NLR,Z_correct_grad=Z_correct_grad,
@@ -268,11 +289,13 @@ for ivol in range(subvols):
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
-            extra_params=extra_params,extra_params_names=extra_params_names,
+            extra_params=extra_params,
+            extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=verbose)
         
 if plot_tests:  # Make test plots
-    make_testplots(root,snapshot,subvols=subvols,gridplots=False,
+    make_testplots(root,endf,snapshot,subvols=subvols,
+                   gridplots=False,
                    outpath=outpath,verbose=verbose)
