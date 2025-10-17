@@ -1,4 +1,4 @@
-#python3 -m unittest tests/test_photio.py 
+#python -m unittest tests/test_photio.py 
 
 import shutil
 import os

@@ -1609,7 +1609,8 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
        If True print out messages.
     '''
 
-    root, endf = io.get_outroot(root,ending,snap,outpath=outpath,verbose=True)
+    root, endf = io.get_outroot(root,ending,outpath=outpath,
+                                verbose=verbose)
 
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 

@@ -274,7 +274,8 @@ for ivol in range(subvols):
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
-            extra_params=extra_params,extra_params_names=extra_params_names,
+            extra_params=extra_params,
+            extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=verbose)

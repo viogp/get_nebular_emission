@@ -16,7 +16,7 @@ import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False   # If True: use only the first 50 elements
-run_code = False
+run_code = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
@@ -51,7 +51,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=True
+units_L40h2=False
 
 ####################################################
 ############  Emission from SF regions #############

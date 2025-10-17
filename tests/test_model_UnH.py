@@ -1,4 +1,4 @@
-#python3 -m unittest tests/test_model_UnH.py 
+#python -m unittest tests/test_model_UnH.py 
 
 import shutil
 import unittest
