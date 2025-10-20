@@ -252,7 +252,8 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
     if Lagn_inputs=='Lagn':
         Lagn = vals[0]
         if units_L40h2:
-            Lagn = Lagn*1e40/h0/h0
+            cfac = 1e40/(h0*h0)
+            Lagn = Lagn*cfac
         return Lagn # erg/s
     
     elif Lagn_inputs=='Mdot_hh':
