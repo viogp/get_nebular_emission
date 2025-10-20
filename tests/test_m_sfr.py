@@ -1,4 +1,4 @@
-#python3 -m unittest tests/test_m_sfr.py 
+#python -m unittest tests/test_m_sfr.py 
 
 import unittest
 import numpy as np

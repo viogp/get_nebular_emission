@@ -16,7 +16,7 @@ import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False   # If True: use only the first 50 elements
-run_code = False
+run_code = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True

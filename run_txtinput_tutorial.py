@@ -57,7 +57,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=False
+units_L40h2=True
 
 ####################################################
 ############  Emission from SF regions #############
@@ -274,7 +274,8 @@ for ivol in range(subvols):
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
             infile_z0=infile_z0, 
             att=att, attmod=attmod, att_params=att_params,
-            extra_params=extra_params,extra_params_names=extra_params_names,
+            extra_params=extra_params,
+            extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=verbose)

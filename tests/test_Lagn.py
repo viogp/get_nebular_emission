@@ -1,4 +1,4 @@
-#python3 -m unittest tests/test_Lagn.py 
+#python -m unittest tests/test_Lagn.py 
 
 from unittest import TestCase
 import numpy as np

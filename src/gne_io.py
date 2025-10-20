@@ -66,7 +66,7 @@ def create_dir(outdir):
     return True
 
 
-def get_outroot(root,ending,snap,outpath=None,verbose=False):
+def get_outroot(root,ending,outpath=None,verbose=False):
     '''
     Get path to output line data and the file root name
 
@@ -134,8 +134,7 @@ def get_plotfile(root,ending,plot_type):
 
 
 
-def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',
-               verbose=False):
+def get_outnom(filenom,dirf=None,verbose=False):
     '''
     Get output from a given filename
 
@@ -143,14 +142,8 @@ def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',
     -------
     filenom : string
         Name of file
-    snap: integer
-        Simulation snapshot number
     dirf : string
         Path to output
-    ftype : string
-        Type of the file: sample, line_data, plots
-    ptype : string
-        Type of plot: bpt
     verbose : boolean
         If True print out messages
 
@@ -159,23 +152,19 @@ def get_outnom(filenom,snap,dirf=None,ftype='line_data',ptype='bpt',
     outfile : string
         Path to output file
     '''
-
-    nom = os.path.splitext(filenom.split('/')[-1])[0]
-    ivol = os.path.splitext(filenom.split('/')[-2])[0]
+    path, nomf = filenom.rsplit('/', 1)
+    nom = nomf.split('.')[0]
+    afteriz = path.split('iz')[-1]
 
     if dirf is None:
-        dir1 = 'output/iz' + str(snap) + '/'
-        dirf = dir1 + ivol + '/'
-        if ftype == 'plots': dirf = dir1 + ftype + '/'
-    create_dir(dirf)    
+        dirf = 'output'
+    dirf = dirf + '/iz' + afteriz + '/'
+    create_dir(dirf)
     
-    if ftype == 'line_data':
-        outfile = dirf + nom + '.hdf5'
-    elif ftype == 'plots':
-        outfile = dirf + ptype + '_' + nom + '.pdf'
+    outfile = dirf + nom + '.hdf5'
 
     if verbose:
-        print(f'* Output {ftype}: {outfile}')
+        print(f'* Output: {outfile}')
     return outfile
 
 
@@ -299,7 +288,7 @@ def generate_header(infile,redshift,snap,
     """
 
     # Get the file name
-    filenom = get_outnom(infile,snap,dirf=outpath,ftype='line_data',verbose=verbose)
+    filenom = get_outnom(infile,dirf=outpath,verbose=verbose)
 
     # Change units if required
     if units_h0:
@@ -313,6 +302,7 @@ def generate_header(infile,redshift,snap,
     headnom = 'header'
     head = hf.create_dataset(headnom,(100,))
     head.attrs[u'redshift'] = redshift
+    head.attrs[u'snapnum'] = snap
     head.attrs[u'h0'] = h0
     head.attrs[u'omega0'] = omega0
     head.attrs[u'omegab'] = omegab
