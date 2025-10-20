@@ -57,7 +57,7 @@ units_h0=True
 units_Gyr=True 
 # units_L40h2=False if input units [L]=erg/s  (default)
 # units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=False
+units_L40h2=True
 
 ####################################################
 ############  Emission from SF regions #############
