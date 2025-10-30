@@ -228,7 +228,8 @@ extra_params_labels = extra_params_names
 extra_params = ['data/type','data/mhhalo',
                 'data/xgal','data/ygal','data/zgal',
                 'data/vxgal','data/vygal','data/vzgal',
-                'data/mag_UKIRT-K_o_tot_ext','data/mag_SDSSz0.1-r_o_tot_ext',
+                'data/mag_UKIRT-K_o_tot_ext',
+                'data/mag_SDSSz0.1-r_o_tot_ext',
                 'data/M_SMBH']
 
 ### SELECTION CRITERIA ###
