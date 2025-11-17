@@ -294,7 +294,7 @@ def generate_header(infile,redshift,snap,
     if units_h0:
         vol = vol/(h0*h0*h0)
         mp = mp/h0
-    
+
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
 

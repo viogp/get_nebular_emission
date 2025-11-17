@@ -16,7 +16,6 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.offsetbox as moffbox
 
-
 import src.gne_const as c
 import src.gne_io as io
 import src.gne_stats as st 
@@ -1566,6 +1565,190 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     return bptnom
 
 
+
+def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
+    '''
+    Make line luminosity function plots
+    
+    Parameters
+    ----------
+    root : string
+       Path to input files. 
+    endf : string
+       Ending of input files. 
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    # Get redshift and cosmology from data
+    filenom = root+'0'+endf
+    f = h5py.File(filenom, 'r') 
+    header = f['header'] #; print(list(header.attrs.items()))
+    redshift = header.attrs['redshift']
+    omega0 = header.attrs['omega0']
+    omegab = header.attrs['omegab']
+    lambda0 = header.attrs['lambda0']
+    h0 = header.attrs['h0']
+    photmod_sfr = header.attrs['photmod_sfr']
+    total_volume = header.attrs['vol_Mpc3']
+
+    # Read AGN information if it exists
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        photmod_agn = header.attrs['photmod_NLR']
+    f.close()
+
+    # Set the cosmology from the simulation
+    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
+
+    # Read limits for properties and photoionisation models
+    minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
+    minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
+
+    # Define emission lines to plot and initialise LF arrays
+    line_labels = [r'H$_{\alpha}$', r'H$_{\beta}$',
+                   r'[OII]$\lambda\lambda 3727$', 
+                   r'[OIII]$\lambda 5007$', r'[NII]$\lambda 6584$', 
+                   r'[SII]$\lambda\lambda 6724$']
+
+    # Initialise histogram bins for luminosity functions
+    lmin = 38.0
+    lmax = 46.0
+    dl = 0.1
+    lbins = np.arange(lmin, lmax, dl)
+    lhist = lbins + dl * 0.5
+
+    # Initialise LF arrays
+    nlines = len(line_labels)
+    lf = np.zeros((nlines, len(lhist)))
+    lf_ext = np.zeros((nlines, len(lhist)))
+    
+    # Read data from each subvolume
+    for ivol in range(subvols):
+        filenom = root + str(ivol) + endf #; print(filenom)
+        f = h5py.File(filenom, 'r')
+
+        # Read SF information from file
+        lu_sfr = f['sfr_data/lu_sfr'][:,0]
+        lz_sfr = f['sfr_data/lz_sfr'][:,0]
+        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
+        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
+        NII_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
+        OII_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
+        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
+        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
+        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)        
+
+        if AGN:
+            # Read AGN information if it exists
+            Ha_agn = f['agn_data/Halpha_agn'][:]
+            Hb_agn = f['agn_data/Hbeta_agn'][:]
+            OII_agn = f['agn_data/OII3727_agn'][:]
+            OIII_agn = f['agn_data/OIII5007_agn'][:]
+            NII_agn = f['agn_data/NII6584_agn'][:]
+            SII6717_agn = f['agn_data/SII6717_agn'][:]
+            SII6731_agn = f['agn_data/SII6731_agn'][:]
+        f.close()
+
+        if AGN:
+            # Combine luminosities (SFR + AGN if available)
+            Ha = Ha_sfr + Ha_agn
+            Hb = Hb_sfr + Hb_agn
+            NII = NII_sfr + NII_agn
+            OII = OII_sfr + OII_agn
+            OIII = OIII_sfr + OIII_agn
+            SII = SII6731_sfr + SII6731_agn +\
+                SII6717_sfr + SII6717_agn
+        else:
+            Ha = Ha_sfr
+            Hb = Hb_sfr
+            NII = NII_sfr
+            OII = OII_sfr
+            OIII = OIII_sfr
+            SII = SII6731_sfr + SII6717_sfr
+
+        # Calculate histograms for each line
+        lums_int = [Ha, Hb, OII, OIII, NII, SII]
+        #lums_ext = [Ha_ext, Hb_ext, OII_ext, OIII_ext, NII_ext, SII_ext]
+        for iline in range(nlines):
+            # Intrinsic luminosity function
+            ind = np.where(lums_int[iline] > 0) ###here more cuts like in bpt?
+            if np.shape(ind)[1] > 0:
+                ll = np.log10(lums_int[iline][ind])
+                H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
+                lf[iline, :] += H
+
+    # Normalize by bin size and volume
+    lf = lf / dl / total_volume
+    #lf_ext = lf_ext / dl / total_volume
+
+    if verbose:
+        print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
+
+    # Plot settings
+    fig, axes = plt.subplots(2, 3, figsize=(30,21))
+    axes = axes.flatten()
+    ytit = r'$\log_{10}(\Phi/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
+    xmin = 39.0
+    xmax = 44.0
+    ymin = -5.5
+    ymax = -1.0
+
+    # Plot each line
+    for iline in range(nlines):
+        ax = axes[iline]
+        xtit = r'$\log_{10}$(L'+line_labels[iline]+'$\mathrm{erg\,s^{-1}})$'
+        
+        # Plot intrinsic LF (dotted line)
+        ilf = lf[iline, :]
+        ind = np.where(ilf > 0)
+        if len(ind[0]) > 0:
+            x = lhist[ind]
+            y = ilf[ind]
+            indy = np.where(y > 0)
+            if len(indy[0]) > 0:
+                logy = np.log10(y[indy])
+                ax.plot(x[indy], logy, 'r:',
+                        label='Intrinsic')
+
+        # Plot dust-attenuated LF (solid line)
+        ilf = lf_ext[iline, :]
+        ind = np.where(ilf > 0)
+        if len(ind[0]) > 0:
+            x = lhist[ind]
+            y = ilf[ind]
+            indy = np.where(y > 0)
+            if len(indy[0]) > 0:
+                logy = np.log10(y[indy])
+                ax.plot(x[indy], logy, 'b-',
+                        label='Dust-attenuated')
+            
+        # Set axis properties
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
+        ax.minorticks_on()
+        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+        if (iline==0):
+            ax.legend(loc='best',frameon=False)
+    
+    plt.tight_layout()
+    
+    # Output
+    nom = io.get_plotfile(root,endf,'lf')
+    plt.savefig(nom)
+    if verbose:
+         print(f'* LFs plots: {nom}')
+    
+    return nom
+
+
+
 def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
                    xid_NLR=0.5,alpha_NLR=-1.7,verbose=True):
     '''
@@ -1616,9 +1799,12 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
+    #bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
-    if gridplots:
-        make_gridplots() ###here work in progress
+    # Make line LFs
+    lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
+
+    #if gridplots:
+    #    make_gridplots() ###here work in progress
     
     return
