@@ -1602,6 +1602,13 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     else:
         AGN = True
         photmod_agn = header.attrs['photmod_NLR']
+
+    # Read dust-attenuated information if it exists
+    if 'attmod' in header.attrs:
+        att = True
+        attmod = header.attrs['attmod']
+    else:
+        att = False
     f.close()
 
     # Set the cosmology from the simulation
@@ -1627,7 +1634,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     # Initialise LF arrays
     nlines = len(line_labels)
     lf = np.zeros((nlines, len(lhist)))
-    lf_ext = np.zeros((nlines, len(lhist)))
+    lf_att = np.zeros((nlines, len(lhist)))
     
     # Read data from each subvolume
     for ivol in range(subvols):
@@ -1645,6 +1652,15 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
         SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
         SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)        
 
+        if att:
+            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att'],axis=0)
+            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att'],axis=0)
+            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att'],axis=0)
+            OII_sfr_att = np.sum(f['sfr_data/OII3727_sfr_att'],axis=0)
+            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att'],axis=0)
+            SII6731_sfr_att = np.sum(f['sfr_data/SII6731_sfr_att'],axis=0)
+            SII6717_sfr_att = np.sum(f['sfr_data/SII6717_sfr_att'],axis=0)        
+        
         if AGN:
             # Read AGN information if it exists
             Ha_agn = f['agn_data/Halpha_agn'][:]
@@ -1654,6 +1670,14 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             NII_agn = f['agn_data/NII6584_agn'][:]
             SII6717_agn = f['agn_data/SII6717_agn'][:]
             SII6731_agn = f['agn_data/SII6731_agn'][:]
+            if att:
+                Ha_agn_att = f['agn_data/Halpha_agn_att'][:]
+                Hb_agn_att = f['agn_data/Hbeta_agn_att'][:]
+                OII_agn_att = f['agn_data/OII3727_agn_att'][:]
+                OIII_agn_att = f['agn_data/OIII5007_agn_att'][:]
+                NII_agn_att = f['agn_data/NII6584_agn_att'][:]
+                SII6717_agn_att = f['agn_data/SII6717_agn_att'][:]
+                SII6731_agn_att = f['agn_data/SII6731_agn_att'][:]
         f.close()
 
         if AGN:
@@ -1665,6 +1689,14 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             OIII = OIII_sfr + OIII_agn
             SII = SII6731_sfr + SII6731_agn +\
                 SII6717_sfr + SII6717_agn
+            if att:
+                Ha_att = Ha_sfr_att + Ha_agn_att
+                Hb_att = Hb_sfr_att + Hb_agn_att
+                NII_att = NII_sfr_att + NII_agn_att
+                OII_att = OII_sfr_att + OII_agn_att
+                OIII_att = OIII_sfr_att + OIII_agn_att
+                SII_att = SII6731_sfr_att + SII6731_agn_att +\
+                    SII6717_sfr_att + SII6717_agn_att
         else:
             Ha = Ha_sfr
             Hb = Hb_sfr
@@ -1672,10 +1704,17 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             OII = OII_sfr
             OIII = OIII_sfr
             SII = SII6731_sfr + SII6717_sfr
-
+            if att:
+                Ha_att = Ha_sfr_att
+                Hb_att = Hb_sfr_att
+                NII_att = NII_sfr_att
+                OII_att = OII_sfr_att
+                OIII_att = OIII_sfr_att
+                SII_att = SII6731_sfr_att + SII6717_sfr_att
+            
         # Calculate histograms for each line
         lums_int = [Ha, Hb, OII, OIII, NII, SII]
-        #lums_ext = [Ha_ext, Hb_ext, OII_ext, OIII_ext, NII_ext, SII_ext]
+        lums_att = [Ha_att, Hb_att, OII_att, OIII_att, NII_att, SII_att]
         for iline in range(nlines):
             # Intrinsic luminosity function
             ind = np.where(lums_int[iline] > 0) ###here more cuts like in bpt?
@@ -1684,9 +1723,16 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                 H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
                 lf[iline, :] += H
 
+            # Dust attenuated luminosity function
+            ind = np.where(lums_att[iline] > 0) ###here more cuts like in bpt?
+            if np.shape(ind)[1] > 0:
+                ll = np.log10(lums_att[iline][ind])
+                H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
+                lf_att[iline, :] += H
+
     # Normalize by bin size and volume
     lf = lf / dl / total_volume
-    #lf_ext = lf_ext / dl / total_volume
+    lf_att = lf_att / dl / total_volume
 
     if verbose:
         print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
@@ -1703,8 +1749,8 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     # Plot each line
     for iline in range(nlines):
         ax = axes[iline]
-        xtit = r'$\log_{10}$(L'+line_labels[iline]+'$\mathrm{erg\,s^{-1}})$'
-        
+        xtit = r'$\log_{10}$(L' + line_labels[iline] +\
+            r'$/\mathrm{erg\,s^{-1}})$' 
         # Plot intrinsic LF (dotted line)
         ilf = lf[iline, :]
         ind = np.where(ilf > 0)
@@ -1718,7 +1764,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                         label='Intrinsic')
 
         # Plot dust-attenuated LF (solid line)
-        ilf = lf_ext[iline, :]
+        ilf = lf_att[iline, :]
         ind = np.where(ilf > 0)
         if len(ind[0]) > 0:
             x = lhist[ind]

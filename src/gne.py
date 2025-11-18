@@ -247,17 +247,21 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         print(' Emission lines calculated.')
 
     if att:
+        # Add relevant constants to header
+        nattrs = io.add2header(outfile,['attmod'],[attmod],verbose=verbose) 
+
         att_param = io.read_data(infile,cut,
                                  inputformat=inputformat,
                                  params=att_params,
                                  testing=testing,
                                  verbose=verbose)
-
-        nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
-                                      att_ratio_lines=att_ratio_lines,
+        nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr,
+                                                    att_param=att_param, 
+                                                    att_ratio_lines=att_ratio_lines,
                                                     redshift=redshift,h0=h0,
-                                      origin='sfr',
-                                      cut=cut, attmod=attmod, photmod=photmod_sfr,verbose=verbose)
+                                                    origin='sfr',
+                                                    cut=cut, attmod=attmod,
+                                                    photmod=photmod_sfr,verbose=verbose)
         
         if verbose:
             print(' Attenuation calculated.')
@@ -286,10 +290,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                       extra_params_names=extra_params_names,
                       extra_params_labels=extra_params_labels,
                       verbose=verbose)
+
     io.write_sfr_data(outfile,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
                       nebline_sfr,nebline_sfr_att,
                       fluxes_sfr,fluxes_sfr_att,verbose=verbose)
-
     del lu_sfr, lnH_sfr
     del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
     del nebline_sfr, nebline_sfr_att
@@ -351,10 +355,8 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
         if verbose: print(' Emission lines calculated.')
 
-        # Calculate attenuation if required
         if att:
-            # Add relevant constants to header
-            nattrs = io.add2header(outfile,['attmod'],[attmod],verbose=verbose)
+            # Calculate attenuation if required
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
                                                         att_ratio_lines=att_ratio_lines,
                                                         redshift=redshift,h0=h0,
@@ -363,7 +365,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                                         photmod=photmod_agn,verbose=verbose)
             if verbose: print(' Attenuation calculated.')     
         else:
-            #nebline_agn_att = np.array(None)
             nebline_agn_att = None
 
         # Calculate fluxes if required
@@ -373,8 +374,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             if verbose:
                 print(' Flux calculated.')
         else:
-            #fluxes_agn = np.array(None)
-            #fluxes_agn_att = np.array(None)
             fluxes_agn = None
             fluxes_agn_att = None
 
@@ -387,6 +386,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         del lu_agn, lzgas_agn 
         del nebline_agn, nebline_agn_att
     del lms, lssfr, cut
-    
+
     if verbose:
         print('* Total time: ', round(time.perf_counter() - start_total_time,2), 's.')

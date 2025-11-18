@@ -197,7 +197,7 @@ root_z0 = None
     # the output file will have intrinsic AND attenuated values of
     # luminosity for the emission lines.
 # att=True to calculate the dust attenuation; False, otherwise
-att = False
+att = True
     
 # To use Cardelli's law (following Favole et. al. 2020):
     # attmod = 'cardelli89' (default)

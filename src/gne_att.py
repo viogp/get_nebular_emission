@@ -117,6 +117,7 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, c
     
     return coef_att
 
+
 def attenuation(nebline, att_param=None, att_ratio_lines=None,
                 redshift=0, h0=0.7, attmod='cardelli89',origin='sfr',
                 photmod='gutkin16', cut=None, verbose=True):
@@ -154,7 +155,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     
     ncomp = len(nebline)
     coef_att = np.full(nebline.shape,c.notnum)
-    
+
     if att_param[0][0] != None:
         if attmod not in c.attmods:
             if verbose:
@@ -178,11 +179,11 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
                             coef_att[comp,i] = 1.
             coef_att[(coef_att!=coef_att)&(coef_att!=c.notnum)] = 1.
         elif attmod=='cardelli89':
-            Rhm = att_param[0]
+            Rhm = att_param[0] ###here need to ensure that the 3 properties are properly handled
             Mcold_disc = att_param[1]
             Z_disc = att_param[2]
-                
-            coef_att = np.full(nebline.shape,c.notnum)
+
+            coef_att = np.full(nebline.shape,c.notnum) ###here why needed again?
             for comp in range(ncomp):
                 for i, line in enumerate(c.line_names[photmod]):
                     if comp==0:
@@ -197,7 +198,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     nebline_att = np.full(nebline.shape,c.notnum)
     ind = np.where((coef_att!=c.notnum))
     nebline_att[ind] = nebline[ind]*coef_att[ind]
-    
+
     return nebline_att, coef_att
 
 # def coef_att_ratios(infile,cols_notatt,cols_att,cols_photmod,inputformat='HDF5',photmod='gutkin16',verbose=True):
