@@ -737,7 +737,7 @@ def get_mgas_hr(infile,selection,cols,r_type,
 
 def write_global_data(filenom,lmass,mass_type='s',
                       lssfr=None,scalelength=None,
-                      extra_param=[[None]],extra_params_names=None,
+                      extra_param=None,extra_params_names=None,
                       extra_params_labels=None,verbose=True):
     '''
     Write global data to output file
@@ -770,7 +770,7 @@ def write_global_data(filenom,lmass,mass_type='s',
         gdat = hf['data']
 
     maxshape = tuple(None for _ in lmass.shape)
-    nom = 'lm'+mass_type
+    nom = 'lm_'+mass_type
     gdat.create_dataset(nom, data=lmass, maxshape=maxshape)
     gdat[nom].dims[0].label = 'log10(M/Msun)'
 
@@ -785,12 +785,18 @@ def write_global_data(filenom,lmass,mass_type='s',
         gdat.create_dataset(nom, data=scalelength, maxshape=maxshape)
         gdat[nom].dims[0].label = 'Mpc'
 
-    if extra_param[0][0] != None:
+    if extra_param is not None:
+        if extra_params_labels is None:
+            extra_param_labels = extra_param_names
+            
         for i in range(len(extra_param)):
-            gdat.create_dataset(extra_params_names[i], data =\
-                                extra_param[i][:,None], maxshape=(None,None))
-            if extra_params_labels:
-                gdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
+            nom = extra_params_names[i]
+            data = extra_param[i]
+            label = extra_params_labels[i]
+            maxshape = tuple(None for _ in data.shape)
+            
+            gdat.create_dataset(nom,data=data,maxshape=maxshape)
+            gdat[nom].dims[0].label = label
 
     hf.close()
     return 

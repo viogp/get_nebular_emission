@@ -10,16 +10,16 @@ to also get the predicted attenuated luminosities.
 """
 
 import src.gne_const as const
-from src.gne import gne
+from src.gne import gne, gne_att
 from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = False           # If True: use only the first 50 elements
+testing = False            # If True: use only the first 50 elements
 get_emission_lines = True # Obtain nebular emission lines
-get_attenuation = True
+get_attenuation = False
 get_flux = True
-plot_tests = True
+plot_tests = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -40,9 +40,6 @@ endf   = '/ex.hdf5'
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
-
-### OUTPUT PATH (Default: output/)
-outpath = None  
 
 ### UNITS: 
 # units_h0=False if input units [Mass]=Msun, [Radius]=Mpc (default)
@@ -299,6 +296,12 @@ for ivol in range(subvols):
             extra_params_labels=extra_params_labels,
             cutcols=cutcols, mincuts=mincuts, maxcuts=maxcuts,
             testing=testing,verbose=verbose)
+
+    if get_attenuation: # Obtain dust-attenuated luminosities
+        gne_att(infile,outpath=outpath,
+                line_att=line_att, attmod=attmod,
+                att_ratios=att_ratios,att_rlines=att_rlines,
+                verbose=verbose)
         
 if plot_tests:  # Make test plots
     make_testplots(root,endf,snapshot,subvols=subvols,

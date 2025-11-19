@@ -1850,7 +1850,7 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
     
     # Make NII and SII bpt plots
-    #bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
     # Make line LFs
     lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)

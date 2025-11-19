@@ -337,8 +337,11 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                       h0=h0,units_h0=units_h0,
                                       inputformat=inputformat,
                                       testing=testing,verbose=verbose)
-            io.write_global_data(outfile,mgas.T,mass_type='g',
-                                 scalelength=hr.T,verbose=verbose)
+            io.write_global_data(outfile,mgas.T,mass_type='gas',
+                                 extra_param=[hr.T],
+                                 extra_params_names=['h_gas'],
+                                 extra_params_labels=['Scalelength(Mpc)'],
+                                 verbose=verbose)
 
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
                                           mgasr_type=mgasr_type_agn,
@@ -390,3 +393,31 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
 
     if verbose:
         print('* Total time: ', round(time.perf_counter() - start_total_time,2), 's.')
+    return
+
+
+def gne_att(infile,outpath=None,
+            line_att=None, attmod=None,
+            att_ratios=None,att_rlines=None,verbose=True):
+    '''
+    Make test plots
+    
+    Parameters
+    ----------
+    root : string
+       Path to input files
+    ending : string
+       End name of input files
+    snap: integer
+        Simulation snapshot number
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
+    verbose : boolean
+       If True print out messages.
+    '''
+    lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
+
+    print(lfile)
+    return
