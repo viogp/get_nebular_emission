@@ -779,24 +779,17 @@ def write_global_data(filenom,lmass,mass_type='s',
         gdat.create_dataset('lssfr', data=lssfr, maxshape=maxshape)
         gdat['lssfr'].dims[0].label = 'log10(SFR/M*/yr)'
 
-    if scalelength is not None:
-        maxshape = tuple(None for _ in scalelength.shape)
-        nom = 'h'+mass_type
-        gdat.create_dataset(nom, data=scalelength, maxshape=maxshape)
-        gdat[nom].dims[0].label = 'Mpc'
-
     if extra_param is not None:
         if extra_params_labels is None:
             extra_param_labels = extra_param_names
-            
+        
         for i in range(len(extra_param)):
             nom = extra_params_names[i]
             data = extra_param[i]
-            label = extra_params_labels[i]
             maxshape = tuple(None for _ in data.shape)
             
             gdat.create_dataset(nom,data=data,maxshape=maxshape)
-            gdat[nom].dims[0].label = label
+            gdat[nom].dims[0].label = extra_params_labels[i]
 
     hf.close()
     return 

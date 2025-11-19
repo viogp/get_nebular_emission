@@ -1407,13 +1407,13 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
         # Magnitudes for cuts
         ismagr = True
         try:
-            magr = f['data/magR'][:,0]
+            magr = f['data/magR'][:]
         except:
             ismagr = False
         
         ismagk = True
         try:
-            magk = f['data/magK'][:,0]
+            magk = f['data/magK'][:]
         except:
             ismagk = False
         f.close()

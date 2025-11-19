@@ -19,7 +19,7 @@ testing = False            # If True: use only the first 50 elements
 get_emission_lines = True # Obtain nebular emission lines
 get_attenuation = False
 get_flux = True
-plot_tests = False
+plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
