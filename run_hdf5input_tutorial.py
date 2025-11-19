@@ -15,8 +15,10 @@ from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
-testing = False   # If True: use only the first 50 elements
-run_code = False
+testing = False           # If True: use only the first 50 elements
+get_emission_lines = True # Obtain nebular emission lines
+get_attenuation = True
+get_flux = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
@@ -109,29 +111,6 @@ Z_correct_grad = True
 # Model to calculate the ionising parameter, U
 model_U_agn    = 'panuzzo03'
 
-# Panuzzo's model requires the calculation of the filling factor
-# epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
-# n_NLR, T_NLR and r_NLR are taken as constants.
-# If mgas_r = None, a fixed volume-filling factor is assumed, otherwise
-# mgas_r is a list of lists with either the column number
-# for each parameters or the name of the HDF5 variable.
-# Each list can correspond to a different component:
-# mgas_r = [[mgas_comp1,R_comp1],...]
-#mgas_r = None
-mgas_r = [['data/mcold','data/rdisk'],
-          ['data/mcold_burst','data/rbulge']]
-
-# If mgas_r given, the type of component needs to be specified
-# mgasr_type = 'disc', 'bulge' or None
-mgasr_type = ['disc','bulge']
-
-# Type of radius input, per component:
-# 0: scalelength;
-# 1: effective radius, Re
-# 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
-# 3: radius of the galaxy or host halo
-r_type = [2,2]
-
 # spec: model for the spectral distribution of the AGN
 model_spec_agn = 'feltre16'
     
@@ -175,6 +154,56 @@ model_spec_agn = 'feltre16'
 #            Lagn_params=[Mbulge,rbulge,vbulge,Mhot,Mbh,(Mspin)]
 Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN','data/mstars_bulge']
 
+###################################################################
+########  Filling factor and Cardelli's law parameters  ###########
+###################################################################
+# Panuzzo's model requires the calculation of the filling factor
+# epsilon(Mgas, Scalelength, n_NLR, T_NLR, r_NLR)
+# n_NLR, T_NLR and r_NLR are taken as constants.
+# If mgas_r = None, a fixed volume-filling factor is assumed, otherwise
+# mgas_r is a list of lists with either the column number
+# for each parameters or the name of the HDF5 variable.
+# Each list can correspond to a different component:
+# mgas_r = None
+# mgas_r = [[mgas_comp1,R_comp1],...]
+mgas_r = [['data/mcold','data/rdisk'],
+          ['data/mcold_burst','data/rbulge']]
+
+# If mgas_r given, the type of component needs to be specified
+# mgasr_type = 'disc', 'bulge' or None
+mgasr_type = ['disc','bulge']
+
+# Type of radius input, per component:
+# 0: scalelength;
+# 1: effective radius, Re
+# 2: half-mass/light radius, R50 (Re=r502re*R50 with a default r502re=1) 
+# 3: radius of the galaxy or host halo
+r_type = [2,2]
+
+####################################################
+##########       Dust attenuation      #############
+####################################################
+#WARNING: Att w ratios not checked (no adequate ex. data)
+
+# att=True to calculate the stellar dust attenuation
+att = False
+# line_att=True to apply the extra line attenuation from Saito+2021
+line_att = True
+
+# Available dust attenuation models
+# attmod = 'cardelli89'; att_ratios = None; att_rlines = None (default)
+#    The calculation follows Favole et. al. 2020 and requires
+#    the above parameters: mgas_r, mgasr_type and r_type
+# attmod = 'ratios'; att_ratios = [positions]; att_rlines =['names']
+#    The calculation uses already available attenuation coefficients.
+#    att_ratios should contain the location of these coefficients, and
+#    the names of the lines with available ratios are in att_rlines.
+#    Example for attmod = 'ratios'
+#    att_params = [31,32,33,34,35,36,36]
+#    att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
+
+attmod='cardelli89'; att_ratios = None; att_rlines = None
+
 ####################################################
 ########  Redshift evolution parameters  ###########
 ####################################################
@@ -187,33 +216,6 @@ Lagn_inputs = 'Lagn'; Lagn_params=['data/Lbol_AGN','data/mstars_bulge']
     # a fixed number of files is needed equal to that at z=0.
     # If local relations are to be used: infiles_z0 = [None]
 root_z0 = None
-
-####################################################
-##########       Dust attenuation      #############
-####################################################
-# WARNING: Attenuation calculation has not been fully tested
-
-# Continuum and line attenuation calculation. If this option is selected 
-    # the output file will have intrinsic AND attenuated values of
-    # luminosity for the emission lines.
-# att=True to calculate the dust attenuation; False, otherwise
-att = True
-    
-# To use Cardelli's law (following Favole et. al. 2020):
-    # attmod = 'cardelli89' (default)
-    # att_params = [half-mass radius, cold gas mass, cold gas metallicity]
-# To use already available attenuation coefficients: attmod = 'ratios'
-    # att_params in this case has the location of the attenuation coefficients
-    # for each line for which attenuation is going to be calculated.
-    # This mode requieres an extra variable, att_ratio_lines, with the names
-    # of the lines corresponding to the coefficients listed in att_params.
-# Example:
-    # attmod = 'ratios'
-    # att_params = [31,32,33,34,35,36,36]
-    # att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
-
-attmod='cardelli89'
-att_params=['data/rdisk','data/mcold','data/Zgas_disc'] 
 
 ####################################################
 ##########      Other calculations     #############
@@ -255,26 +257,27 @@ for ivol in range(subvols):
     infile_z0 = root_z0
     if root_z0 is not None:
         infile_z0 = root_z0+str(ivol)+endf
-    
-    # Get the redshift, cosmology and volume of the model galaxies
-    f = h5py.File(infile) 
-    header = f['header'] #; print(list(header.attrs.keys()))
-    redshift = header.attrs['redshift']
-    snapshot = header.attrs['snapnum']
-    boxside = header.attrs['bside_Mpch']
-    h0 = header.attrs['h0']
-    omega0 = header.attrs['omega0']
-    omegab = header.attrs['omegab']
-    lambda0 = header.attrs['lambda0']
-    mp = header.attrs['mp_Msunh']
-    try:
-        p = header.attrs['percentage']/100.
-    except:
-        p = 1
-    f.close()
-    vol = p*boxside**3
 
-    if run_code:  # Run the code
+    if get_emission_lines:  
+        # Get the redshift, cosmology and volume of the model galaxies
+        f = h5py.File(infile) 
+        header = f['header'] #; print(list(header.attrs.keys()))
+        redshift = header.attrs['redshift']
+        snapshot = header.attrs['snapnum']
+        boxside = header.attrs['bside_Mpch']
+        h0 = header.attrs['h0']
+        omega0 = header.attrs['omega0']
+        omegab = header.attrs['omegab']
+        lambda0 = header.attrs['lambda0']
+        mp = header.attrs['mp_Msunh']
+        try:
+            p = header.attrs['percentage']/100.
+        except:
+            p = 1
+        f.close()
+        vol = p*boxside**3
+
+        # Obtain nebular emission lines
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
@@ -288,8 +291,9 @@ for ivol in range(subvols):
             mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
+            att=att, line_att=line_att, attmod=attmod,
+            att_ratios=att_ratios,att_rlines=att_rlines,
             infile_z0=infile_z0, 
-            att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,
             extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,

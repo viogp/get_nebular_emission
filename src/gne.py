@@ -33,10 +33,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
-        zeq=None,infile_z0=None,
-        att=False,attmod='cardelli89',
-        att_params=[None], att_ratio_lines=[None],
+        att=False, line_att=False, attmod='cardelli89',
+        att_ratios=[None], att_rlines=[None],
         flux=False,
+        zeq=None,infile_z0=None,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
         cutcols=[None], mincuts=[None], maxcuts=[None],
@@ -77,7 +77,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Parameters to look for calculating attenuation. See gne_const to know what each model expects.
      - For text or csv files: list of integers with column position.
      - For hdf5 files: list of data names.
-    att_ratio_lines : strings
+    att_rlines : strings
      Names of the lines corresponding to the values in att_params when attmod=ratios.
      They should be written as they are in the selected model (see gne_const).
     flux : boolean
@@ -249,15 +249,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if att:
         # Add relevant constants to header
         nattrs = io.add2header(outfile,['attmod'],[attmod],verbose=verbose) 
-
+        att_params=['data/rdisk','data/mcold','data/Zgas_disc'] 
         att_param = io.read_data(infile,cut,
                                  inputformat=inputformat,
                                  params=att_params,
                                  testing=testing,
                                  verbose=verbose)
+        print(att_param); exit()
         nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr,
                                                     att_param=att_param, 
-                                                    att_ratio_lines=att_ratio_lines,
+                                                    att_rlines=att_rlines,
                                                     redshift=redshift,h0=h0,
                                                     origin='sfr',
                                                     cut=cut, attmod=attmod,
@@ -358,7 +359,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         if att:
             # Calculate attenuation if required
             nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
-                                                        att_ratio_lines=att_ratio_lines,
+                                                        att_rlines=att_rlines,
                                                         redshift=redshift,h0=h0,
                                                         origin='agn',cut=cut,
                                                         attmod=attmod,

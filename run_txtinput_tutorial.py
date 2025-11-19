@@ -10,12 +10,14 @@ to also get the predicted attenuated luminosities.
 """
 
 import src.gne_const as const
-from src.gne import gne
+from src.gne import gne, gne_att, gne_flux
 from src.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
-testing = False   # If True: use only the first 50 elements
-run_code = True
+testing = False           # If True: use only the first 50 elements
+get_emission_lines = True # Obtain nebular emission lines
+get_attenuation = True
+get_flux = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
@@ -258,7 +260,7 @@ for ivol in range(subvols):
     if root_z0 is not None:
         infile_z0 = root_z0+str(ivol)+endf
 
-    if run_code:  # Run the code
+    if get_emission_lines:  # Obtain nebular emission lines
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
@@ -272,8 +274,9 @@ for ivol in range(subvols):
             mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
+            att=att, line_att=line_att, attmod=attmod,
+            att_params=att_params,
             infile_z0=infile_z0, 
-            att=att, attmod=attmod, att_params=att_params,
             extra_params=extra_params,
             extra_params_names=extra_params_names,
             extra_params_labels=extra_params_labels,

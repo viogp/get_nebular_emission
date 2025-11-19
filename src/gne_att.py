@@ -106,7 +106,7 @@ def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, c
     mean_col_dens_disc_log = (np.log10(Mcold_disc*h0) + np.log10(c.Msun) - 
     np.log10(1.4*c.mp*np.pi)-2.*np.log10(a_disc*rhalf_mass_disc*h0*c.Mpc_to_cm))
     
-    tau_disc = np.log10(Al_Av) + np.log10((Z_disc/c.zsun)**s) + mean_col_dens_disc_log - np.log10(2.1e21)
+    tau_disc = np.log10(Al_Av) + np.log10((Z_disc/c.zsun)**s) + mean_col_dens_disc_log - 21*np.log10(2.1)
     tau_disc = 10.**tau_disc
     
     al_disc = (np.sqrt(1.-albedo))*tau_disc
@@ -156,8 +156,8 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
     ncomp = len(nebline)
     coef_att = np.full(nebline.shape,c.notnum)
 
-    if att_param[0][0] != None:
-        if attmod not in c.attmods:
+    if att_param[0][0] != None: ###here improve this to be more general
+        if attmod not in c.attmods: ###here to be outside, as a test
             if verbose:
                 print('STOP (gne_photio.attenuation): Unrecognised model for attenuation.')
                 print('                Possible attmod= {}'.format(c.attmods))
@@ -184,11 +184,12 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
             Z_disc = att_param[2]
 
             coef_att = np.full(nebline.shape,c.notnum) ###here why needed again?
-            for comp in range(ncomp):
+            for comp in range(ncomp): ###here this needs to go over components
                 for i, line in enumerate(c.line_names[photmod]):
                     if comp==0:
                         coef_att[comp,i] = coef_att_cardelli(c.line_wavelength[photmod][i], 
-                                    Mcold_disc=Mcold_disc, rhalf_mass_disc=Rhm, 
+                                                             Mcold_disc=Mcold_disc,
+                                                             rhalf_mass_disc=Rhm, 
                                                              Z_disc=Z_disc, h0=h0,
                                                              costheta=0.3, albedo=0.56) * c.line_att_coef_all(redshift)
                     else:

@@ -1712,9 +1712,11 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                 OIII_att = OIII_sfr_att
                 SII_att = SII6731_sfr_att + SII6717_sfr_att
             
-        # Calculate histograms for each line
         lums_int = [Ha, Hb, OII, OIII, NII, SII]
-        lums_att = [Ha_att, Hb_att, OII_att, OIII_att, NII_att, SII_att]
+        if att:
+            lums_att = [Ha_att, Hb_att, OII_att, OIII_att, NII_att, SII_att]
+
+        # Calculate histograms for each line
         for iline in range(nlines):
             # Intrinsic luminosity function
             ind = np.where(lums_int[iline] > 0) ###here more cuts like in bpt?
@@ -1724,15 +1726,17 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                 lf[iline, :] += H
 
             # Dust attenuated luminosity function
-            ind = np.where(lums_att[iline] > 0) ###here more cuts like in bpt?
-            if np.shape(ind)[1] > 0:
-                ll = np.log10(lums_att[iline][ind])
-                H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
-                lf_att[iline, :] += H
+            if att:
+                ind = np.where(lums_att[iline] > 0) ###here more cuts like in bpt?
+                if np.shape(ind)[1] > 0:
+                    ll = np.log10(lums_att[iline][ind])
+                    H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
+                    lf_att[iline, :] += H
 
     # Normalize by bin size and volume
     lf = lf / dl / total_volume
-    lf_att = lf_att / dl / total_volume
+    if att:
+        lf_att = lf_att / dl / total_volume
 
     if verbose:
         print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
@@ -1763,17 +1767,18 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                 ax.plot(x[indy], logy, 'r:',
                         label='Intrinsic')
 
-        # Plot dust-attenuated LF (solid line)
-        ilf = lf_att[iline, :]
-        ind = np.where(ilf > 0)
-        if len(ind[0]) > 0:
-            x = lhist[ind]
-            y = ilf[ind]
-            indy = np.where(y > 0)
-            if len(indy[0]) > 0:
-                logy = np.log10(y[indy])
-                ax.plot(x[indy], logy, 'b-',
-                        label='Dust-attenuated')
+        if att:
+            # Plot dust-attenuated LF (solid line)
+            ilf = lf_att[iline, :]
+            ind = np.where(ilf > 0)
+            if len(ind[0]) > 0:
+                x = lhist[ind]
+                y = ilf[ind]
+                indy = np.where(y > 0)
+                if len(indy[0]) > 0:
+                    logy = np.log10(y[indy])
+                    ax.plot(x[indy], logy, 'b-',
+                            label='Dust-attenuated')
             
         # Set axis properties
         ax.set_xlim([xmin, xmax])
