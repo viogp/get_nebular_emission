@@ -10,13 +10,14 @@ to also get the predicted attenuated luminosities.
 """
 
 import src.gne_const as const
-from src.gne import gne, gne_att
+from src.gne import gne
+from src.gne_att import gne_att
 from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False            # If True: use only the first 50 elements
-get_emission_lines = True # Obtain nebular emission lines
+get_emission_lines = False # Obtain nebular emission lines
 get_attenuation = False
 get_flux = True
 plot_tests = True
@@ -182,24 +183,23 @@ r_type = [2,2]
 ####################################################
 #WARNING: Att w ratios not checked (no adequate ex. data)
 
-# att=True to calculate the stellar dust attenuation
-att = False
+# Dust-attenuated luminosities are calculated if get_attenuation=True
 # line_att=True to apply the extra line attenuation from Saito+2021
 line_att = True
 
 # Available dust attenuation models
-# attmod = 'cardelli89'; att_ratios = None; att_rlines = None (default)
+# 'cardelli89' (default)
 #    The calculation follows Favole et. al. 2020 and requires
 #    the above parameters: mgas_r, mgasr_type and r_type
-# attmod = 'ratios'; att_ratios = [positions]; att_rlines =['names']
+#    If None is passed, default parameters will be used
+attmod = 'cardelli89'
+att_config = {'s': None, 'costheta': None} # use default values in Favole+2020
+# 'ratios'
 #    The calculation uses already available attenuation coefficients.
 #    att_ratios should contain the location of these coefficients, and
 #    the names of the lines with available ratios are in att_rlines.
 #    Example for attmod = 'ratios'
-#    att_params = [31,32,33,34,35,36,36]
-#    att_ratio_lines = ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] 
-
-attmod='cardelli89'; att_ratios = None; att_rlines = None
+#att_config = {'ratios': [31,32,33,34,35,36,36], 'rlines': ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] }
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -255,25 +255,25 @@ for ivol in range(subvols):
     if root_z0 is not None:
         infile_z0 = root_z0+str(ivol)+endf
 
+    # Get the redshift, cosmology and volume of the model galaxies
+    f = h5py.File(infile) 
+    header = f['header'] #; print(list(header.attrs.keys()))
+    redshift = header.attrs['redshift']
+    snapshot = header.attrs['snapnum']
+    boxside = header.attrs['bside_Mpch']
+    h0 = header.attrs['h0']
+    omega0 = header.attrs['omega0']
+    omegab = header.attrs['omegab']
+    lambda0 = header.attrs['lambda0']
+    mp = header.attrs['mp_Msunh']
+    try:
+        p = header.attrs['percentage']/100.
+    except:
+        p = 1
+    f.close()
+    vol = p*boxside**3
+        
     if get_emission_lines:  
-        # Get the redshift, cosmology and volume of the model galaxies
-        f = h5py.File(infile) 
-        header = f['header'] #; print(list(header.attrs.keys()))
-        redshift = header.attrs['redshift']
-        snapshot = header.attrs['snapnum']
-        boxside = header.attrs['bside_Mpch']
-        h0 = header.attrs['h0']
-        omega0 = header.attrs['omega0']
-        omegab = header.attrs['omegab']
-        lambda0 = header.attrs['lambda0']
-        mp = header.attrs['mp_Msunh']
-        try:
-            p = header.attrs['percentage']/100.
-        except:
-            p = 1
-        f.close()
-        vol = p*boxside**3
-
         # Obtain nebular emission lines
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
@@ -288,8 +288,6 @@ for ivol in range(subvols):
             mgas_r_agn=mgas_r,mgasr_type_agn=mgasr_type,r_type_agn=r_type,
             model_spec_agn=model_spec_agn,
             Lagn_inputs=Lagn_inputs, Lagn_params=Lagn_params,
-            att=att, line_att=line_att, attmod=attmod,
-            att_ratios=att_ratios,att_rlines=att_rlines,
             infile_z0=infile_z0, 
             extra_params=extra_params,
             extra_params_names=extra_params_names,
@@ -298,10 +296,8 @@ for ivol in range(subvols):
             testing=testing,verbose=verbose)
 
     if get_attenuation: # Obtain dust-attenuated luminosities
-        gne_att(infile,outpath=outpath,
-                line_att=line_att, attmod=attmod,
-                att_ratios=att_ratios,att_rlines=att_rlines,
-                verbose=verbose)
+        gne_att(infile,outpath=outpath,attmod=attmod,line_att=line_att,
+                att_config=att_config,verbose=verbose)
         
 if plot_tests:  # Make test plots
     make_testplots(root,endf,snapshot,subvols=subvols,

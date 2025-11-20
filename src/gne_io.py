@@ -735,6 +735,52 @@ def get_mgas_hr(infile,selection,cols,r_type,
     return outm, outr
 
 
+def write_data(filenom,group=None,params=None,params_names=None,
+               params_labels=None,verbose=True):
+    '''
+    Write global data to output file
+
+    Parameters
+    ----------
+    filenom : string
+       Full path to the output file
+    group : string
+       Group in hdf5 file to write into
+    params : list of strings (hdf5 files)
+       Datasets to be written
+    params_names : array of strings
+       Names of the datasets to be written
+    params_labels : array of strings
+       Units and maybe descriptions for the parameters
+    '''     
+    # Open the file 
+    hf = h5py.File(filenom, 'a')
+    if group is not None:
+        # Create the output group if needed
+        if group not in hf.keys():
+            gdat = hf.create_group(group)
+        else:
+            gdat = hf[group]
+
+    if params is not None:
+        if params_labels is None:
+            params_labels = params_names
+        
+        for i in range(len(params)):
+            nom = params_names[i]
+            data = params[i]
+            maxshape = tuple(None for _ in data.shape)
+
+            if nom in gdat.keys():
+                # Remove dataset if already present
+                del gdat[nom]
+            gdat.create_dataset(nom,data=data,maxshape=maxshape)
+            gdat[nom].dims[0].label = params_labels[i]
+
+    hf.close()
+    return 
+
+
 def write_global_data(filenom,lmass,mass_type='s',
                       lssfr=None,scalelength=None,
                       extra_param=None,extra_params_names=None,
@@ -847,7 +893,7 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
                     hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
                                          data=nebline_sfr_att[:,i], maxshape=(None,None))
                     hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = \
-                        'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                        'erg s^-1 [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
             
             if fluxes_sfr is not None:
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
@@ -918,7 +964,7 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
                                  data=ndata, maxshape=(None))
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
-                'Line units: egr s^-1'
+                'erg s^-1'
 
             if nebline_agn_att is not None:
                 ndata = nebline_agn_att[0,i,:]

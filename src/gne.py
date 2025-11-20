@@ -393,32 +393,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     del lms, lssfr, cut
 
     if verbose:
-        print('* Total time: ', round(time.perf_counter() - start_total_time,2), 's.')
+        tt = round(time.perf_counter() - start_total_time,2)
+        print('* Total time: ', tt, 's.')
     return
 
-
-def gne_att(infile,outpath=None,
-            line_att=None, attmod=None,
-            att_ratios=None,att_rlines=None,verbose=True):
-    '''
-    Make test plots
-    
-    Parameters
-    ----------
-    root : string
-       Path to input files
-    ending : string
-       End name of input files
-    snap: integer
-        Simulation snapshot number
-    subvols: integer
-        Number of subvolumes to be considered
-    outpath : string
-        Path to output, default is output/ 
-    verbose : boolean
-       If True print out messages.
-    '''
-    lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
-
-    print(lfile)
-    return

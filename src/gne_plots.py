@@ -1660,7 +1660,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att'],axis=0)
             SII6731_sfr_att = np.sum(f['sfr_data/SII6731_sfr_att'],axis=0)
             SII6717_sfr_att = np.sum(f['sfr_data/SII6717_sfr_att'],axis=0)        
-        
+
         if AGN:
             # Read AGN information if it exists
             Ha_agn = f['agn_data/Halpha_agn'][:]
@@ -1719,20 +1719,22 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
         # Calculate histograms for each line
         for iline in range(nlines):
             # Intrinsic luminosity function
-            ind = np.where(lums_int[iline] > 0) ###here more cuts like in bpt?
+            lums = lums_int[iline]
+            ind = np.where(lums > 0) ###here more cuts like in bpt?
             if np.shape(ind)[1] > 0:
-                ll = np.log10(lums_int[iline][ind])
-                H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
+                ll = np.log10(lums[ind])
+                H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
                 lf[iline, :] += H
 
-            # Dust attenuated luminosity function
             if att:
-                ind = np.where(lums_att[iline] > 0) ###here more cuts like in bpt?
+                # Dust attenuated luminosity function
+                lums = lums_att[iline]
+                ind = np.where(lums > 0) ###here more cuts like in bpt?
                 if np.shape(ind)[1] > 0:
-                    ll = np.log10(lums_att[iline][ind])
-                    H, dum = np.histogram(ll, bins=np.append(lbins, lmax))
+                    ll = np.log10(lums[ind])
+                    H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
                     lf_att[iline, :] += H
-
+                    
     # Normalize by bin size and volume
     lf = lf / dl / total_volume
     if att:

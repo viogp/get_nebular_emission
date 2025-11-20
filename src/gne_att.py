@@ -290,3 +290,105 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 #         del X        
     
 #     return coef_att
+
+
+def gne_att(infile, outpath=None, attmod='cardelli89',
+            line_att=None,att_config=None,verbose=True):
+    '''
+    Get the neccessary information to calculate
+    dust-attenuated luminosities
+    
+    Parameters
+    ----------
+    infile : string
+        Input file
+    outpath : string
+        Path to output, default is output/ 
+    attmod : str
+        Attenuation model ('cardelli89' or 'ratios')
+    att_config : dict
+       Model-specific parameters:
+       - 'cardelli89': {'s': 1.6, 'costheta': 0.3}
+       - 'ratios': {'ratios': array, 'rlines': list}
+    verbose : boolean
+       If True print out messages.
+    '''
+    # Add attenuation information to the line file
+    lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
+    nattrs = io.add2header(lfile,['attmod'],[attmod],verbose=verbose)
+    #if line_att:
+    #    print(line_att)
+        #nattrs = io.add2header(lfile,['att_line'],[''],verbose=verbose)
+        
+    # Get emission lines
+    f = h5py.File(lfile, 'r') 
+    header = f['header']
+    group = 'sfr_data'
+    photmod_sfr = header.attrs['photmod_sfr']
+    lnames = c.line_names[photmod_sfr]
+    nlines = len(lnames)
+    ncomp = np.shape(f[group+'/'+lnames[0]+'_sfr'][:])[0]
+    ngal = np.shape(f[group+'/'+lnames[0]+'_sfr'][:])[1]
+    neblines = np.zeros((nlines, ncomp, ngal))
+    for i, line in enumerate(lnames):
+        neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
+
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        group_agn = 'agn_data'
+        photmod_agn = header.attrs['photmod_NLR']
+        lnames_agn = c.line_names[photmod_agn]
+        nlines = len(lnames_agn)
+        ngal = len(f[group_agn+'/'+lnames_agn[0] +'_agn'][:])
+        neblines_agn = np.zeros((nlines, ngal))
+        for i, line in enumerate(lnames_agn):
+            neblines_agn[i, :] = f[group_agn+'/'+line+'_agn'][:]
+    f.close()
+
+    # Prep arrays for attenuation coefficients
+    coeff = np.full(neblines.shape,1)
+    if AGN:
+        coeff_agn = np.full(neblines_agn.shape,1)
+    ## Get the information needed by the dust attenuation model
+    #if attmod == 'cardelli89':
+    #    if att_config is None:
+    #        att_config = {}
+    #    s = att_config.get('s')
+    #    costheta = att_config.get('costheta')
+    #    print(s);exit()
+    #
+    #    # Add parameters to header
+    #    config_names = [f'att_config_{k}' for k in att_config.keys()]
+    #    config_values = list(att_config.values())
+    #    io.add2header(lfile, config_names, config_values, verbose=verbose)
+    #    
+    #elif attmod == 'ratios':
+    #    att_ratios = att_config.get('ratios')
+    #    att_rlines = att_config.get('rlines')
+        
+    if line_att:
+        ss = 1
+        coeff *= ss
+        if AGN:
+            coeff_agn *= ss
+
+        #nattrs = io.add2header(lfile,['att_line'],[''],verbose=verbose)
+        #Add extra attenuation + information
+
+    neblines_att = neblines*coeff
+    lnames_att = [line + '_sfr_att' for line in lnames]
+    labels = np.full(np.shape(lnames),'erg s^-1')
+    io.write_data(lfile,group=group,params=neblines_att,
+                  params_names=lnames_att,params_labels=labels)
+    if AGN:
+        neblines_agn_att = neblines_agn*coeff_agn
+        lnames_att = [line + '_agn_att' for line in lnames_agn]
+        labels = np.full(np.shape(lnames_agn),'erg s^-1')
+
+        io.write_data(lfile,group=group_agn,params=neblines_agn_att,
+                      params_names=lnames_att,params_labels=labels)
+
+    print(lfile)#; exit() ###here
+    return
