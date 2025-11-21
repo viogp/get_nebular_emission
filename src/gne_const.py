@@ -115,51 +115,8 @@ r502re   = 1.     # Lima Neto+1999, Wolf+2010, Huang+2017
 rvir2r50 = 0.03   # Huang+2017, Yang+2025
 
 #-------------------------------------------
-#    Atenuation:
+#    Attenuation:
 #-------------------------------------------
-
-# De Barros et. al. 2016 - Halpha, 3.33, z = (0.004, 0.02)
-# Holden et. al. 2016 - 1600A, 2.27, z = 0.02
-# Calzetti et. al. 2021 - Halpha, 2.54, z = (0.00258, 0.00261)
-# Valentino et. al. 2017 - Halpha, 1.75, z = 1.55
-# Buat et. al. 2018 - Halpha, 1.85, z = (0.6, 1.6)
-# Saito et. al. 2020 - Halpha, 5/(z+2.2), z < 0.46
-# Saito et. al. 2020 - OII (3727A, 3729A), 5/(z+2.2), z = (0.48,1.54)
-
-def saito_att(z):
-    if z < 2.8:
-        return (z+2.2)/5
-    else:
-        return 1
-
-def line_att_coef_all(z):
-    return saito_att(z)
-
-def line_att_coef_func(z=0):
-    saito = saito_att(z)
-    line_att_coef = {'OII3727' : saito,
-                     'Hbeta' : saito,
-                     'OIII4959' : saito,
-                     'OIII5007' : saito,
-                     'OI6300' : saito,
-                     'NII6548' : saito,
-                     'Halpha' : saito,
-                     'NII6584' : saito,
-                     'SII6717' : saito,
-                     'SII6731' : saito,
-                     'NV1240' : saito,
-                     'CIV1548' : saito,
-                     'CIV1551' : saito,
-                     'HeII1640' : saito, 
-                     'OIII1661' : saito,
-                     'OIII1666' : saito,
-                     'SiIII1883' : saito,
-                     'SiIII1888' : saito, 
-                     'CIII1907' : saito,
-                     'CIII1908' : saito,
-                     'CIII1910' : saito
-        }
-    return line_att_coef
 
 #-------------------------------------------
 #    AGNs:

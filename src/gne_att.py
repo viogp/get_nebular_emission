@@ -15,9 +15,31 @@ import sys
 import warnings
 from src.gne_cosmology import emission_line_flux
 
-#------------------------------------------------------------------------------------
-#   Cardelli et al. 1989 extinction laws in FIR and IR/OPT:
-#------------------------------------------------------------------------------------
+def get_f_saito20(z):
+    '''
+    Calculate the dust attenuation fraction parameter
+    from Eq. 5 in Saito+2020, this parameter is defined as
+    f = E_stellar(B-V)/E_gas(B-V)
+    and is a function of redshift (z)
+
+    Parameters
+    ----------
+    z : float
+      Redshift
+     
+    Returns
+    -------
+    f : float
+    '''
+    if (z <= 2.8):
+        f = 0.44 + 0.2*z
+    else:
+        f = 1
+    return f   
+    
+#-------------------------------------------------------------
+#   Cardelli+1989 extinction laws in FIR and IR/OPT:
+#-------------------------------------------------------------
 def cardelli(waveA):
     '''
     Given the wavelength, returns Al/Av following Cardelli 1989.
@@ -316,17 +338,15 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     # Add attenuation information to the line file
     lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
     nattrs = io.add2header(lfile,['attmod'],[attmod],verbose=verbose)
-    #if line_att:
-    #    print(line_att)
-        #nattrs = io.add2header(lfile,['att_line'],[''],verbose=verbose)
         
     # Get emission lines
     f = h5py.File(lfile, 'r') 
     header = f['header']
-    group = 'sfr_data'
+    zz = header.attrs['redshift']
     photmod_sfr = header.attrs['photmod_sfr']
     lnames = c.line_names[photmod_sfr]
     nlines = len(lnames)
+    group = 'sfr_data'
     ncomp = np.shape(f[group+'/'+lnames[0]+'_sfr'][:])[0]
     ngal = np.shape(f[group+'/'+lnames[0]+'_sfr'][:])[1]
     neblines = np.zeros((nlines, ncomp, ngal))
@@ -369,21 +389,22 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     #    att_rlines = att_config.get('rlines')
         
     if line_att:
-        ss = 1
-        coeff *= ss
+        f = get_f_saito20(zz)
+        coeff = coeff/f
         if AGN:
-            coeff_agn *= ss
+            coeff_agn = coeff_agn/f
+            
+        #Add information in header
+        nattrs = io.add2header(lfile,['att_f_saito20'],[f],verbose=verbose)
 
-        #nattrs = io.add2header(lfile,['att_line'],[''],verbose=verbose)
-        #Add extra attenuation + information
 
-    neblines_att = neblines*coeff
+    neblines_att = neblines*(10**(-0.4*coeff))
     lnames_att = [line + '_sfr_att' for line in lnames]
     labels = np.full(np.shape(lnames),'erg s^-1')
     io.write_data(lfile,group=group,params=neblines_att,
                   params_names=lnames_att,params_labels=labels)
     if AGN:
-        neblines_agn_att = neblines_agn*coeff_agn
+        neblines_agn_att = neblines_agn*(10**(-0.4*coeff_agn))
         lnames_att = [line + '_agn_att' for line in lnames_agn]
         labels = np.full(np.shape(lnames_agn),'erg s^-1')
 
