@@ -336,7 +336,6 @@ def get_A_lambda(tau,costheta=c.costheta,albedo=c.albedo):
     return A_lambda
 
 
-
 def att_favole20(wavelengths,ngal,Rv=c.Rv,costheta=c.costheta,
                  albedo=c.albedo):
     '''
@@ -358,13 +357,17 @@ def att_favole20(wavelengths,ngal,Rv=c.Rv,costheta=c.costheta,
     '''
     coeff = np.full((len(wavelengths),ngal),c.notnum)
 
-    # Use the Cardelli+89 model to obtain A_l/A_V
-    alav = np.zeros(len(wavelengths))
     for ii,wl in enumerate(wavelengths):
-        alav[ii] = get_AlAv_cardelli89(wl,Rv=Rv)
+        # Use the Cardelli+89 model to obtain A_l/A_V
+        alav = get_AlAv_cardelli89(wl,Rv=Rv)
 
-    # For each galaxy calculate the attenuation coefficient
-    coeff = get_att_coeff(tau,cos)
+        #Calculate the galaxy optical depth 
+        tau = np.zeros((ngal))
+        tau = tau + alav ###here
+        
+        # For each galaxy calculate the attenuation coefficient
+        coeff[ii,:] = get_A_lambda(tau,costheta=costheta,albedo=albedo)
+
     return coeff                                          
 
 
@@ -442,17 +445,15 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         Rv = get_param(att_config, 'Rv', c.Rv)
         costheta = get_param(att_config, 'costheta', c.costheta) 
         albedo = get_param(att_config, 'albedo', c.albedo)
+        # Add parameters to header
+        config_names  = ['Rv', 'costheta', 'albedo']
+        config_values = [Rv, costheta, albedo]
+        io.add2header(lfile,config_names,config_values,verbose=False)
 
         for icomp in range(ncomp):
             coeff[:,icomp,:] = att_favole20(wavelengths,ngal,
                                             Rv=Rv,costheta=costheta,
                                             albedo=albedo)
-
-    #
-    #    # Add parameters to header
-    #    config_names = [f'att_config_{k}' for k in att_config.keys()]
-    #    config_values = list(att_config.values())
-    #    io.add2header(lfile, config_names, config_values, verbose=verbose)
 
         #gal_factor = get_delucia07(lfile)
         #gal_factor = np.full(neblines.shape[-1],1)
@@ -499,6 +500,5 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
 
         io.write_data(lfile,group=group_agn,params=neblines_agn_att,
                       params_names=lnames_att,params_labels=labels)
-    print(np.shape(neblines_agn_att)); exit() ###here
-    print(lfile)#; exit() ###here
+
     return
