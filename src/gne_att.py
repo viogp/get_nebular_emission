@@ -38,59 +38,7 @@ def get_f_saito20(z):
     return f   
 
 
-def cardelli(waveAA,Rv=c.Rv):
-    '''
-    Given the wavelength, returns Al/Av following Cardelli+1989.
-
-    Parameters
-    ----------
-    waveAA : floats
-     Wavelength (A)
-     
-    Returns
-    -------
-    Al_Av : floats
-    '''
-    
-    print(Rv); exit()
-    wave=waveAA/10000.
-    x=1./wave
-    
-    if (x < 0.3) or (x > 10):
-        print('STOP (gne_att.cardelli): ',
-              'Wavelength out of range.')
-        sys.exit()
-        return
-    elif (x < 1.1): #IR
-        ax = 0.574*(x**1.61) 
-        bx = -0.527*(x**1.61)
-    elif (x < 3.3): #Optical/NIR
-        y = x-1.82
-        ax = (1.+0.17699*y - 0.50447*y**2 - 0.02427*y**3 + 0.72085*y**4 + 
-        0.01979*y**5 - 0.77530*y**6 + 0.32999*y**7) 
-        bx = (1.41338*y+2.28305*y**2 + 1.07233*y**3 - 5.38434*y**4 -
-        0.62251*y**5 + 5.30260*y**6 - 2.09002*y**7)
-    elif (x < 8): #UV
-        if (x < 5.9):
-            Fa = 0
-            Fb = 0
-        else: 
-            Fa = -0.04473*(x-5.9)**2 - 0.009779*(x-5.9)**3
-            Fb = 0.2130*(x-5.9)**2 + 0.1207*(x-5.9)**3
-        ax = 1.752-0.316*x - 0.104/((x-4.67)**2 + 0.341) + Fa
-        bx = -3.090+1.825*x + 1.206/((x-4.62)**2 + 0.263) + Fb
-    else:
-        ax = -1.073 - 0.628*(x-8) + 0.137*(x-8)**2 - 0.070*(x-8)**3
-        bx = 13.670 + 4.257*(x-8) - 0.420*(x-8)**2 + 0.374*(x-8)**3
-    
-    Al_Av = ax+bx/Rv
-    return Al_Av
-
-
-def get_coeff_favole20(nebline,wavelengths):
-    coeff = np.full(neblines.shape,c.notnum)
-    return coeff
-
+######################
 
 def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, costheta=0.3, albedo=0.56):
     '''
@@ -226,6 +174,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 
     return nebline_att, coef_att
 
+
 # def coef_att_ratios(infile,cols_notatt,cols_att,cols_photmod,inputformat='HDF5',photmod='gutkin16',verbose=True):
 #     '''
 #     It reads luminosities of lines with and without attenuation
@@ -316,6 +265,109 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 #     return coef_att
 
 
+
+def get_AlAv_cardelli89(waveAA,Rv=c.Rv):
+    '''
+    Given the wavelength, returns Al/Av following
+    Cardelli+1989 (doi:10.1086/167900)
+
+    Parameters
+    ----------
+    waveAA : array of floats
+     Wavelength (A)
+     
+    Returns
+    -------
+    Al_Av : array floats
+    '''
+    
+    wl=waveAA/10000. #microm
+    x=1./wl
+    
+    if (x < 0.3) or (x > 10):
+        print('STOP (gne_att.cardelli): ',
+              'Wavelength out of range.')
+        sys.exit()
+        return
+    elif (x <= 1.1): #IR
+        ax = 0.574*(x**1.61) 
+        bx = -0.527*(x**1.61)
+    elif (x <= 3.3): #Optical/NIR
+        y = x-1.82
+        ax = (1.+0.17699*y - 0.50447*(y**2) - 0.02427*(y**3) +
+              0.72085*(y**4) + 0.01979*(y**5) -
+              0.77530*(y**6) + 0.32999*(y**7)) 
+        bx = (1.41338*y + 2.28305*(y**2) + 1.07233*(y**3) -
+              5.38434*(y**4) - 0.62251*(y**5) +
+              5.30260*(y**6) - 2.09002*(y**7))
+    elif (x <= 8): #UV
+        if (x < 5.9):
+            Fa = 0
+            Fb = 0
+        else: 
+            Fa = -0.04473*(x-5.9)**2 - 0.009779*(x-5.9)**3
+            Fb = 0.2130*(x-5.9)**2 + 0.1207*(x-5.9)**3
+        ax = 1.752-0.316*x - 0.104/((x-4.67)**2 + 0.341) + Fa
+        bx = -3.090+1.825*x + 1.206/((x-4.62)**2 + 0.263) + Fb
+    else:
+        ax = -1.073 - 0.628*(x-8) + 0.137*(x-8)**2 - 0.070*(x-8)**3
+        bx = 13.670 + 4.257*(x-8) - 0.420*(x-8)**2 + 0.374*(x-8)**3
+    
+    Al_Av = ax+bx/Rv
+    return Al_Av
+
+
+def get_A_lambda(tau,costheta=c.costheta,albedo=c.albedo):
+    """
+    Calculate the attenuation coefficient, A_lambda.
+    
+    Arguments can be floats or arrays of floats.
+    """
+    # Vectorise
+    tau = np.asarray(tau)
+    costheta = np.asarray(costheta)
+    albedo = np.asarray(albedo)
+
+    # Calculate the attenuation coefficient
+    al = tau*np.sqrt(1.0 - albedo)    
+    x = al/costheta
+    A_lambda = -2.5 * np.log10((1.0 - np.exp(-x)) / x)
+    
+    return A_lambda
+
+
+
+def att_favole20(wavelengths,ngal,Rv=c.Rv,costheta=c.costheta,
+                 albedo=c.albedo):
+    '''
+    Calculate attenuation coefficients following Favole+2020 (1908.05626)
+
+    Parameters
+    ----------
+    wavelenths : array of floats
+        Wavelengths (AA) at which calculate the attenuation coefficients
+    Rv : float
+        Slope of the extinction curve in the optical
+    costheta : float
+        Cosine of the typical dust scattering angle
+    albedo : float
+        Dust albedo (fraction between 0 and 1)
+    Return
+    ------
+    coeff : array of floats
+    '''
+    coeff = np.full((len(wavelengths),ngal),c.notnum)
+
+    # Use the Cardelli+89 model to obtain A_l/A_V
+    alav = np.zeros(len(wavelengths))
+    for ii,wl in enumerate(wavelengths):
+        alav[ii] = get_AlAv_cardelli89(wl,Rv=Rv)
+
+    # For each galaxy calculate the attenuation coefficient
+    coeff = get_att_coeff(tau,cos)
+    return coeff                                          
+
+
 def gne_att(infile, outpath=None, attmod='cardelli89',
             line_att=None,att_config=None,verbose=True):
     '''
@@ -369,11 +421,13 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             neblines_agn[i, :] = f[group_agn+'/'+line+'_agn'][:]
     f.close()
 
-    # Get wavelengths
+    # Get wavelengths and prep attenuation coefficients
     wavelengths = c.line_wavelength[photmod_sfr]
+    coeff = np.full(neblines.shape,c.notnum)
     if AGN:
         wavelengths_agn = c.line_wavelength[photmod_agn]
-    
+        coeff_agn = np.full(neblines_agn.shape,c.notnum)
+        
     # Get the information needed by the dust attenuation model
     if attmod not in c.attmods:
         if verbose:
@@ -381,18 +435,19 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             print('                Possible ones= {}'.format(c.attmods))
         sys.exit()
     elif attmod == 'ratios':
+        print('Work in progress: Ratios not checked')
     #    att_ratios = att_config.get('ratios')
     #    att_rlines = att_config.get('rlines')
-        coeff = np.full(neblines.shape,c.notnum)
-        if AGN:
-            coeff_agn = np.full(neblines_agn.shape,c.notnum)
     else:
         Rv = get_param(att_config, 'Rv', c.Rv)
         costheta = get_param(att_config, 'costheta', c.costheta) 
         albedo = get_param(att_config, 'albedo', c.albedo)
-        print(Rv,costheta,albedo);exit()
 
-        #if attmod == 'favole20':
+        for icomp in range(ncomp):
+            coeff[:,icomp,:] = att_favole20(wavelengths,ngal,
+                                            Rv=Rv,costheta=costheta,
+                                            albedo=albedo)
+
     #
     #    # Add parameters to header
     #    config_names = [f'att_config_{k}' for k in att_config.keys()]
