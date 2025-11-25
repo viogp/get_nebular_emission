@@ -409,6 +409,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     neblines = np.zeros((nlines, ncomp, ngal))
     for i, line in enumerate(lnames):
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
+    if attmod != 'ratios':
+        zgas = f[group+'/lz_sfr'][:]
 
     if 'agn_data' not in f.keys():
         AGN = False
@@ -418,10 +420,12 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         photmod_agn = header.attrs['photmod_NLR']
         lnames_agn = c.line_names[photmod_agn]
         nlines = len(lnames_agn)
-        ngal = len(f[group_agn+'/'+lnames_agn[0] +'_agn'][:])
+        ngal = len(f[group_agn+'/'+lnames_agn[0] +'_agn'])
         neblines_agn = np.zeros((nlines, ngal))
         for i, line in enumerate(lnames_agn):
             neblines_agn[i, :] = f[group_agn+'/'+line+'_agn'][:]
+        if attmod != 'ratios':
+            zgas_agn = f[group_agn+'/lz_agn'][:]
     f.close()
 
     # Get wavelengths and prep attenuation coefficients
