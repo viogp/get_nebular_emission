@@ -37,7 +37,25 @@ class TestStringMethods(unittest.TestCase):
         expected = expath+'/iz61/ivol0/ex.hdf5'
         self.assertEqual(outf,expected)        
         shutil.rmtree(expath)
-            
+
+    def test_get_param(self):
+        att_config = {'albedo': 0, 'costheta': None}
+
+        result = io.get_param(att_config, 'albedo', c.albedo)
+        self.assertEqual(result, 0)
+
+        result = io.get_param(att_config, 'costheta', c.albedo)
+        self.assertEqual(result, c.albedo)
+        
+        att_config = {}
+        result = io.get_param(att_config, 'Rv', c.Rv)
+        self.assertEqual(result, c.Rv)
+
+        att_config = None
+        result = io.get_param(att_config, 'Rv', c.Rv)
+        self.assertEqual(result, c.Rv)
+
+        
     def test_hdf5_headers(self):
         expath = 'output/test'
         h0 = 0.7

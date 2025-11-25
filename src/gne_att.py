@@ -10,7 +10,7 @@ import h5py
 import numpy as np
 import src.gne_io as io
 import src.gne_const as c
-from src.gne_io import check_file
+from src.gne_io import check_file, get_param
 import sys
 import warnings
 from src.gne_cosmology import emission_line_flux
@@ -36,17 +36,15 @@ def get_f_saito20(z):
     else:
         f = 1
     return f   
-    
-#-------------------------------------------------------------
-#   Cardelli+1989 extinction laws in FIR and IR/OPT:
-#-------------------------------------------------------------
-def cardelli(waveA):
+
+
+def cardelli(waveAA,Rv=c.Rv):
     '''
-    Given the wavelength, returns Al/Av following Cardelli 1989.
+    Given the wavelength, returns Al/Av following Cardelli+1989.
 
     Parameters
     ----------
-    waveA : floats
+    waveAA : floats
      Wavelength (A)
      
     Returns
@@ -54,12 +52,12 @@ def cardelli(waveA):
     Al_Av : floats
     '''
     
-    Rv=3.1 
-    wave=waveA/10000.
+    print(Rv); exit()
+    wave=waveAA/10000.
     x=1./wave
     
     if (x < 0.3) or (x > 10):
-        print('STOP (gne_photio.cardelli): ',
+        print('STOP (gne_att.cardelli): ',
               'Wavelength out of range.')
         sys.exit()
         return
@@ -88,6 +86,10 @@ def cardelli(waveA):
     Al_Av = ax+bx/Rv
     return Al_Av
 
+
+def get_coeff_favole20(nebline,wavelengths):
+    coeff = np.full(neblines.shape,c.notnum)
+    return coeff
 
 
 def coef_att_cardelli(wavelength, Mcold_disc, rhalf_mass_disc, Z_disc, h0=0.7, costheta=0.3, albedo=0.56):
@@ -367,49 +369,81 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             neblines_agn[i, :] = f[group_agn+'/'+line+'_agn'][:]
     f.close()
 
-    # Prep arrays for attenuation coefficients
-    coeff = np.full(neblines.shape,1)
+    # Get wavelengths
+    wavelengths = c.line_wavelength[photmod_sfr]
     if AGN:
-        coeff_agn = np.full(neblines_agn.shape,1)
-    ## Get the information needed by the dust attenuation model
-    #if attmod == 'cardelli89':
-    #    if att_config is None:
-    #        att_config = {}
-    #    s = att_config.get('s')
-    #    costheta = att_config.get('costheta')
-    #    print(s);exit()
+        wavelengths_agn = c.line_wavelength[photmod_agn]
+    
+    # Get the information needed by the dust attenuation model
+    if attmod not in c.attmods:
+        if verbose:
+            print('STOP (gne_att): Unrecognised dust model.')
+            print('                Possible ones= {}'.format(c.attmods))
+        sys.exit()
+    elif attmod == 'ratios':
+    #    att_ratios = att_config.get('ratios')
+    #    att_rlines = att_config.get('rlines')
+        coeff = np.full(neblines.shape,c.notnum)
+        if AGN:
+            coeff_agn = np.full(neblines_agn.shape,c.notnum)
+    else:
+        Rv = get_param(att_config, 'Rv', c.Rv)
+        costheta = get_param(att_config, 'costheta', c.costheta) 
+        albedo = get_param(att_config, 'albedo', c.albedo)
+        print(Rv,costheta,albedo);exit()
+
+        #if attmod == 'favole20':
     #
     #    # Add parameters to header
     #    config_names = [f'att_config_{k}' for k in att_config.keys()]
     #    config_values = list(att_config.values())
     #    io.add2header(lfile, config_names, config_values, verbose=verbose)
-    #    
-    #elif attmod == 'ratios':
-    #    att_ratios = att_config.get('ratios')
-    #    att_rlines = att_config.get('rlines')
+
+        #gal_factor = get_delucia07(lfile)
+        #gal_factor = np.full(neblines.shape[-1],1)
+        #print(np.shape(gal_factor)); exit()
+
         
+        #coeff = get_coeff_favole20(neblines_agn,wavelengths)
+        #
+        #if AGN:
+        #    wavelengths = c.line_wavelength[photmod_agn]
+        #    coeff_agn = get_coeff_favole20(neblines_agn,wavelengths)
+        #    coeff_agn = np.full(neblines_agn.shape,c.notnum)
+
+            
+    # Lines with valid attenuation coefficients
+    ind = (coeff > c.notnum)
+    if AGN:
+        ind_agn = (coeff_agn > c.notnum)
+
+    # Extra gas attenuation on top of the stellar one
     if line_att:
         f = get_f_saito20(zz)
-        coeff = coeff/f
+        coeff[ind] = coeff[ind]/f
         if AGN:
-            coeff_agn = coeff_agn/f
+            coeff_agn[ind_agn] = coeff_agn[ind_agn]/f
             
         #Add information in header
         nattrs = io.add2header(lfile,['att_f_saito20'],[f],verbose=verbose)
 
-
-    neblines_att = neblines*(10**(-0.4*coeff))
+    # Calculate dust-attenuated emission lines
+    neblines_att = neblines
+    neblines_att[ind] = neblines[ind]*(10**(-0.4*coeff[ind]))
     lnames_att = [line + '_sfr_att' for line in lnames]
     labels = np.full(np.shape(lnames),'erg s^-1')
     io.write_data(lfile,group=group,params=neblines_att,
                   params_names=lnames_att,params_labels=labels)
+
     if AGN:
-        neblines_agn_att = neblines_agn*(10**(-0.4*coeff_agn))
+        neblines_agn_att = neblines_agn
+        neblines_agn_att[ind_agn] = neblines_agn[ind_agn]*(
+            10**(-0.4*coeff_agn[ind_agn]))
         lnames_att = [line + '_agn_att' for line in lnames_agn]
         labels = np.full(np.shape(lnames_agn),'erg s^-1')
 
         io.write_data(lfile,group=group_agn,params=neblines_agn_att,
                       params_names=lnames_att,params_labels=labels)
-
+    print(np.shape(neblines_agn_att)); exit() ###here
     print(lfile)#; exit() ###here
     return

@@ -168,6 +168,18 @@ def get_outnom(filenom,dirf=None,verbose=False):
     return outfile
 
 
+def get_param(config, key, default):
+    param = default
+    if config:
+        try:
+            value = config.get(key)
+            if value is not None: 
+                param = value 
+        except:
+            param = default
+    return param
+
+
 def print_h5attr(infile,inhead='header'):
     """
     Print out the group attributes of a hdf5 file

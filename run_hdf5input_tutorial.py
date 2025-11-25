@@ -185,15 +185,15 @@ r_type = [2,2]
 
 # Dust-attenuated luminosities are calculated if get_attenuation=True
 # line_att=True to apply the extra line attenuation from Saito+2021
-line_att = True
+line_att = False
 
 # Available dust attenuation models
-# 'cardelli89' (default)
+# 'favole20' (default)
 #    The calculation follows Favole et. al. 2020 and requires
 #    the above parameters: mgas_r, mgasr_type and r_type
 #    If None is passed, default parameters will be used
-attmod = 'cardelli89'
-att_config = {'s': None, 'costheta': None} # use default values in Favole+2020
+attmod = 'favole20'
+att_config = {'Rv': None, 'albedo': None, 'costheta': None} 
 # 'ratios'
 #    The calculation uses already available attenuation coefficients.
 #    att_ratios should contain the location of these coefficients, and

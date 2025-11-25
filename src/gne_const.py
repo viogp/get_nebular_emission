@@ -73,8 +73,6 @@ photmods = ['gutkin16', 'feltre16']
 mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
            'feltre16': r"data/nebular_data/feltre16_tables/limits_feltre.txt"}
 
-attmods = ['ratios', 'cardelli89']
-
 #--------------------------------------------
 #   Orsi et. al. 2014
 #--------------------------------------------
@@ -117,6 +115,10 @@ rvir2r50 = 0.03   # Huang+2017, Yang+2025
 #-------------------------------------------
 #    Attenuation:
 #-------------------------------------------
+attmods = ['ratios', 'favole20']
+Rv = 3.1
+costheta = 0.6
+albedo = 0.8
 
 #-------------------------------------------
 #    AGNs:
