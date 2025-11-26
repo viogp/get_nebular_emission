@@ -18,7 +18,7 @@ from src.gne_cosmology import emission_line_flux
 def get_f_saito20(z):
     '''
     Calculate the dust attenuation fraction parameter
-    from Eq. 5 in Saito+2020, this parameter is defined as
+    from Eq. 5 in Saito+2020, his parameter is defined as
     f = E_stellar(B-V)/E_gas(B-V)
     and is a function of redshift (z)
 
@@ -336,7 +336,19 @@ def get_A_lambda(tau,costheta=c.costheta,albedo=c.albedo):
     return A_lambda
 
 
-def att_favole20(wavelengths,ngal,Rv=c.Rv,costheta=c.costheta,
+def factor_delucia07(zgas):
+    '''
+    Calculate the factor for the optical depth that
+    depends on the galaxy global properties,
+    following De Lucia and Blaziot 2007 (0606519)
+    '''
+    ngal = len(zgas)
+    fgal = np.full((ngal),c.notnum)
+
+    
+    return fgal
+
+def att_favole20(wavelengths,lzgas,Rv=c.Rv,costheta=c.costheta,
                  albedo=c.albedo):
     '''
     Calculate attenuation coefficients following Favole+2020 (1908.05626)
@@ -345,6 +357,8 @@ def att_favole20(wavelengths,ngal,Rv=c.Rv,costheta=c.costheta,
     ----------
     wavelenths : array of floats
         Wavelengths (AA) at which calculate the attenuation coefficients
+    lzgas : array of floats
+        log10(Z_cold_gas)
     Rv : float
         Slope of the extinction curve in the optical
     costheta : float
@@ -355,15 +369,27 @@ def att_favole20(wavelengths,ngal,Rv=c.Rv,costheta=c.costheta,
     ------
     coeff : array of floats
     '''
+    ngal = len(lzgas)
     coeff = np.full((len(wavelengths),ngal),c.notnum)
 
+    # Calculate the factor for the optical depth of each galaxy
+
+
+    # For each galaxy get the attenuation for each wavelength
     for ii,wl in enumerate(wavelengths):
         # Use the Cardelli+89 model to obtain A_l/A_V
         alav = get_AlAv_cardelli89(wl,Rv=Rv)
 
-        #Calculate the galaxy optical depth 
-        tau = np.zeros((ngal))
-        tau = tau + alav ###here
+        #Calculate the galaxy optical depth
+        if wl > 2000:
+            # Following Guiderdoni & Roca-Volmerange 1987 
+            s = 1.6
+        else:
+            s = 1.35
+        nH = np.full((ngal),1)###here
+        loga = (s*(lzgas - np.log10(c.zsun)) +
+                nH - 21 - np.log10(2.1)) 
+        tau = alav*10.**loga
         
         # For each galaxy calculate the attenuation coefficient
         coeff[ii,:] = get_A_lambda(tau,costheta=costheta,albedo=albedo)
@@ -410,7 +436,11 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     for i, line in enumerate(lnames):
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
     if attmod != 'ratios':
-        zgas = f[group+'/lz_sfr'][:]
+        lzgas = f[group+'/lz_sfr'][:]  # log10(Z_cold_gas)
+        lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
+        ###here how to use one or the other: disc/bulge
+        h_gas = f['data/h_gas'][:]  #Scalelength(Mpc)
+        ###here where to modify it to R1/2?
 
     if 'agn_data' not in f.keys():
         AGN = False
@@ -425,7 +455,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         for i, line in enumerate(lnames_agn):
             neblines_agn[i, :] = f[group_agn+'/'+line+'_agn'][:]
         if attmod != 'ratios':
-            zgas_agn = f[group_agn+'/lz_agn'][:]
+            lzgas_agn = f[group_agn+'/lz_agn'][:] # log10(Z_cold_gas)
     f.close()
 
     # Get wavelengths and prep attenuation coefficients
@@ -455,7 +485,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         io.add2header(lfile,config_names,config_values,verbose=False)
 
         for icomp in range(ncomp):
-            coeff[:,icomp,:] = att_favole20(wavelengths,ngal,
+            coeff[:,icomp,:] = att_favole20(wavelengths,lzgas[:,icomp],
                                             Rv=Rv,costheta=costheta,
                                             albedo=albedo)
 
