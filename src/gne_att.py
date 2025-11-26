@@ -336,19 +336,18 @@ def get_A_lambda(tau,costheta=c.costheta,albedo=c.albedo):
     return A_lambda
 
 
-def factor_delucia07(zgas):
+def NH_delucia07(lmgas,hgas):
     '''
-    Calculate the factor for the optical depth that
-    depends on the galaxy global properties,
+    Calculate the mean hydrogen column density
     following De Lucia and Blaziot 2007 (0606519)
     '''
-    ngal = len(zgas)
-    fgal = np.full((ngal),c.notnum)
+    rcm = c.Mpc_to_cm*hgas/c.re2hr
+    a = lmgas + np.log10(c.Msun) - 21 - np.log10(2.1)
 
-    
-    return fgal
+    NH = 10**a/(1.4*c.mp*np.pi*(1.68*rcm)**2)
+    return NH
 
-def att_favole20(wavelengths,lzgas,Rv=c.Rv,costheta=c.costheta,
+def att_favole20(wavelengths,lzgas,hgas,lmgas,Rv=c.Rv,costheta=c.costheta,
                  albedo=c.albedo):
     '''
     Calculate attenuation coefficients following Favole+2020 (1908.05626)
@@ -359,6 +358,8 @@ def att_favole20(wavelengths,lzgas,Rv=c.Rv,costheta=c.costheta,
         Wavelengths (AA) at which calculate the attenuation coefficients
     lzgas : array of floats
         log10(Z_cold_gas)
+    lmgas : array of floats
+        log10(M_cold_gas)
     Rv : float
         Slope of the extinction curve in the optical
     costheta : float
@@ -372,8 +373,8 @@ def att_favole20(wavelengths,lzgas,Rv=c.Rv,costheta=c.costheta,
     ngal = len(lzgas)
     coeff = np.full((len(wavelengths),ngal),c.notnum)
 
-    # Calculate the factor for the optical depth of each galaxy
-
+    # Calculate the mean hydrogen column density
+    NH = NH_delucia07(lmgas,hgas)
 
     # For each galaxy get the attenuation for each wavelength
     for ii,wl in enumerate(wavelengths):
@@ -386,10 +387,8 @@ def att_favole20(wavelengths,lzgas,Rv=c.Rv,costheta=c.costheta,
             s = 1.6
         else:
             s = 1.35
-        nH = np.full((ngal),1)###here
-        loga = (s*(lzgas - np.log10(c.zsun)) +
-                nH - 21 - np.log10(2.1)) 
-        tau = alav*10.**loga
+
+        tau = alav*NH*10.**(s*(lzgas - np.log10(c.zsun)))
         
         # For each galaxy calculate the attenuation coefficient
         coeff[ii,:] = get_A_lambda(tau,costheta=costheta,albedo=albedo)
@@ -486,6 +485,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
 
         for icomp in range(ncomp):
             coeff[:,icomp,:] = att_favole20(wavelengths,lzgas[:,icomp],
+                                            lm_gas[:,icomp],
+                                            h_gas[:,icomp],
                                             Rv=Rv,costheta=costheta,
                                             albedo=albedo)
 

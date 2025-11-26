@@ -34,8 +34,6 @@ G_Ms = G*Msun/(kilo*kilo*parsec*mega) # 4.301e-9 km^2*Mpc/Msun/s^-2
 c_cm = c*100.                         # Light velocity, cm/s
 h_erg= h*J2erg                        # Planck constant, erg s
 kB_Ms= kB/(Msun*(parsec*mega)**2)     # 7.29e-99 Mpc^2*Msun/s^2/K 
-
-re2hr_exp = 1.678
 #--------------------------------------------
 sigma_1Dprobs = [0.682689492137086,    # 1 sigma
                  0.954499736103642,    # 2 sigma
