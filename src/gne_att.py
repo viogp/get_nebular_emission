@@ -336,18 +336,22 @@ def get_A_lambda(tau,costheta=c.costheta,albedo=c.albedo):
     return A_lambda
 
 
-def NH_delucia07(lmgas,hgas):
+def logNH_delucia07(lmgas,hgas):
     '''
     Calculate the mean hydrogen column density
     following De Lucia and Blaziot 2007 (0606519)
     '''
-    rcm = c.Mpc_to_cm*hgas/c.re2hr
-    a = lmgas + np.log10(c.Msun) - 21 - np.log10(2.1)
+    logNH = np.zeros(lmgas.shape)
 
-    NH = 10**a/(1.4*c.mp*np.pi*(1.68*rcm)**2)
-    return NH
+    ind = np.where((hgas > 0) & (lmgas >0))
+    if np.shape(ind)[1]>0:
+        rcm = c.Mpc_to_cm*hgas[ind]/c.re2hr
+        logm_at = lmgas[ind] + np.log10(c.Msun) - np.log10(1.4*c.mp)
+        logNH[ind] = logm_at - np.log10(np.pi) - 2*np.log10(1.68*rcm)
+    return logNH
 
-def att_favole20(wavelengths,lzgas,hgas,lmgas,Rv=c.Rv,costheta=c.costheta,
+
+def att_favole20(wavelengths,lzgas,lmgas,hgas,Rv=c.Rv,costheta=c.costheta,
                  albedo=c.albedo):
     '''
     Calculate attenuation coefficients following Favole+2020 (1908.05626)
@@ -374,7 +378,7 @@ def att_favole20(wavelengths,lzgas,hgas,lmgas,Rv=c.Rv,costheta=c.costheta,
     coeff = np.full((len(wavelengths),ngal),c.notnum)
 
     # Calculate the mean hydrogen column density
-    NH = NH_delucia07(lmgas,hgas)
+    logNH = logNH_delucia07(lmgas,hgas)
 
     # For each galaxy get the attenuation for each wavelength
     for ii,wl in enumerate(wavelengths):
@@ -388,11 +392,15 @@ def att_favole20(wavelengths,lzgas,hgas,lmgas,Rv=c.Rv,costheta=c.costheta,
         else:
             s = 1.35
 
-        tau = alav*NH*10.**(s*(lzgas - np.log10(c.zsun)))
-        
-        # For each galaxy calculate the attenuation coefficient
-        coeff[ii,:] = get_A_lambda(tau,costheta=costheta,albedo=albedo)
-
+        ind = np.where((lzgas > c.notnum) & (logNH >0))
+        if np.shape(ind)[1]>0:
+            logz_norm = lzgas[ind] - np.log10(c.zsun)
+            logNH_norm = logNH[ind] - np.log10(2.1) - 21.
+            tau = alav*10.**(s*logz_norm + logNH_norm)
+            
+            # For each galaxy calculate the attenuation coefficient
+            coeff[ii,ind] =  get_A_lambda(tau,
+                                          costheta=costheta,albedo=albedo)
     return coeff                                          
 
 
@@ -420,7 +428,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     # Add attenuation information to the line file
     lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
     nattrs = io.add2header(lfile,['attmod'],[attmod],verbose=verbose)
-        
+
     # Get emission lines
     f = h5py.File(lfile, 'r') 
     header = f['header']
@@ -436,7 +444,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
     if attmod != 'ratios':
         lzgas = f[group+'/lz_sfr'][:]  # log10(Z_cold_gas)
-        lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
+        #lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
+        lm_gas = np.log10(f['data/lm_gas'][:]) ###here needs to be corrected
         ###here how to use one or the other: disc/bulge
         h_gas = f['data/h_gas'][:]  #Scalelength(Mpc)
         ###here where to modify it to R1/2?
@@ -483,25 +492,22 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         config_values = [Rv, costheta, albedo]
         io.add2header(lfile,config_names,config_values,verbose=False)
 
-        for icomp in range(ncomp):
-            coeff[:,icomp,:] = att_favole20(wavelengths,lzgas[:,icomp],
-                                            lm_gas[:,icomp],
-                                            h_gas[:,icomp],
-                                            Rv=Rv,costheta=costheta,
-                                            albedo=albedo)
+        if attmod == 'favole20':
+            icomp = 0 ###here how to do this?
+            coeffd = att_favole20(wavelengths,lzgas[:,icomp],
+                                  lm_gas[:,icomp],h_gas[:,icomp],
+                                  Rv=Rv,costheta=costheta,
+                                  albedo=albedo)
+            coeff[:, :, :] = coeffd[:, np.newaxis, :]
 
-        #gal_factor = get_delucia07(lfile)
-        #gal_factor = np.full(neblines.shape[-1],1)
-        #print(np.shape(gal_factor)); exit()
-
+        elif attmod == 'favole20_percomponent':
+            for icomp in range(ncomp):
+                coeff[:,icomp,:] = att_favole20(wavelengths,lzgas[:,icomp],
+                                                lm_gas[:,icomp],
+                                                h_gas[:,icomp],
+                                                Rv=Rv,costheta=costheta,
+                                                albedo=albedo)
         
-        #coeff = get_coeff_favole20(neblines_agn,wavelengths)
-        #
-        #if AGN:
-        #    wavelengths = c.line_wavelength[photmod_agn]
-        #    coeff_agn = get_coeff_favole20(neblines_agn,wavelengths)
-        #    coeff_agn = np.full(neblines_agn.shape,c.notnum)
-
             
     # Lines with valid attenuation coefficients
     ind = (coeff > c.notnum)
