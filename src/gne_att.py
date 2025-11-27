@@ -444,11 +444,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
     if attmod != 'ratios':
         lzgas = f[group+'/lz_sfr'][:]  # log10(Z_cold_gas)
-        #lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
-        lm_gas = np.log10(f['data/lm_gas'][:]) ###here needs to be corrected
-        ###here how to use one or the other: disc/bulge
+        lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
         h_gas = f['data/h_gas'][:]  #Scalelength(Mpc)
-        ###here where to modify it to R1/2?
 
     if 'agn_data' not in f.keys():
         AGN = False

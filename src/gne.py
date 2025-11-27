@@ -337,8 +337,10 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                       h0=h0,units_h0=units_h0,
                                       inputformat=inputformat,
                                       testing=testing,verbose=verbose)
-
-            io.write_global_data(outfile,mgas.T,mass_type='gas',
+            lmgas = np.full(mgas.shape,c.notnum)
+            ind = (mgas>0.)
+            lmgas[ind] = np.log10(mgas[ind])
+            io.write_global_data(outfile,lmgas.T,mass_type='gas',
                                  extra_param=[hr.T],
                                  extra_params_names=['h_gas'],
                                  extra_params_labels=['Scalelength(Mpc)'],
