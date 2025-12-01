@@ -326,6 +326,21 @@ def generate_header(infile,redshift,snap,
     return filenom
 
 
+def decode_string_list(raw_list):
+    """
+    Helper function to decode a list of strings from HDF5 attribute.
+    Handles both byte strings (older h5py) and
+    regular strings (newer h5py).
+    """
+    result = []
+    for item in raw_list:
+        if isinstance(item, bytes):
+            result.append(item.decode('utf-8'))
+        else:
+            result.append(str(item))
+    return result
+
+
 def add2header(filenom,names,values,verbose=True):
     """
     Add attributes to header
@@ -854,8 +869,7 @@ def write_global_data(filenom,lmass,mass_type='s',
 
 
 def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
-                   nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
-                   verbose=True):
+                   fluxes_sfr=None,verbose=True):
     '''
     Write line data from star forming regions
 
@@ -871,8 +885,6 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_sfr : floats
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
-    nebline_sfr_att : floats
-      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)    
     '''
 
     # Read information on models
@@ -899,13 +911,6 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
                                  data=nebline_sfr[:,i], maxshape=(None,None))
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
                 'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
-
-            if nebline_sfr_att is not None:
-                if nebline_sfr_att[0,i,0] > 0:
-                    hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
-                                         data=nebline_sfr_att[:,i], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = \
-                        'erg s^-1 [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
             
             if fluxes_sfr is not None:
                 hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
@@ -913,17 +918,11 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
                 hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = \
                     'Line units: egr s^-1 cm^-2'
                 
-            if fluxes_sfr_att is not None:
-                hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux_att', 
-                                     data=fluxes_sfr_att[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = \
-                    'Line units: egr s^-1 cm^-2'                    
     return 
 
 
 def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
-                   nebline_agn,nebline_agn_att=None,
-                   fluxes_agn=None,fluxes_agn_att=None,
+                   nebline_agn,fluxes_agn=None,
                    epsilon_agn=None,
                    ew_notatt=None,ew_att=None,
                    verbose=True):
@@ -942,8 +941,6 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_agn : array of floats
        Luminosities (erg/s)
-    nebline_agn_att : array of floats
-       Dust attenuated luminosities (erg/s)
     '''
 
     # Read information on models
@@ -978,25 +975,11 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
                 'erg s^-1'
 
-            if nebline_agn_att is not None:
-                ndata = nebline_agn_att[0,i,:]
-                hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
-                                     data=ndata, maxshape=(None))
-                hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = \
-                    'Line units: egr s^-1'
-
             if fluxes_agn is not None:
                 ndata = fluxes_agn[0,i,:]
                 hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
                                      data=ndata, maxshape=(None))
                 hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
-                    'Line units: egr s^-1 cm^-2'
-
-            if fluxes_agn_att is not None:
-                ndata = fluxes_agn_att[0,i,:]
-                hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
-                                     data=ndata, maxshape=(None))
-                hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = \
                     'Line units: egr s^-1 cm^-2'
     return 
 

@@ -2,6 +2,7 @@
 
 import shutil
 import unittest
+import tempfile, os
 import numpy as np
 import h5py
 from numpy.testing import assert_allclose
@@ -16,7 +17,6 @@ txtfile = opath+nom+'.txt'
 hf5file = opath+nom+'.hdf5'
 
 class TestStringMethods(unittest.TestCase):
-
     def test_outroot(self):
         expath = 'output/iz61/'
         dirf, endf = io.get_outroot(expath,'example.txt')
@@ -55,7 +55,33 @@ class TestStringMethods(unittest.TestCase):
         result = io.get_param(att_config, 'Rv', c.Rv)
         self.assertEqual(result, c.Rv)
 
+    def test_add2headers(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.test_file = os.path.join(self.temp_dir, 'test_output.hdf5')
+        with h5py.File(self.test_file, 'w') as hf:
+            hf.create_dataset('header', (100,))
+
+        names = ['mgasr_type']
+        values = [['disc', 'bulge']]
+        count = io.add2header(self.test_file, names, values, verbose=False)
         
+        # Check that one attribute was added
+        self.assertEqual(count, 1)
+        
+        # Read back and verify
+        with h5py.File(self.test_file, 'r') as hf:
+            self.assertIn('mgasr_type', hf['header'].attrs)
+            mgasr_type_raw = hf['header'].attrs['mgasr_type']
+            mgasr_type = io.decode_string_list(mgasr_type_raw)
+            
+            self.assertEqual(len(mgasr_type), 2)
+            self.assertEqual(mgasr_type[0], 'disc')
+            self.assertEqual(mgasr_type[1], 'bulge')
+            
+        if os.path.exists(self.test_file):
+            os.remove(self.test_file)
+        os.rmdir(self.temp_dir)
+            
     def test_hdf5_headers(self):
         expath = 'output/test'
         h0 = 0.7

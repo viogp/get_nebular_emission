@@ -443,6 +443,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     for i, line in enumerate(lnames):
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
     if attmod != 'ratios':
+        mgasr_type = io.decode_string_list(header.attrs['mgasr_type'])
+
         lzgas = f[group+'/lz_sfr'][:]  # log10(Z_cold_gas)
         lm_gas = f['data/lm_gas'][:] # log10(M/Msun)
         h_gas = f['data/h_gas'][:]  #Scalelength(Mpc)
@@ -490,7 +492,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         io.add2header(lfile,config_names,config_values,verbose=False)
 
         if attmod == 'favole20':
-            icomp = 0 ###here how to do this?
+            icomp = mgasr_type.index('disc')
             coeffd = att_favole20(wavelengths,lzgas[:,icomp],
                                   lm_gas[:,icomp],h_gas[:,icomp],
                                   Rv=Rv,costheta=costheta,
