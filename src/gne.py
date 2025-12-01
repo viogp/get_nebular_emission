@@ -12,8 +12,9 @@ from src.gne_m_sfr import get_sfrdata
 from src.gne_Lagn import get_Lagn
 import src.gne_const as c
 from src.gne_stats import components2tot
-from src.gne_photio import get_lines, get_limits, calculate_flux
+from src.gne_photio import get_lines, get_limits
 from src.gne_plots import make_testplots
+from src.gne_flux import calculate_flux ###here to be removed
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
@@ -343,4 +344,3 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         tt = round(time.perf_counter() - start_total_time,2)
         print('* Total time: ', tt, 's.')
     return
-

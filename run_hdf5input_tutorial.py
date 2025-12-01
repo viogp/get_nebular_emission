@@ -12,13 +12,14 @@ to also get the predicted attenuated luminosities.
 import src.gne_const as const
 from src.gne import gne
 from src.gne_att import gne_att
+from src.gne_flux import gne_flux
 from src.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False            # If True: use only the first 50 elements
-get_emission_lines = True # Obtain nebular emission lines
-get_attenuation = True
+get_emission_lines = False # Obtain nebular emission lines
+get_attenuation = False
 get_flux = True
 plot_tests = True
 
@@ -298,7 +299,10 @@ for ivol in range(subvols):
     if get_attenuation: # Obtain dust-attenuated luminosities
         gne_att(infile,outpath=outpath,attmod=attmod,line_att=line_att,
                 att_config=att_config,verbose=verbose)
-        
+
+    if get_flux: # Calculate fluxes from luminosities
+        gne_flux(infile,outpath=outpath,verbose=verbose)
+
 if plot_tests:  # Make test plots
     make_testplots(root,endf,snapshot,subvols=subvols,
                    gridplots=False,

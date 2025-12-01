@@ -10,9 +10,7 @@ import h5py
 import numpy as np
 import src.gne_io as io
 import src.gne_const as c
-from src.gne_io import check_file, get_param
 import sys
-import warnings
 from src.gne_cosmology import emission_line_flux
 
 def get_f_saito20(z):
@@ -211,7 +209,7 @@ def attenuation(nebline, att_param=None, att_ratio_lines=None,
 #     coef_att : floats
 #     '''
     
-#     check_file(infile, verbose=verbose)
+#     io.check_file(infile, verbose=verbose)
     
 #     ncomp = len(cols_notatt)
         
@@ -483,9 +481,9 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     #    att_ratios = att_config.get('ratios')
     #    att_rlines = att_config.get('rlines')
     else:
-        Rv = get_param(att_config, 'Rv', c.Rv)
-        costheta = get_param(att_config, 'costheta', c.costheta) 
-        albedo = get_param(att_config, 'albedo', c.albedo)
+        Rv = io.get_param(att_config, 'Rv', c.Rv)
+        costheta = io.get_param(att_config, 'costheta', c.costheta) 
+        albedo = io.get_param(att_config, 'albedo', c.albedo)
         # Add parameters to header
         config_names  = ['Rv', 'costheta', 'albedo']
         config_values = [Rv, costheta, albedo]
