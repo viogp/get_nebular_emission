@@ -21,7 +21,7 @@ testing = False            # If True: use only the first 50 elements
 get_emission_lines = False # Obtain nebular emission lines
 get_attenuation = False
 get_flux = True
-plot_tests = True
+plot_tests = False
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -301,7 +301,8 @@ for ivol in range(subvols):
                 att_config=att_config,verbose=verbose)
 
     if get_flux: # Calculate fluxes from luminosities
-        gne_flux(infile,outpath=outpath,verbose=verbose)
+        gne_flux(infile,outpath=outpath,
+                 line_names=['Halpha'],verbose=verbose)
 
 if plot_tests:  # Make test plots
     make_testplots(root,endf,snapshot,subvols=subvols,
