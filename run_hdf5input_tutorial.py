@@ -20,8 +20,8 @@ import h5py
 testing = False            # If True: use only the first 50 elements
 get_emission_lines = False # Obtain nebular emission lines
 get_attenuation = False
-get_flux = True
-plot_tests = False
+get_flux = False
+plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -301,8 +301,8 @@ for ivol in range(subvols):
                 att_config=att_config,verbose=verbose)
 
     if get_flux: # Calculate fluxes from luminosities
-        gne_flux(infile,outpath=outpath,
-                 line_names=['Halpha'],verbose=verbose)
+        gne_flux(infile,outpath=outpath,verbose=verbose,
+                 line_names=['Halpha','Hbeta','NII6584','OIII5007'])
 
 if plot_tests:  # Make test plots
     make_testplots(root,endf,snapshot,subvols=subvols,

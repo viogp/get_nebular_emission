@@ -2,6 +2,7 @@ import numpy as np
 
 notnum    = -999.
 testlimit = 50
+eps       = 1e-10
 
 #-------------------Solar constants
 Lbolsun = 3.826e33  # erg/s

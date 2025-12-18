@@ -7,11 +7,9 @@ import h5py
 import numpy as np
 import src.gne_io as io
 import src.gne_const as c
-#import sys
-#import warnings
 import src.gne_cosmology as cosmo
 
- 
+##################################Function to be removed
 def calculate_flux(nebline,filenom,origin='sfr'): ###here to be removed, once coding done
     '''
     Calculate and write down fluxes from luminosities in erg/s.
@@ -53,22 +51,49 @@ def calculate_flux(nebline,filenom,origin='sfr'): ###here to be removed, once co
                     fluxes[comp,i,j] = logL2flux(luminosities[comp,i,j],redshift)
 
     return fluxes
+##################################
+
+def L2flux(luminosity,zz):
+    """
+    Calculates Flux(erg/s/cm^2) from Luminosity(erg/s)
+    """
+    # Initialise the flux matrix
+    flux = np.zeros(np.shape(luminosity))
+    
+    # Luminosity distance in cm
+    d_L = cosmo.luminosity_distance(zz,cm=True)
+    if d_L<c.eps:
+        print(f'WARNING: no flux calculation, Dl({zz})<{c.eps}')
+        return flux
+
+    # Operate with log10, to avoid numerical issues
+    ind = np.where(luminosity>0)
+    if np.shape(ind)[1]<1:
+        print(f'WARNING: no flux calculation, L({zz})<0')
+        return flux
+    den = np.log10(4.0*np.pi) + 2*np.log10(d_L)
+    log_flux = np.log10(luminosity[ind]) - den
+
+    # Flux in erg/s/cm^2
+    flux[ind] = 10**log_flux
+
+    return flux
 
 
-def write_flux(nebline,dataset,filenom):
+def write_flux(luminosities,dataset,filenom):
     '''
     Calculate and write down fluxes from luminosities in erg/s.
 
     Params
     -------
-    nebline : array of floats
+    luminositites : array of floats
         Luminosities of the lines per component (erg/s).
     dataset : list of strings
         Dataset paths
     filenom : string
         Name of file with output
     '''
-    
+
     # Read redshift and cosmological parameters
     f = h5py.File(filenom, 'r')
     header = f['header']
@@ -80,17 +105,25 @@ def write_flux(nebline,dataset,filenom):
     f.close()
     
     cosmo.set_cosmology(omega0=omega0, omegab=omegab,lambda0=lambda0,h0=h0)
-    ###here check units and codes within cosmo
-    luminosities = np.zeros(nebline.shape)
-    luminosities[nebline>0] = np.log10(nebline[nebline>0]*h0**2)
 
-    fluxes = np.zeros(luminosities.shape)
-    for idx in np.ndindex(luminosities.shape):
-        if luminosities[idx] == 0:
-            fluxes[idx] = 0
-        else:
-            fluxes[idx] = logL2flux(luminosities[idx], redshift)
+    # Calculate fluxes for each line
+    nlines = len(dataset)
 
+    for i in range(nlines):
+        # Get luminosity for this line
+        lum = luminosities[i]
+
+        # Calculate flux
+        flux = L2flux(lum, redshift)
+
+        # Split dataset path into group and name
+        group, name = dataset[i].rsplit('/', 1)
+
+        # Write to file
+        io.write_data(filenom, group=group,
+                      params=[flux],
+                      params_names=[name],
+                      params_labels=['erg s^-1 cm^-2'])
     return
 
 
@@ -178,7 +211,8 @@ def gne_flux(infile, outpath=None, line_names=None, verbose=True):
     # Calculate the fluxes
     if len(ind_lines)>0:
         subset = neblines[ind_lines,:,:]
-
+        write_flux(subset,outnames,lfile)
+        
     if len(ind_lines_agn)>0:
         subset = neblines_agn[ind_lines_agn,:]
         write_flux(subset,outnames_agn,lfile)
