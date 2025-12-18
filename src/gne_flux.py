@@ -80,6 +80,34 @@ def L2flux(luminosity,zz):
     return flux
 
 
+def flux2L(flux,zz):
+    """
+    Calculates Luminosity(erg/s) from Flux(erg/s/cm^2)
+    """
+    # Initialise the luminosity matrix
+    lum = np.zeros(np.shape(flux))
+    
+    # Luminosity distance in cm
+    d_L = cosmo.luminosity_distance(zz,cm=True)
+    if d_L<c.eps:
+        print(f'WARNING: no luminosity calculated, Dl({zz})<{c.eps}')
+        return lum
+
+    # Operate with log10, to avoid numerical issues
+    ind = np.where(flux>0)
+    if np.shape(ind)[1]<1:
+        print(f'WARNING: no luminosity calculated, F({zz})<0')
+        return lum
+    den = np.log10(4.0*np.pi) + 2*np.log10(d_L)
+    log_lum = np.log10(flux[ind]) + den
+
+    # Luminosity in erg/s/cm^2
+    lum[ind] = 10**log_lum
+
+    return lum
+
+
+
 def write_flux(luminosities,dataset,filenom):
     '''
     Calculate and write down fluxes from luminosities in erg/s.
