@@ -57,6 +57,10 @@ def L2flux(luminosity,zz):
     """
     Calculates Flux(erg/s/cm^2) from Luminosity(erg/s)
     """
+    # Check if input is a scalar and convert to array if needed
+    is_scalar = np.isscalar(luminosity)
+    luminosity = np.atleast_1d(luminosity)
+    
     # Initialise the flux matrix
     flux = np.zeros(np.shape(luminosity))
     
@@ -64,26 +68,30 @@ def L2flux(luminosity,zz):
     d_L = cosmo.luminosity_distance(zz,cm=True)
     if d_L<c.eps:
         print(f'WARNING: no flux calculation, Dl({zz})<{c.eps}')
-        return flux
+        return flux[0] if is_scalar else flux
 
     # Operate with log10, to avoid numerical issues
     ind = np.where(luminosity>0)
     if np.shape(ind)[1]<1:
         print(f'WARNING: no flux calculation, L({zz})<0')
-        return flux
+        return flux[0] if is_scalar else flux
     den = np.log10(4.0*np.pi) + 2*np.log10(d_L)
     log_flux = np.log10(luminosity[ind]) - den
 
     # Flux in erg/s/cm^2
     flux[ind] = 10**log_flux
 
-    return flux
+    return flux[0] if is_scalar else flux
 
 
 def flux2L(flux,zz):
     """
     Calculates Luminosity(erg/s) from Flux(erg/s/cm^2)
     """
+    # Check if input is a scalar and convert to array if needed
+    is_scalar = np.isscalar(flux)
+    flux = np.atleast_1d(flux)
+    
     # Initialise the luminosity matrix
     lum = np.zeros(np.shape(flux))
     
@@ -91,20 +99,20 @@ def flux2L(flux,zz):
     d_L = cosmo.luminosity_distance(zz,cm=True)
     if d_L<c.eps:
         print(f'WARNING: no luminosity calculated, Dl({zz})<{c.eps}')
-        return lum
+        return lum[0] if is_scalar else lum
 
     # Operate with log10, to avoid numerical issues
     ind = np.where(flux>0)
     if np.shape(ind)[1]<1:
         print(f'WARNING: no luminosity calculated, F({zz})<0')
-        return lum
+        return lum[0] if is_scalar else lum
     den = np.log10(4.0*np.pi) + 2*np.log10(d_L)
     log_lum = np.log10(flux[ind]) + den
 
     # Luminosity in erg/s/cm^2
     lum[ind] = 10**log_lum
 
-    return lum
+    return lum[0] if is_scalar else lum
 
 
 

@@ -1473,7 +1473,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
         if redshift <= 0.2:
             flux = 2e-16 # erg/s/cm^2 Favole+2024
             Lmin = flux2L(flux,redshift) #erg/s
-    
+
             if ismagr:
                 sel = np.where((Ha> Lmin) & (Hb> Lmin) &
                                (OIII> Lmin) & (NII> Lmin) &
@@ -1949,7 +1949,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
                     ncum_att[iline,:] = ncum_att[iline,:] + H
                     
     # Get number per deg^2
-    Dc = cosmo.comoving_distance(zz)
+    Dc = 0;#cosmo.comoving_distance(zz)
     print(Dc); exit()
     fac = Dc*dDc*np.pi/180.
     ncum = ncum*fac*fac/total_volume

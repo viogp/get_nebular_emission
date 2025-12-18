@@ -1,4 +1,4 @@
-#python -m unittest tests/test_flux.py 
+# python -m unittest tests/test_flux.py 
 
 from unittest import TestCase
 import numpy as np
@@ -15,17 +15,17 @@ class TestPredict(TestCase):
         expect = 1
 
         # Test single value
-        luminosity = np.array([1e42])  # erg/s
+        luminosity = 1e42 # erg/s
         zz = 0.1
         flux = fx.L2flux(luminosity, zz)
-        self.assertGreater(flux[0], 0)
+        self.assertGreater(flux, 0)
         d_L = cosmo.luminosity_distance(zz, cm=True)
-        expected_flux = luminosity[0]/(4*np.pi*d_L**2)
-        assert_allclose(flux[0], expected_flux, rtol=1e-10)
+        expected_flux = luminosity/(4*np.pi*d_L**2)
+        assert_allclose(flux, expected_flux, rtol=1e-10)
 
         # Test zz=0
         flux = fx.L2flux(luminosity, 0.)
-        self.assertGreater(flux[0], 0)
+        self.assertGreater(flux, 0)
                 
         # Test array
         luminosity = np.array([1e40, 1e42, 1e44, 1e43])
@@ -45,22 +45,23 @@ class TestPredict(TestCase):
         mock_print.assert_called_once()
         self.assertIn('WARNING', mock_print.call_args[0][0])
 
+        
     def test_flux2L(self):
         """Test flux to luminosity conversion."""
         cosmo.set_cosmology(omega0=0.3, omegab=0.045, lambda0=0.7, h0=0.7)
 
         # Test single value
-        flux = np.array([1e-14])  # erg/s/cm^2
+        flux = 1e-14  # erg/s/cm^2
         zz = 0.1
         lum = fx.flux2L(flux, zz)
-        self.assertGreater(lum[0], 0)
+        self.assertGreater(lum, 0)
         d_L = cosmo.luminosity_distance(zz, cm=True)
-        expected_lum = flux[0] * (4 * np.pi * d_L**2)
-        assert_allclose(lum[0], expected_lum, rtol=1e-10)
+        expected_lum = flux*(4*np.pi*d_L**2)
+        assert_allclose(lum, expected_lum, rtol=1e-10)
 
         # Test zz=0
         lum = fx.flux2L(flux, 0.)
-        self.assertGreater(lum[0], 0)
+        self.assertGreater(lum, 0)
 
         # Test array
         flux = np.array([1e-16, 1e-14, 1e-12, 1e-13])
