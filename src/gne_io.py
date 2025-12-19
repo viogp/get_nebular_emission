@@ -869,7 +869,7 @@ def write_global_data(filenom,lmass,mass_type='s',
 
 
 def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
-                   fluxes_sfr=None,verbose=True):
+                   verbose=True):
     '''
     Write line data from star forming regions
 
@@ -911,19 +911,12 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
                                  data=nebline_sfr[:,i], maxshape=(None,None))
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
                 'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
-            
-            if fluxes_sfr is not None:
-                hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
-                                     data=fluxes_sfr[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = \
-                    'Line units: egr s^-1 cm^-2'
                 
     return 
 
 
 def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
-                   nebline_agn,fluxes_agn=None,
-                   epsilon_agn=None,
+                   nebline_agn,epsilon_agn=None,
                    ew_notatt=None,ew_att=None,
                    verbose=True):
     '''
@@ -974,12 +967,5 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                                  data=ndata, maxshape=(None))
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
                 'erg s^-1'
-
-            if fluxes_agn is not None:
-                ndata = fluxes_agn[0,i,:]
-                hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
-                                     data=ndata, maxshape=(None))
-                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
-                    'Line units: egr s^-1 cm^-2'
     return 
 

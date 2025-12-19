@@ -1822,9 +1822,20 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
        If True print out messages.
     '''
 
-    # Get redshift and cosmology from data
+    # Check if flux data exists in the file
     filenom = root+'0'+endf
     f = h5py.File(filenom, 'r') 
+    required_flux_datasets = ['sfr_data/Halpha_sfr_flux','sfr_data/Hbeta_sfr_flux',
+                              'sfr_data/NII6584_sfr_flux','sfr_data/OIII5007_sfr_flux']
+    flux_data_exists = any(dataset in f for dataset in required_flux_datasets)
+    if not flux_data_exists:
+        f.close()
+        if verbose:
+            print(f'WARNING (plot_ncumu_flux): No flux data found in {filenom}. '
+                  f'Skipping cumulative flux plot.')
+        return None
+    
+    # Get redshift and cosmology from data
     header = f['header'] #; print(list(header.attrs.items()))
     redshift = header.attrs['redshift']
     omega0 = header.attrs['omega0']
@@ -2061,12 +2072,12 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     #    make_gridplots() ###here work in progress
     
     # Make NII and SII bpt plots
-    #bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
     # Make line LFs
-    #lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
+    lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
 
-    # Cumulative numbers with flux limits 
+    # Cumulative numbers with flux limits (if possible) 
     ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
     
     return

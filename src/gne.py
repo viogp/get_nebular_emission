@@ -14,7 +14,6 @@ import src.gne_const as c
 from src.gne_stats import components2tot
 from src.gne_photio import get_lines, get_limits
 from src.gne_plots import make_testplots
-from src.gne_flux import calculate_flux ###here to be removed
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,
@@ -33,7 +32,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
-        flux=False,
         zeq=None,infile_z0=None,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
@@ -69,8 +67,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
     maxcuts : floats
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
-    flux : boolean
-     If True calculates flux of the emission lines based on the given redshift.
     IMF : array of strings
        Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]
     q0 : float
@@ -233,13 +229,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if verbose:
         print(' Emission lines calculated.')
 
-    if flux:
-        fluxes_sfr = calculate_flux(nebline_sfr,outfile,origin='sfr')
-        if verbose:
-            print(' Flux calculated.')
-    else:
-        fluxes_sfr = None
-
     ### Write output
     extra_param = io.read_data(infile,cut,
                                inputformat=inputformat,
@@ -253,7 +242,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                       verbose=verbose)
 
     io.write_sfr_data(outfile,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
-                      nebline_sfr,fluxes_sfr,verbose=verbose)
+                      nebline_sfr,verbose=verbose)
     del lu_sfr, lnH_sfr
     del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
     del nebline_sfr
@@ -323,17 +312,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
         if verbose: print(' Emission lines calculated.')
 
-        # Calculate fluxes if required
-        if flux:
-            fluxes_agn = calculate_flux(nebline_agn,outfile,origin='agn')
-            if verbose:
-                print(' Flux calculated.')
-        else:
-            fluxes_agn = None
-
         # Write output in a file            
         io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,
-                          nebline_agn,fluxes_agn,
+                          nebline_agn,
                           epsilon_agn=epsilon_agn,
                           verbose=verbose)             
         del lu_agn, lzgas_agn 

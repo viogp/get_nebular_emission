@@ -9,50 +9,6 @@ import src.gne_io as io
 import src.gne_const as c
 import src.gne_cosmology as cosmo
 
-##################################Function to be removed
-def calculate_flux(nebline,filenom,origin='sfr'): ###here to be removed, once coding done
-    '''
-    Calculate and write down fluxes from luminosities in erg/s.
-
-    Params
-    -------
-    nebline : array of floats
-        Luminosities of the lines per component (erg/s).
-    dataset : list of strings
-        Dataset paths
-    filenom : string
-        Name of file with output
-    '''
-    
-    # Read redshift and cosmological parameters
-    f = h5py.File(filenom, 'r')
-    header = f['header']
-    redshift = header.attrs['redshift']
-    h0 = header.attrs['h0']
-    omega0 = header.attrs['omega0']
-    omegab = header.attrs['omegab']
-    lambda0 = header.attrs['lambda0']
-    f.close()
-    
-    cosmo.set_cosmology(omega0=omega0, omegab=omegab,lambda0=lambda0,h0=h0)
-    print(h0); exit() 
-    luminosities = np.zeros(nebline.shape)
-    luminosities[nebline>0] = np.log10(nebline[nebline>0]*h0**2)
-    if (origin=='agn') and (luminosities.shape[0]==2):
-        luminosities[1] = 0
-            
-    fluxes = np.zeros(luminosities.shape)
-    for comp in range(luminosities.shape[0]):
-        for i in range(luminosities.shape[1]):
-            for j in range(luminosities.shape[2]):
-                if luminosities[comp,i,j] == 0:  
-                    fluxes[comp,i,j] = 0
-                else:
-                    fluxes[comp,i,j] = logL2flux(luminosities[comp,i,j],redshift)
-
-    return fluxes
-##################################
-
 def L2flux(luminosity,zz):
     """
     Calculates line Flux(erg/s/cm^2) from Luminosity(erg/s)
@@ -186,8 +142,11 @@ def gne_flux(infile, outpath=None, line_names=None, verbose=True):
     if line_names is None: lnames = c.line_names[photmod_sfr]
     group = 'sfr_data'
     # Generate a list with all the luminosity datasets
-    line_datasets = [group+'/'+line+suffix for line in lnames
-                     for suffix in ['_sfr', '_sfr_att']]
+    if 'attmod' in header.attrs:
+        line_datasets = [group+'/'+line+suffix for line in lnames
+                         for suffix in ['_sfr', '_sfr_att']]
+    else:
+        line_datasets = [group+'/'+line+'_sfr' for line in lnames]
     nlines = len(line_datasets)
     # Find the first available line dataset to get dimensions
     first_line_dataset = None
@@ -219,8 +178,12 @@ def gne_flux(infile, outpath=None, line_names=None, verbose=True):
         group_agn = 'agn_data'
         photmod_agn = header.attrs['photmod_NLR']
         if line_names is None: lnames = c.line_names[photmod_agn]
-        lineagn_datasets = [group_agn+'/'+line+suffix for line in lnames
-                            for suffix in ['_agn', '_agn_att']]
+        # Generate a list with all the luminosity datasets
+        if 'attmod' in header.attrs:
+            lineagn_datasets = [group_agn+'/'+line+suffix for line in lnames
+                                for suffix in ['_agn', '_agn_att']]
+        else:
+            lineagn_datasets = [group_agn+'/'+line+'_agn' for line in lnames]
         nlines_agn = len(lineagn_datasets)
         first_line_dataset = None
         for lineagn_dataset in lineagn_datasets:

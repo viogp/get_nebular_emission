@@ -18,9 +18,9 @@ import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False            # If True: use only the first 50 elements
-get_emission_lines = False # Obtain nebular emission lines
-get_attenuation = False
-get_flux = False
+get_emission_lines = True # Obtain nebular emission lines
+get_attenuation = True
+get_flux = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
