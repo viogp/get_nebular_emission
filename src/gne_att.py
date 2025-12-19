@@ -478,6 +478,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         sys.exit()
     elif attmod == 'ratios':
         print('Work in progress: Ratios not checked')
+        # Read ratios or attenuation coeffs: coeff = L_att/L_int
     #    att_ratios = att_config.get('ratios')
     #    att_rlines = att_config.get('rlines')
     else:
@@ -496,7 +497,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
                                   Rv=Rv,costheta=costheta,
                                   albedo=albedo)
             coeff[:, :, :] = coeffd[:, np.newaxis, :]
-
+            
         elif attmod == 'favole20_percomponent':
             for icomp in range(ncomp):
                 coeff[:,icomp,:] = att_favole20(wavelengths,lzgas[:,icomp],
@@ -504,7 +505,13 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
                                                 h_gas[:,icomp],
                                                 Rv=Rv,costheta=costheta,
                                                 albedo=albedo)
-        
+
+        if AGN: ####here This to be checked: does it make sense to use the disc?
+            icomp = mgasr_type.index('disc')
+            coeff_agn = att_favole20(wavelengths_agn,lzgas[:,icomp],
+                                  lm_gas[:,icomp],h_gas[:,icomp],
+                                  Rv=Rv,costheta=costheta,
+                                  albedo=albedo)        
             
     # Lines with valid attenuation coefficients
     ind = (coeff > c.notnum)
@@ -523,7 +530,10 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
 
     # Calculate dust-attenuated emission lines
     neblines_att = neblines
-    neblines_att[ind] = neblines[ind]*(10**(-0.4*coeff[ind]))
+    if attmod == 'ratios':
+        neblines_att[ind] = neblines[ind]*coeff[ind]
+    else:
+        neblines_att[ind] = neblines[ind]*(10**(-0.4*coeff[ind]))
     lnames_att = [line + '_sfr_att' for line in lnames]
     labels = np.full(np.shape(lnames),'erg s^-1')
     io.write_data(lfile,group=group,params=neblines_att,
@@ -531,8 +541,11 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
 
     if AGN:
         neblines_agn_att = neblines_agn
-        neblines_agn_att[ind_agn] = neblines_agn[ind_agn]*(
-            10**(-0.4*coeff_agn[ind_agn]))
+        if attmod == 'ratios':
+            neblines_agn_att[ind_agn] = neblines_agn[ind_agn]*coeff_agn[ind_agn]
+        else:
+            neblines_agn_att[ind_agn] = neblines_agn[ind_agn]*(
+                10**(-0.4*coeff_agn[ind_agn]))
         lnames_att = [line + '_agn_att' for line in lnames_agn]
         labels = np.full(np.shape(lnames_agn),'erg s^-1')
 
