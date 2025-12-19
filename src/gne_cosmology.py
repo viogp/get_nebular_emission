@@ -399,16 +399,21 @@ def angular_scale(z):
     return a
     
 
-def luminosity_distance(z):
+def luminosity_distance(inz,cm=False):
     """
     luminosity_distance(): returns the luminosity distance
                            (in Mpc/h) corresponding to a
                            redshift, z.
+    cm: bool
+        If True the output is in units of cm
     USAGE: dL = luminosity_distance(z)
     NOTE: requires that a cosmology must first have been
           set using set_cosmology()    
     """
-    dL = angular_diameter_distance(z)*(1.0+z)**2
+    zz = max(inz,zlow_lim)
+    dL = angular_diameter_distance(zz)*(1.0+zz)**2
+    if cm:
+        dL = dL*Mpc2cm/h
     return dL
     
 
@@ -710,7 +715,7 @@ def ndeg2nV(ndeg,z1,z2,verbose=False):
     
     return nV
 
-    
+
 def logL2flux(log10luminosity,inz):
     """
     Returns flux in units of erg/s/cm^2 from input of

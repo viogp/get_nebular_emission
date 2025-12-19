@@ -168,6 +168,18 @@ def get_outnom(filenom,dirf=None,verbose=False):
     return outfile
 
 
+def get_param(config, key, default):
+    param = default
+    if config:
+        try:
+            value = config.get(key)
+            if value is not None: 
+                param = value 
+        except:
+            param = default
+    return param
+
+
 def print_h5attr(infile,inhead='header'):
     """
     Print out the group attributes of a hdf5 file
@@ -294,7 +306,7 @@ def generate_header(infile,redshift,snap,
     if units_h0:
         vol = vol/(h0*h0*h0)
         mp = mp/h0
-    
+
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
 
@@ -312,6 +324,21 @@ def generate_header(infile,redshift,snap,
     hf.close()
     
     return filenom
+
+
+def decode_string_list(raw_list):
+    """
+    Helper function to decode a list of strings from HDF5 attribute.
+    Handles both byte strings (older h5py) and
+    regular strings (newer h5py).
+    """
+    result = []
+    for item in raw_list:
+        if isinstance(item, bytes):
+            result.append(item.decode('utf-8'))
+        else:
+            result.append(str(item))
+    return result
 
 
 def add2header(filenom,names,values,verbose=True):
@@ -735,9 +762,55 @@ def get_mgas_hr(infile,selection,cols,r_type,
     return outm, outr
 
 
+def write_data(filenom,group=None,params=None,params_names=None,
+               params_labels=None,verbose=True):
+    '''
+    Write global data to output file
+
+    Parameters
+    ----------
+    filenom : string
+       Full path to the output file
+    group : string
+       Group in hdf5 file to write into
+    params : list of strings (hdf5 files)
+       Datasets to be written
+    params_names : array of strings
+       Names of the datasets to be written
+    params_labels : array of strings
+       Units and maybe descriptions for the parameters
+    '''     
+    # Open the file 
+    hf = h5py.File(filenom, 'a')
+    if group is not None:
+        # Create the output group if needed
+        if group not in hf.keys():
+            gdat = hf.create_group(group)
+        else:
+            gdat = hf[group]
+
+    if params is not None:
+        if params_labels is None:
+            params_labels = params_names
+        
+        for i in range(len(params)):
+            nom = params_names[i]
+            data = params[i]
+            maxshape = tuple(None for _ in data.shape)
+
+            if nom in gdat.keys():
+                # Remove dataset if already present
+                del gdat[nom]
+            gdat.create_dataset(nom,data=data,maxshape=maxshape)
+            gdat[nom].dims[0].label = params_labels[i]
+
+    hf.close()
+    return 
+
+
 def write_global_data(filenom,lmass,mass_type='s',
                       lssfr=None,scalelength=None,
-                      extra_param=[[None]],extra_params_names=None,
+                      extra_param=None,extra_params_names=None,
                       extra_params_labels=None,verbose=True):
     '''
     Write global data to output file
@@ -770,7 +843,7 @@ def write_global_data(filenom,lmass,mass_type='s',
         gdat = hf['data']
 
     maxshape = tuple(None for _ in lmass.shape)
-    nom = 'lm'+mass_type
+    nom = 'lm_'+mass_type
     gdat.create_dataset(nom, data=lmass, maxshape=maxshape)
     gdat[nom].dims[0].label = 'log10(M/Msun)'
 
@@ -779,25 +852,23 @@ def write_global_data(filenom,lmass,mass_type='s',
         gdat.create_dataset('lssfr', data=lssfr, maxshape=maxshape)
         gdat['lssfr'].dims[0].label = 'log10(SFR/M*/yr)'
 
-    if scalelength is not None:
-        maxshape = tuple(None for _ in scalelength.shape)
-        nom = 'h'+mass_type
-        gdat.create_dataset(nom, data=scalelength, maxshape=maxshape)
-        gdat[nom].dims[0].label = 'Mpc'
-
-    if extra_param[0][0] != None:
+    if extra_param is not None:
+        if extra_params_labels is None:
+            extra_param_labels = extra_param_names
+        
         for i in range(len(extra_param)):
-            gdat.create_dataset(extra_params_names[i], data =\
-                                extra_param[i][:,None], maxshape=(None,None))
-            if extra_params_labels:
-                gdat[extra_params_names[i]].dims[0].label = extra_params_labels[i]
+            nom = extra_params_names[i]
+            data = extra_param[i]
+            maxshape = tuple(None for _ in data.shape)
+            
+            gdat.create_dataset(nom,data=data,maxshape=maxshape)
+            gdat[nom].dims[0].label = extra_params_labels[i]
 
     hf.close()
     return 
 
 
 def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
-                   nebline_sfr_att=None,fluxes_sfr=None,fluxes_sfr_att=None,
                    verbose=True):
     '''
     Write line data from star forming regions
@@ -814,8 +885,6 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_sfr : floats
       Array with the luminosity of the lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)
-    nebline_sfr_att : floats
-      Array with the luminosity of the attenuated lines per component. (Lsun per unit SFR(Mo/yr) for 10^8yr)    
     '''
 
     # Read information on models
@@ -841,35 +910,13 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
             hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr', 
                                  data=nebline_sfr[:,i], maxshape=(None,None))
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
-                'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
-            
-            if fluxes_sfr is not None:
-                hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux', 
-                                     data=fluxes_sfr[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux'].dims[0].label = \
-                    'Lines units: egr s^-1 cm^-2'
+                'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
                 
-            if fluxes_sfr_att is not None:
-                hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_flux_att', 
-                                     data=fluxes_sfr_att[:,i], maxshape=(None,None))
-                hfdat[c.line_names[photmod_sfr][i] + '_sfr_flux_att'].dims[0].label = \
-                    'Lines units: egr s^-1 cm^-2'
-
-            
-            if nebline_sfr_att is not None:
-                if nebline_sfr_att[0,i,0] > 0:
-                    hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr_att', 
-                                         data=nebline_sfr_att[:,i], maxshape=(None,None))
-                    hfdat[c.line_names[photmod_sfr][i] + '_sfr_att'].dims[0].label = \
-                        'Lines units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
-    
     return 
 
 
 def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
-                   nebline_agn,nebline_agn_att=None,
-                   fluxes_agn=None,fluxes_agn_att=None,
-                   epsilon_agn=None,
+                   nebline_agn,epsilon_agn=None,
                    ew_notatt=None,ew_att=None,
                    verbose=True):
     '''
@@ -887,8 +934,6 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
      Metallicity of the galaxies per component (12+log(O/H))
     nebline_agn : array of floats
        Luminosities (erg/s)
-    nebline_agn_att : array of floats
-       Dust attenuated luminosities (erg/s)
     '''
 
     # Read information on models
@@ -917,34 +962,10 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
                 'AGN NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
-            ndata = np.squeeze(nebline_agn[0,i])
+            ndata = nebline_agn[0,i,:]
             hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
                                  data=ndata, maxshape=(None))
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
-                'Lines units: egr s^-1'
-            
-            if fluxes_agn is not None:
-                ndata = np.squeeze(fluxes_agn[0,i])
-                hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux', 
-                                     data=ndata, maxshape=(None))
-                hfdat[c.line_names[photmod_agn][i] + '_agn_flux'].dims[0].label = \
-                    'Lines units: egr s^-1 cm^-2'
-                
-            if fluxes_agn_att is not None:
-                if fluxes_agn_att[0,i,0] >= 0:
-                    ndata = np.squeeze(fluxes_agn_att[0,i])
-                    hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_flux_att', 
-                                         data=ndata, maxshape=(None,None))
-                    hfdat[c.line_names[photmod_agn][i] + '_agn_flux_att'].dims[0].label = \
-                        'Lines units: egr s^-1 cm^-2'
-            
-            if nebline_agn_att is not None:
-                if nebline_agn_att[0,i,0] >= 0:
-                    ndata = np.squeeze(nebline_agn_att[0,i])
-                    hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn_att', 
-                                         data=ndata, maxshape=(None,None))
-                    hfdat[c.line_names[photmod_agn][i] + '_agn_att'].dims[0].label = \
-                        'Lines units: egr s^-1'
-
+                'erg s^-1'
     return 
 

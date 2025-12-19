@@ -192,8 +192,10 @@ def get_UnH_kashino20(lms1, lssfr1, lzgas, IMF=['Kroupa','Kroupa'],nhout=True):
     #
     #lu[ind] = np.log10(cte[ind] * Q[ind]**(1/3))
 
-    # As nothing is stated in the paper, we assume this is U(Rs)
+    # Assuming the ionising parameter from Kashino+202 to be U(Rs)
     output = lu
+    ## Assuming the ionising parameter from Kashino+202 to be <U(R)>
+    #output = lu - np.log10(3.) 
     if nhout: output = lnH
     
     return output

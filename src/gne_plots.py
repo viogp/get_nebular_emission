@@ -16,12 +16,13 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.offsetbox as moffbox
 
-
 import src.gne_const as c
 import src.gne_io as io
-import src.gne_stats as st 
+import src.gne_stats as st
+from src.gne_stats import n_gt_x
 from src.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
-from src.gne_cosmology import set_cosmology,emission_line_luminosity
+from src.gne_cosmology import set_cosmology
+from src.gne_flux import flux2L
 import src.gne_style
 plt.style.use(src.gne_style.style1)
 
@@ -1408,13 +1409,13 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
         # Magnitudes for cuts
         ismagr = True
         try:
-            magr = f['data/magR'][:,0]
+            magr = f['data/magR'][:]
         except:
             ismagr = False
         
         ismagk = True
         try:
-            magk = f['data/magK'][:,0]
+            magk = f['data/magK'][:]
         except:
             ismagk = False
         f.close()
@@ -1471,8 +1472,8 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
         # Add further cuts if adequate
         if redshift <= 0.2:
             flux = 2e-16 # erg/s/cm^2 Favole+2024
-            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
-    
+            Lmin = flux2L(flux,redshift) #erg/s
+
             if ismagr:
                 sel = np.where((Ha> Lmin) & (Hb> Lmin) &
                                (OIII> Lmin) & (NII> Lmin) &
@@ -1483,7 +1484,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
                                (SII> Lmin))
         elif 0.7 <= redshift <= 0.9:            
             flux = 1e-16  # erg/s/cm^2 Kashino+2019
-            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+            Lmin = flux2L(flux,redshift) #erg/s
             
             if ismagr:
                 sel = np.where((Ha> Lmin) & (mag_r<124.1))
@@ -1491,7 +1492,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
                 sel = np.where(Ha> Lmin)
         elif 1.45 <= redshift <= 1.75:
             flux = 5e-17  # erg/s/cm^2 Kashino+2019
-            Lmin = emission_line_luminosity(flux,redshift)*1e40 #erg/s
+            Lmin = flux2L(flux,redshift) #erg/s
             
             if ismagk:
                 sel = np.where((Ha> Lmin) & (mag_k<23.5))
@@ -1566,6 +1567,458 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     return bptnom
 
 
+
+def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
+    '''
+    Make line luminosity function plots
+    
+    Parameters
+    ----------
+    root : string
+       Path to input files. 
+    endf : string
+       Ending of input files. 
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    # Get redshift and cosmology from data
+    filenom = root+'0'+endf
+    f = h5py.File(filenom, 'r') 
+    header = f['header'] #; print(list(header.attrs.items()))
+    redshift = header.attrs['redshift']
+    omega0 = header.attrs['omega0']
+    omegab = header.attrs['omegab']
+    lambda0 = header.attrs['lambda0']
+    h0 = header.attrs['h0']
+    photmod_sfr = header.attrs['photmod_sfr']
+    total_volume = header.attrs['vol_Mpc3']
+
+    # Read AGN information if it exists
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        photmod_agn = header.attrs['photmod_NLR']
+
+    # Read dust-attenuated information if it exists
+    if 'attmod' in header.attrs:
+        att = True
+        attmod = header.attrs['attmod']
+    else:
+        att = False
+    f.close()
+
+    # Set the cosmology from the simulation
+    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
+
+    # Read limits for properties and photoionisation models
+    minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
+    minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
+
+    # Define emission lines to plot and initialise LF arrays
+    line_labels = [r'H$_{\alpha}$', r'H$_{\beta}$',
+                   r'[OII]$\lambda\lambda 3727$', 
+                   r'[OIII]$\lambda 5007$', r'[NII]$\lambda 6584$', 
+                   r'[SII]$\lambda\lambda 6724$']
+
+    # Initialise histogram bins for luminosity functions
+    lmin = 38.0
+    lmax = 46.0
+    dl = 0.1
+    lbins = np.arange(lmin, lmax, dl)
+    lhist = lbins + dl * 0.5
+
+    # Initialise LF arrays
+    nlines = len(line_labels)
+    lf = np.zeros((nlines, len(lhist)))
+    lf_att = np.zeros((nlines, len(lhist)))
+    
+    # Read data from each subvolume
+    for ivol in range(subvols):
+        filenom = root + str(ivol) + endf #; print(filenom)
+        f = h5py.File(filenom, 'r')
+
+        # Read SF information from file
+        lu_sfr = f['sfr_data/lu_sfr'][:,0]
+        lz_sfr = f['sfr_data/lz_sfr'][:,0]
+        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
+        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
+        NII_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
+        OII_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
+        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
+        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
+        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)        
+
+        if att:
+            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att'],axis=0)
+            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att'],axis=0)
+            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att'],axis=0)
+            OII_sfr_att = np.sum(f['sfr_data/OII3727_sfr_att'],axis=0)
+            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att'],axis=0)
+            SII6731_sfr_att = np.sum(f['sfr_data/SII6731_sfr_att'],axis=0)
+            SII6717_sfr_att = np.sum(f['sfr_data/SII6717_sfr_att'],axis=0)        
+
+        if AGN:
+            # Read AGN information if it exists
+            Ha_agn = f['agn_data/Halpha_agn'][:]
+            Hb_agn = f['agn_data/Hbeta_agn'][:]
+            OII_agn = f['agn_data/OII3727_agn'][:]
+            OIII_agn = f['agn_data/OIII5007_agn'][:]
+            NII_agn = f['agn_data/NII6584_agn'][:]
+            SII6717_agn = f['agn_data/SII6717_agn'][:]
+            SII6731_agn = f['agn_data/SII6731_agn'][:]
+            if att:
+                Ha_agn_att = f['agn_data/Halpha_agn_att'][:]
+                Hb_agn_att = f['agn_data/Hbeta_agn_att'][:]
+                OII_agn_att = f['agn_data/OII3727_agn_att'][:]
+                OIII_agn_att = f['agn_data/OIII5007_agn_att'][:]
+                NII_agn_att = f['agn_data/NII6584_agn_att'][:]
+                SII6717_agn_att = f['agn_data/SII6717_agn_att'][:]
+                SII6731_agn_att = f['agn_data/SII6731_agn_att'][:]
+        f.close()
+
+        if AGN:
+            # Combine luminosities (SFR + AGN if available)
+            Ha = Ha_sfr + Ha_agn
+            Hb = Hb_sfr + Hb_agn
+            NII = NII_sfr + NII_agn
+            OII = OII_sfr + OII_agn
+            OIII = OIII_sfr + OIII_agn
+            SII = SII6731_sfr + SII6731_agn +\
+                SII6717_sfr + SII6717_agn
+            if att:
+                Ha_att = Ha_sfr_att + Ha_agn_att
+                Hb_att = Hb_sfr_att + Hb_agn_att
+                NII_att = NII_sfr_att + NII_agn_att
+                OII_att = OII_sfr_att + OII_agn_att
+                OIII_att = OIII_sfr_att + OIII_agn_att
+                SII_att = SII6731_sfr_att + SII6731_agn_att +\
+                    SII6717_sfr_att + SII6717_agn_att
+        else:
+            Ha = Ha_sfr
+            Hb = Hb_sfr
+            NII = NII_sfr
+            OII = OII_sfr
+            OIII = OIII_sfr
+            SII = SII6731_sfr + SII6717_sfr
+            if att:
+                Ha_att = Ha_sfr_att
+                Hb_att = Hb_sfr_att
+                NII_att = NII_sfr_att
+                OII_att = OII_sfr_att
+                OIII_att = OIII_sfr_att
+                SII_att = SII6731_sfr_att + SII6717_sfr_att
+            
+        lums_int = [Ha, Hb, OII, OIII, NII, SII]
+        if att:
+            lums_att = [Ha_att, Hb_att, OII_att, OIII_att, NII_att, SII_att]
+
+        # Calculate histograms for each line
+        for iline in range(nlines):
+            # Intrinsic luminosity function
+            lums = lums_int[iline]
+            ind = np.where(lums > 0) ###here more cuts like in bpt?
+            if np.shape(ind)[1] > 0:
+                ll = np.log10(lums[ind])
+                H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
+                lf[iline, :] += H
+
+            if att:
+                # Dust attenuated luminosity function
+                lums = lums_att[iline]
+                ind = np.where(lums > 0) ###here more cuts like in bpt?
+                if np.shape(ind)[1] > 0:
+                    ll = np.log10(lums[ind])
+                    H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
+                    lf_att[iline, :] += H
+                    
+    # Normalize by bin size and volume
+    lf = lf / dl / total_volume
+    if att:
+        lf_att = lf_att / dl / total_volume
+
+    if verbose:
+        print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
+
+    # Plot settings
+    fig, axes = plt.subplots(2, 3, figsize=(30,21))
+    axes = axes.flatten()
+    ytit = r'$\log_{10}(\Phi/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
+    xmin = 39.0
+    xmax = 44.0
+    ymin = -5.5
+    ymax = -1.0
+
+    # Plot each line
+    for iline in range(nlines):
+        ax = axes[iline]
+        xtit = r'$\log_{10}$(L' + line_labels[iline] +\
+            r'$/\mathrm{erg\,s^{-1}})$' 
+        # Plot intrinsic LF (dotted line)
+        ilf = lf[iline, :]
+        ind = np.where(ilf > 0)
+        if len(ind[0]) > 0:
+            x = lhist[ind]
+            y = ilf[ind]
+            indy = np.where(y > 0)
+            if len(indy[0]) > 0:
+                logy = np.log10(y[indy])
+                ax.plot(x[indy], logy, 'r:',
+                        label='Intrinsic (z='+str(redshift)+')')
+
+        if att:
+            # Plot dust-attenuated LF (solid line)
+            ilf = lf_att[iline, :]
+            ind = np.where(ilf > 0)
+            if len(ind[0]) > 0:
+                x = lhist[ind]
+                y = ilf[ind]
+                indy = np.where(y > 0)
+                if len(indy[0]) > 0:
+                    logy = np.log10(y[indy])
+                    ax.plot(x[indy], logy, 'b-',
+                            label='Dust-attenuated')
+            
+        # Set axis properties
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
+        ax.minorticks_on()
+        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+        if (iline==0):
+            ax.legend(loc='best',frameon=False)
+    
+    plt.tight_layout()
+    
+    # Output
+    nom = io.get_plotfile(root,endf,'lf')
+    plt.savefig(nom)
+    if verbose:
+         print(f'* LFs plots: {nom}')
+    
+    return nom
+
+
+
+def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
+    '''
+    Make plots with the cumulative numbers as a function of flux
+    
+    Parameters
+    ----------
+    root : string
+       Path to input files. 
+    endf : string
+       Ending of input files. 
+    subvols: integer
+        Number of subvolumes to be considered
+    outpath : string
+        Path to output, default is output/ 
+    verbose : boolean
+       If True print out messages.
+    '''
+
+    # Check if flux data exists in the file
+    filenom = root+'0'+endf
+    f = h5py.File(filenom, 'r') 
+    required_flux_datasets = ['sfr_data/Halpha_sfr_flux','sfr_data/Hbeta_sfr_flux',
+                              'sfr_data/NII6584_sfr_flux','sfr_data/OIII5007_sfr_flux']
+    flux_data_exists = any(dataset in f for dataset in required_flux_datasets)
+    if not flux_data_exists:
+        f.close()
+        if verbose:
+            print(f'WARNING (plot_ncumu_flux): No flux data found in {filenom}. '
+                  f'Skipping cumulative flux plot.')
+        return None
+    
+    # Get redshift and cosmology from data
+    header = f['header'] #; print(list(header.attrs.items()))
+    redshift = header.attrs['redshift']
+    omega0 = header.attrs['omega0']
+    omegab = header.attrs['omegab']
+    lambda0 = header.attrs['lambda0']
+    h0 = header.attrs['h0']
+    photmod_sfr = header.attrs['photmod_sfr']
+    total_volume = header.attrs['vol_Mpc3']
+
+    # Read AGN information if it exists
+    if 'agn_data' not in f.keys():
+        AGN = False
+    else:
+        AGN = True
+        photmod_agn = header.attrs['photmod_NLR']
+
+    # Read dust-attenuated information if it exists
+    if 'attmod' in header.attrs:
+        att = True
+        attmod = header.attrs['attmod']
+    else:
+        att = False
+    f.close()
+
+    # Set the cosmology from the simulation
+    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
+
+    # Read limits for properties and photoionisation models
+    minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
+    minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
+
+    # Define emission lines to plot and initialise arrays
+    line_labels = [r'H$_{\alpha}$',r'H$_{\alpha}$+N[II]','O[III]',r'O[III]+H$_{\beta}$']
+
+    # Initialise histogram bins for luminosity functions
+    fmin = -18
+    fmax = -14
+    df = 0.2
+    fbins = np.arange(fmin, fmax, df)
+
+    # Initialise arrays
+    nlines = len(line_labels)
+    ncum = np.zeros((nlines, len(fbins)))
+    ncum_att = np.zeros((nlines, len(fbins)))
+
+    # Read data from each subvolume
+    for ivol in range(subvols):
+        filenom = root + str(ivol) + endf #; print(filenom)
+        f = h5py.File(filenom, 'r')
+
+        # Read SF information from file
+        lu_sfr = f['sfr_data/lu_sfr'][:,0]
+        lz_sfr = f['sfr_data/lz_sfr'][:,0]
+        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr_flux'],axis=0)
+        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr_flux'],axis=0)
+        NII_sfr = np.sum(f['sfr_data/NII6584_sfr_flux'],axis=0)
+        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
+
+        if att:
+            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att_flux'],axis=0)
+            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att_flux'],axis=0)
+            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att_flux'],axis=0)
+            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att_flux'],axis=0)
+
+        if AGN:
+            # Read AGN information if it exists
+            Ha_agn = f['agn_data/Halpha_agn_flux'][:]
+            Hb_agn = f['agn_data/Hbeta_agn_flux'][:]
+            OIII_agn = f['agn_data/OIII5007_agn_flux'][:]
+            NII_agn = f['agn_data/NII6584_agn_flux'][:]
+
+            if att:
+                Ha_agn_att = f['agn_data/Halpha_agn_att_flux'][:]
+                Hb_agn_att = f['agn_data/Hbeta_agn_att_flux'][:]
+                OIII_agn_att = f['agn_data/OIII5007_agn_att_flux'][:]
+                NII_agn_att = f['agn_data/NII6584_agn_att_flux'][:]
+        f.close()
+
+        if AGN:
+            # Combine luminosities (SFR + AGN if available)
+            Ha = Ha_sfr + Ha_agn
+            HaN2 = Ha + NII_sfr + NII_agn
+            O3 = OIII_sfr + OIII_agn
+            O3Hb = O3 + Hb_sfr + Hb_agn 
+            if att:
+                Ha_att = Ha_sfr_att + Ha_agn_att
+                HaN2_att = Ha_att + NII_sfr_att + NII_agn_att
+                O3_att = OIII_sfr_att + OIII_agn_att
+                O3Hb_att = O3_att + Hb_sfr_att + Hb_agn_att 
+        else:
+            Ha = Ha_sfr
+            HaN2 = Ha + NII_sfr
+            O3 = OIII_sfr
+            O3Hb = O3 + Hb_sfr
+            if att:
+                Ha_att = Ha_sfr_att
+                HaN2_att = Ha_att + NII_sfr_att
+                O3_att = OIII_sfr_att
+                O3Hb_att = O3_att + Hb_sfr_att
+
+        flux_int = [Ha, HaN2, O3, O3Hb]
+        if att:
+            flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
+        
+        # Calculate the cumulative numbers for each line
+        for iline in range(nlines):
+            # Intrinsic flux
+            flux = flux_int[iline]
+            ind = np.where(flux > 0) ###here more cuts like in bpt?
+            if np.shape(ind)[1] > 0:
+                ff = np.log10(flux[ind])
+                H = n_gt_x(fbins,ff)
+                ncum[iline,:] = ncum[iline,:] + H
+
+            if att: # Attenuated flux
+                flux = flux_att[iline]
+                ind = np.where(flux > 0) ###here more cuts like in bpt?
+                if np.shape(ind)[1] > 0:
+                    ff = np.log10(flux[ind])
+                    H = n_gt_x(fbins,ff)
+                    ncum_att[iline,:] = ncum_att[iline,:] + H
+                    
+    # Get number per volume
+    ncum = ncum/total_volume
+    if att:
+        ncum_att = ncum_att/total_volume
+
+    if verbose:
+        print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
+
+    # Plot settings
+    nfigs = 2
+    fig, axes = plt.subplots(1, 2, figsize=(30,21))
+    axes = axes.flatten()
+    ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
+    xmin = fmin
+    xmax = fmax
+    ymin = -2
+    ymax = -1.0
+
+    line = -2
+    for ifig in range(nfigs):
+        ax = axes[ifig]
+        xtit = r'$\log_{10}(F_{\rm lim}/\mathrm{erg\,s^{-1}\,cm^{-2}})$'
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
+        ax.minorticks_on()
+        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+        line += 2
+        for iline in [line,line+1]:
+            color = plt.cm.tab10(iline % 10)
+            # Plot intrinsic n
+            yy = ncum[iline, :]
+            ind = np.where(yy > 0)
+            if len(ind[0]) > 0:
+                x = fbins[ind]
+                y = np.log10(yy[ind])
+                ll = line_labels[iline]+'(int.)'
+                ax.plot(x, y, '-',color=color,label=ll)
+
+            if att: # Dust-attenuated 
+                yy = ncum_att[iline, :]
+                ind = np.where(yy > 0)
+                if len(ind[0]) > 0:
+                    x = fbins[ind]
+                    y = np.log10(yy[ind])
+                    ll = line_labels[iline]+'(att.)'
+                    ax.plot(x, y,'--',color=color,label=ll)
+            
+        # Legend
+        ax.legend(loc='best',frameon=False)
+    plt.tight_layout()
+    
+    # Output
+    nom = io.get_plotfile(root,endf,'flux_ncumu')
+    plt.savefig(nom)
+    if verbose:
+         print(f'* Cumulative numbers vs flux plots: {nom}')
+    
+    return nom
+
+
+
 def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
                    xid_NLR=0.5,alpha_NLR=-1.7,verbose=True):
     '''
@@ -1614,11 +2067,17 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
 
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
+
+    #if gridplots:
+    #    make_gridplots() ###here work in progress
     
     # Make NII and SII bpt plots
     bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
-    if gridplots:
-        make_gridplots() ###here work in progress
+    # Make line LFs
+    lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
+
+    # Cumulative numbers with flux limits (if possible) 
+    ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
     
     return

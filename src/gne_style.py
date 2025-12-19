@@ -55,7 +55,7 @@ style1 = {
 
     # Legend
     'legend.fancybox': False,
-    'legend.fontsize': 'large',
+    'legend.fontsize': 'medium',
     'legend.scatterpoints': 1,
     'legend.numpoints': 1,
     'legend.loc': 'best',

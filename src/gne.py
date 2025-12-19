@@ -12,8 +12,7 @@ from src.gne_m_sfr import get_sfrdata
 from src.gne_Lagn import get_Lagn
 import src.gne_const as c
 from src.gne_stats import components2tot
-from src.gne_photio import get_lines, get_limits, calculate_flux
-from src.gne_att import attenuation
+from src.gne_photio import get_lines, get_limits
 from src.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
@@ -28,15 +27,12 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         AGN=False,photmod_agn='feltre16',
         Zgas_NLR=None,Z_correct_grad=False,
         model_U_agn='panuzzo03',
-        mgas_r_agn=[None],mgasr_type_agn=[None],r_type_agn=[None],
+        mgas_r=[None],mgasr_type=[None],r_type=[None],
         model_spec_agn='feltre16',
         alpha_NLR=c.alpha_NLR_feltre16,xid_NLR=c.xid_NLR_feltre16,
         nH_NLR=c.nH_NLR_cm3,T_NLR=c.temp_ionising,r_NLR=c.radius_NLR,
         Lagn_inputs='Lagn', Lagn_params=[None],
         zeq=None,infile_z0=None,
-        att=False,attmod='cardelli89',
-        att_params=[None], att_ratio_lines=[None],
-        flux=False,
         extra_params=[None], extra_params_names=[None],
         extra_params_labels=[None],
         cutcols=[None], mincuts=[None], maxcuts=[None],
@@ -71,17 +67,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
      Minimum value of the parameter of cutcols in the same index. All the galaxies below won't be considered.
     maxcuts : floats
      Maximum value of the parameter of cutcols in the same index. All the galaxies above won't be considered.
-    att : boolean
-     If True calculates attenuated emission.
-    att_params : list
-     Parameters to look for calculating attenuation. See gne_const to know what each model expects.
-     - For text or csv files: list of integers with column position.
-     - For hdf5 files: list of data names.
-    att_ratio_lines : strings
-     Names of the lines corresponding to the values in att_params when attmod=ratios.
-     They should be written as they are in the selected model (see gne_const).
-    flux : boolean
-     If True calculates flux of the emission lines based on the given redshift.
     IMF : array of strings
        Assumed IMF for the input data of each component, [[component1_IMF],[component2_IMF],...]
     q0 : float
@@ -147,8 +132,6 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         Value assumed for the AGN NLR temperature.
     r_NLR : float
         Value assumed for the radius of the AGN NLR.
-    attmod : string
-        Attenuation model.
     units_h0: boolean
         True if input units with h
     units_Gyr: boolean
@@ -172,7 +155,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                  h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
                                  verbose=verbose)
-
+    
     #----------------HII region calculation------------------------
     if verbose: print('SF:')        
     # Add relevant constants to header
@@ -246,36 +229,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if verbose:
         print(' Emission lines calculated.')
 
-    if att:
-        att_param = io.read_data(infile,cut,
-                                 inputformat=inputformat,
-                                 params=att_params,
-                                 testing=testing,
-                                 verbose=verbose)
-
-        nebline_sfr_att, coef_sfr_att = attenuation(nebline_sfr, att_param=att_param, 
-                                      att_ratio_lines=att_ratio_lines,
-                                                    redshift=redshift,h0=h0,
-                                      origin='sfr',
-                                      cut=cut, attmod=attmod, photmod=photmod_sfr,verbose=verbose)
-        
-        if verbose:
-            print(' Attenuation calculated.')
-    else:
-        nebline_sfr_att = None
-
-    if flux:
-        fluxes_sfr = calculate_flux(nebline_sfr,outfile,origin='sfr')
-        fluxes_sfr_att = calculate_flux(nebline_sfr_att,outfile,origin='sfr')
-        if verbose:
-            print(' Flux calculated.')
-    else:
-        fluxes_sfr = None
-        fluxes_sfr_att = None
-
     ### Write output
-    # Read any extra parameters and write them in the output file
-    # together with the HII spectral lines
     extra_param = io.read_data(infile,cut,
                                inputformat=inputformat,
                                params=extra_params,
@@ -286,14 +240,32 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                       extra_params_names=extra_params_names,
                       extra_params_labels=extra_params_labels,
                       verbose=verbose)
-    io.write_sfr_data(outfile,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
-                      nebline_sfr,nebline_sfr_att,
-                      fluxes_sfr,fluxes_sfr_att,verbose=verbose)
 
+    io.write_sfr_data(outfile,lu_o_sfr,lnH_o_sfr,lzgas_o_sfr,
+                      nebline_sfr,verbose=verbose)
     del lu_sfr, lnH_sfr
     del lu_o_sfr, lnH_o_sfr, lzgas_o_sfr
-    del nebline_sfr, nebline_sfr_att
+    del nebline_sfr
 
+    # Get information on Mgas and scalelengths, if provided
+    mgas = None; hr = None
+    if mgas_r is not None:
+        nattrs = io.add2header(outfile,['mgasr_type'],
+                               [mgasr_type],verbose=True)
+        mgas, hr = io.get_mgas_hr(infile,cut,
+                                  mgas_r,r_type,
+                                  h0=h0,units_h0=units_h0,
+                                  inputformat=inputformat,
+                                  testing=testing,verbose=verbose)
+        lmgas = np.full(mgas.shape,c.notnum)
+        ind = (mgas>0.)
+        lmgas[ind] = np.log10(mgas[ind])
+        io.write_global_data(outfile,lmgas.T,mass_type='gas',
+                             extra_param=[hr.T],
+                             extra_params_names=['h_gas'],
+                             extra_params_labels=['Scalelength(Mpc)'],
+                             verbose=verbose)
+    
     #----------------NLR AGN calculation------------------------
     if AGN:
         if verbose: print('AGN:')
@@ -325,20 +297,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                         testing=testing,verbose=verbose)
 
         # Get the ionising parameter, U, (and filling factor)
-        mgas = None; hr = None
-        if mgas_r_agn is not None:    
-            mgas, hr = io.get_mgas_hr(infile,cut,
-                                      mgas_r_agn,r_type_agn,
-                                      h0=h0,units_h0=units_h0,
-                                      inputformat=inputformat,
-                                      testing=testing,verbose=verbose)
-            io.write_global_data(outfile,mgas.T,mass_type='g',
-                                 scalelength=hr.T,verbose=verbose)
-
         lu_agn, epsilon_agn = get_UnH_agn(Lagn, mgas, hr,outfile,
-                                          mgasr_type=mgasr_type_agn,
+                                          mgasr_type=mgasr_type,
                                           verbose=verbose)
-
         if verbose: print(' U calculated.')
 
         # Calculate emission lines in adequate units
@@ -351,42 +312,16 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
             nebline_agn[0] = nebline_agn[0]*Lagn/1e45
         if verbose: print(' Emission lines calculated.')
 
-        # Calculate attenuation if required
-        if att:
-            # Add relevant constants to header
-            nattrs = io.add2header(outfile,['attmod'],[attmod],verbose=verbose)
-            nebline_agn_att, coef_agn_att = attenuation(nebline_agn, att_param=att_param, 
-                                                        att_ratio_lines=att_ratio_lines,
-                                                        redshift=redshift,h0=h0,
-                                                        origin='agn',cut=cut,
-                                                        attmod=attmod,
-                                                        photmod=photmod_agn,verbose=verbose)
-            if verbose: print(' Attenuation calculated.')     
-        else:
-            #nebline_agn_att = np.array(None)
-            nebline_agn_att = None
-
-        # Calculate fluxes if required
-        if flux:
-            fluxes_agn = calculate_flux(nebline_agn,outfile,origin='agn')
-            fluxes_agn_att = calculate_flux(nebline_agn_att,outfile,origin='agn')
-            if verbose:
-                print(' Flux calculated.')
-        else:
-            #fluxes_agn = np.array(None)
-            #fluxes_agn_att = np.array(None)
-            fluxes_agn = None
-            fluxes_agn_att = None
-
         # Write output in a file            
         io.write_agn_data(outfile,Lagn,lu_agn.T,lzgas_agn.T,
-                          nebline_agn,nebline_agn_att,
-                          fluxes_agn,fluxes_agn_att,
+                          nebline_agn,
                           epsilon_agn=epsilon_agn,
                           verbose=verbose)             
         del lu_agn, lzgas_agn 
-        del nebline_agn, nebline_agn_att
+        del nebline_agn
     del lms, lssfr, cut
-    
+
     if verbose:
-        print('* Total time: ', round(time.perf_counter() - start_total_time,2), 's.')
+        tt = round(time.perf_counter() - start_total_time,2)
+        print('* Total time: ', tt, 's.')
+    return
