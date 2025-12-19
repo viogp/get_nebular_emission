@@ -1769,7 +1769,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             if len(indy[0]) > 0:
                 logy = np.log10(y[indy])
                 ax.plot(x[indy], logy, 'r:',
-                        label='Intrinsic')
+                        label='Intrinsic (z='+str(redshift)+')')
 
         if att:
             # Plot dust-attenuated LF (solid line)
@@ -1857,19 +1857,18 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
     # Define emission lines to plot and initialise arrays
-    line_labels = [r'H$_{\alpha}$',r'H$_{\alpha}$+N[II]','O[III]','O[III]+H$_{\beta}$']
+    line_labels = [r'H$_{\alpha}$',r'H$_{\alpha}$+N[II]','O[III]',r'O[III]+H$_{\beta}$']
 
     # Initialise histogram bins for luminosity functions
     fmin = -18
     fmax = -14
     df = 0.2
     fbins = np.arange(fmin, fmax, df)
-    xhist = fbins + df * 0.5
 
     # Initialise arrays
     nlines = len(line_labels)
-    ncum = np.zeros((nlines, len(xhist)))
-    ncum_att = np.zeros((nlines, len(xhist)))
+    ncum = np.zeros((nlines, len(fbins)))
+    ncum_att = np.zeros((nlines, len(fbins)))
 
     # Read data from each subvolume
     for ivol in range(subvols):
@@ -1925,11 +1924,11 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
                 HaN2_att = Ha_att + NII_sfr_att
                 O3_att = OIII_sfr_att
                 O3Hb_att = O3_att + Hb_sfr_att
-            
+
         flux_int = [Ha, HaN2, O3, O3Hb]
         if att:
             flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
-
+        
         # Calculate the cumulative numbers for each line
         for iline in range(nlines):
             # Intrinsic flux
@@ -1948,71 +1947,62 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
                     H = n_gt_x(fbins,ff)
                     ncum_att[iline,:] = ncum_att[iline,:] + H
                     
-    # Get number per deg^2
-    Dc = 0;#cosmo.comoving_distance(zz)
-    print(Dc); exit()
-    fac = Dc*dDc*np.pi/180.
-    ncum = ncum*fac*fac/total_volume
+    # Get number per volume
+    ncum = ncum/total_volume
     if att:
-        lf_att = lf_att / dl / total_volume
+        ncum_att = ncum_att/total_volume
 
     if verbose:
         print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
 
     # Plot settings
-    fig, axes = plt.subplots(2, 3, figsize=(30,21))
+    nfigs = 2
+    fig, axes = plt.subplots(1, 2, figsize=(30,21))
     axes = axes.flatten()
-    ytit = r'$\log_{10}(\Phi/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
-    xmin = 39.0
-    xmax = 44.0
-    ymin = -5.5
+    ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
+    xmin = fmin
+    xmax = fmax
+    ymin = -2
     ymax = -1.0
 
-    # Plot each line
-    for iline in range(nlines):
-        ax = axes[iline]
-        xtit = r'$\log_{10}$(L' + line_labels[iline] +\
-            r'$/\mathrm{erg\,s^{-1}})$' 
-        # Plot intrinsic LF (dotted line)
-        ilf = lf[iline, :]
-        ind = np.where(ilf > 0)
-        if len(ind[0]) > 0:
-            x = lhist[ind]
-            y = ilf[ind]
-            indy = np.where(y > 0)
-            if len(indy[0]) > 0:
-                logy = np.log10(y[indy])
-                ax.plot(x[indy], logy, 'r:',
-                        label='Intrinsic')
-
-        if att:
-            # Plot dust-attenuated LF (solid line)
-            ilf = lf_att[iline, :]
-            ind = np.where(ilf > 0)
-            if len(ind[0]) > 0:
-                x = lhist[ind]
-                y = ilf[ind]
-                indy = np.where(y > 0)
-                if len(indy[0]) > 0:
-                    logy = np.log10(y[indy])
-                    ax.plot(x[indy], logy, 'b-',
-                            label='Dust-attenuated')
-            
-        # Set axis properties
+    line = -2
+    for ifig in range(nfigs):
+        ax = axes[ifig]
+        xtit = r'$\log_{10}(F_{\rm lim}/\mathrm{erg\,s^{-1}\,cm^{-2}})$'
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
-        if (iline==0):
-            ax.legend(loc='best',frameon=False)
-    
+        line += 2
+        for iline in [line,line+1]:
+            color = plt.cm.tab10(iline % 10)
+            # Plot intrinsic n
+            yy = ncum[iline, :]
+            ind = np.where(yy > 0)
+            if len(ind[0]) > 0:
+                x = fbins[ind]
+                y = np.log10(yy[ind])
+                ll = line_labels[iline]+'(int.)'
+                ax.plot(x, y, '-',color=color,label=ll)
+
+            if att: # Dust-attenuated 
+                yy = ncum_att[iline, :]
+                ind = np.where(yy > 0)
+                if len(ind[0]) > 0:
+                    x = fbins[ind]
+                    y = np.log10(yy[ind])
+                    ll = line_labels[iline]+'(att.)'
+                    ax.plot(x, y,'--',color=color,label=ll)
+            
+        # Legend
+        ax.legend(loc='best',frameon=False)
     plt.tight_layout()
     
     # Output
-    nom = io.get_plotfile(root,endf,'lf')
+    nom = io.get_plotfile(root,endf,'flux_ncumu')
     plt.savefig(nom)
     if verbose:
-         print(f'* LFs plots: {nom}')
+         print(f'* Cumulative numbers vs flux plots: {nom}')
     
     return nom
 
@@ -2071,10 +2061,10 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     #    make_gridplots() ###here work in progress
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
+    #bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
     # Make line LFs
-    lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
+    #lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
 
     # Cumulative numbers with flux limits 
     ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)

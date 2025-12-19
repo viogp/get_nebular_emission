@@ -55,7 +55,7 @@ def calculate_flux(nebline,filenom,origin='sfr'): ###here to be removed, once co
 
 def L2flux(luminosity,zz):
     """
-    Calculates Flux(erg/s/cm^2) from Luminosity(erg/s)
+    Calculates line Flux(erg/s/cm^2) from Luminosity(erg/s)
     """
     # Check if input is a scalar and convert to array if needed
     is_scalar = np.isscalar(luminosity)
@@ -86,7 +86,7 @@ def L2flux(luminosity,zz):
 
 def flux2L(flux,zz):
     """
-    Calculates Luminosity(erg/s) from Flux(erg/s/cm^2)
+    Calculates line Luminosity(erg/s) from Flux(erg/s/cm^2)
     """
     # Check if input is a scalar and convert to array if needed
     is_scalar = np.isscalar(flux)
