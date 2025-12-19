@@ -279,7 +279,7 @@ def get_lines_gutkin16(lu, lzgas, filenom, lnH=None,
     ndat = lu.shape[1]
     ncomp = lu.shape[0]
     nemline = emline_grid1.shape[2]
-    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
+    nebline = np.zeros((ncomp,nemline,ndat))
 
     # Edges of Z, U and nH grids
     zmet_str = c.zmet_str[photmod]
@@ -469,7 +469,7 @@ def get_lines_feltre16(lu, lzgas, filenom, lnH=None,
     ndat = lu.shape[1]
     ncomp = lu.shape[0]
     nemline = emline_grid1.shape[2]
-    nebline = np.zeros((ncomp,nemline,ndat)); nebline.fill(c.notnum)
+    nebline = np.zeros((ncomp,nemline,ndat))
 
     # Edges of Z, U and nH grids
     zmet_str = c.zmet_str[photmod]
