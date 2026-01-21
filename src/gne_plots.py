@@ -1459,16 +1459,16 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
         OIII = OIII[ind]
         SII = SII[ind]
     
-        O3Hb =np.log10(OIII) - np.log10(Hb)
-        N2Ha =np.log10(NII) - np.log10(Ha)
-        S2Ha =np.log10(SII) - np.log10(Ha)
+        O3Hb = np.log10(OIII) - np.log10(Hb)
+        N2Ha = np.log10(NII) - np.log10(Ha)
+        S2Ha = np.log10(SII) - np.log10(Ha)
 
         if ismagr:
             mag_r = magr[ind]
         if ismagk:
             mag_k = magk[ind]
-    
-        sel = np.copy(ind)
+
+        sel = (np.arange(len(O3Hb)),)
         # Add further cuts if adequate
         if redshift <= 0.2:
             flux = 2e-16 # erg/s/cm^2 Favole+2024
@@ -1482,7 +1482,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
                 sel = np.where((Ha> Lmin) & (Hb> Lmin) &
                                (OIII> Lmin) & (NII> Lmin) &
                                (SII> Lmin))
-        elif 0.7 <= redshift <= 0.9:            
+        elif 0.7 <= redshift <= 0.9:
             flux = 1e-16  # erg/s/cm^2 Kashino+2019
             Lmin = flux2L(flux,redshift) #erg/s
             
@@ -1498,15 +1498,15 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
                 sel = np.where((Ha> Lmin) & (mag_k<23.5))
             else:
                 sel = np.where(Ha > Lmin)
-                
+            
         if (np.shape(sel)[1]<1):
             continue
         seltot = seltot + np.shape(sel)[1]
-                
+
         # Model spectral line ratios
         yy = O3Hb[sel] #O3/Hb
         cha = Halpha_ratio[sel]
-        
+
         xx = N2Ha[sel] #N2/Ha
         axn.scatter(xx,yy, c=cha,s=50, marker='o', cmap=cmap)
 
@@ -1524,9 +1524,10 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     sm.set_array(chatot)    
     cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
     if AGN:
-        collabel = r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'
+        collabel = (r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'+
+                    f' (z={redshift:.1f})')
     else:
-        collabel = r'$L_{\rm H_{\alpha}}$'
+        collabel = r'$L_{\rm H_{\alpha}}$'+f' (z={redshift:.1f})'
     cbar.set_label(collabel,rotation=270,labelpad=60)        
 
     if verbose:
@@ -1538,8 +1539,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
             magmsg = '(K mag. used for selection)'
         else:
             magmsg = ''
-        print('    {} gal. for BPT plots at z={} {}\n'.format(
-            seltot,redshift,magmsg))
+        print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
 
     for ii, bpt in enumerate(['NII','SII']):
         # Lines
@@ -1769,7 +1769,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             if len(indy[0]) > 0:
                 logy = np.log10(y[indy])
                 ax.plot(x[indy], logy, 'r:',
-                        label='Intrinsic (z='+str(redshift)+')')
+                        label=f'Intrinsic (z={redshift:.1f})')
 
         if att:
             # Plot dust-attenuated LF (solid line)

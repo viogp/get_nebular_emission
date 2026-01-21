@@ -440,7 +440,21 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     neblines = np.zeros((nlines, ncomp, ngal))
     for i, line in enumerate(lnames):
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
-    if attmod != 'ratios':
+    if attmod == 'ratios':
+        rr = 'ratio_'
+        ff = h5py.File(infile, 'r')
+        fkeys = ff['data'].keys()
+        att_rlines = [name.replace(rr, '')
+                      for name in fkeys if name.startswith(rr)]
+        if not att_rlines:
+            ff.close()
+            if verbose: print('WARNING: No attenuation calculation, as no line ratios, '+rr+'*, found in '+infile)
+            return
+        # Read the ratios into a dictionary
+        att_ratios= {rr+name: ff['data/'+rr+name][:]
+                     for name in att_rlines}
+        ff.close()     
+    else: 
         mgasr_type = io.decode_string_list(header.attrs['mgasr_type'])
 
         lzgas = f[group+'/lz_sfr'][:]  # log10(Z_cold_gas)
@@ -477,10 +491,13 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             print('                Possible ones= {}'.format(c.attmods))
         sys.exit()
     elif attmod == 'ratios':
-        print('Work in progress: Ratios not checked')
-        # Read ratios or attenuation coeffs: coeff = L_att/L_int
-    #    att_ratios = att_config.get('ratios')
-    #    att_rlines = att_config.get('rlines')
+        print(c.line_names[photmod_sfr],att_rlines)
+        #find out with 'coeff' to change for values' and what to do w AGN
+        print(np.shape(coeff),np.shape(att_ratios['ratio_Halpha'])); exit()
+        #coeff[ii] = att_rlines ??? 
+        #if AGN:
+            #coeff_agn[ii] = att_rlines ???
+        print('Ratios to coeffs'); exit()
     else:
         Rv = io.get_param(att_config, 'Rv', c.Rv)
         costheta = io.get_param(att_config, 'costheta', c.costheta) 
@@ -519,7 +536,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         ind_agn = (coeff_agn > c.notnum)
 
     # Extra gas attenuation on top of the stellar one
-    if line_att:
+    if line_att and attmod != 'ratios':
         f = get_f_saito20(zz)
         coeff[ind] = coeff[ind]/f
         if AGN:

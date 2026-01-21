@@ -18,7 +18,7 @@ import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False            # If True: use only the first 50 elements
-get_emission_lines = False # Obtain nebular emission lines
+get_emission_lines = True # Obtain nebular emission lines
 get_attenuation = True
 get_flux = False
 plot_tests = True
@@ -37,8 +37,12 @@ outpath = None
 # Star formation rate (SFR) or 12+log(O/H)
 # Mean metallicity of the cold gas (Z).
 subvols = 2
-root = 'data/example_data/iz61/ivol'
-endf   = '/ex.hdf5'
+#root = 'data/example_data/iz61/ivol'
+#endf   = '/ex.hdf5'
+
+#Laptop data
+root = '/home/violeta/buds/emlines/gp20data/iz39/ivol'
+endf = '/gne_input.hdf5'
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -199,8 +203,9 @@ att_config = {'Rv': None, 'albedo': None, 'costheta': None}
 #    The calculation uses already available attenuation coefficients.
 #    att_ratios should contain the location of these coefficients, and
 #    the names of the lines with available ratios are in att_rlines.
-#    Example for attmod = 'ratios'
-#att_config = {'ratios': [31,32,33,34,35,36,36], 'rlines': ['Halpha','Hbeta','NII6584','OII3727','OIII5007','SII6717','SII6731'] }
+#    Example for
+#attmod = 'ratios'
+#att_config = ['Halpha', 'Hbeta', 'NII6583', 'OII3727', 'OIII5007', 'SII6716']
 
 ####################################################
 ########  Redshift evolution parameters  ###########
@@ -224,13 +229,16 @@ root_z0 = None
 extra_params_names = ['type','mh','xgal','ygal','zgal',
                       'vxgal','vygal','vzgal',
                       'magK','magR','M_SMBH']
-extra_params_labels = extra_params_names
 extra_params = ['data/type','data/mhhalo',
                 'data/xgal','data/ygal','data/zgal',
                 'data/vxgal','data/vygal','data/vzgal',
                 'data/mag_UKIRT-K_o_tot_ext',
                 'data/mag_SDSSz0.1-r_o_tot_ext',
                 'data/M_SMBH']
+if attmod == 'ratios':
+    extra_params_names.append('ratio_'+att_config)
+    extra_params.append('data/ratio_'+att_config)
+extra_params_labels = extra_params_names
 
 ### SELECTION CRITERIA ###
 # Cuts can be made on the input file
