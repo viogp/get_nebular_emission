@@ -442,18 +442,15 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         neblines[i, :, :] = f[group+'/'+line+'_sfr'][:]
     if attmod == 'ratios':
         rr = 'ratio_'
-        ff = h5py.File(infile, 'r')
-        fkeys = ff['data'].keys()
+        fkeys = f['data'].keys()
         att_rlines = [name.replace(rr, '')
                       for name in fkeys if name.startswith(rr)]
         if not att_rlines:
-            ff.close()
             if verbose: print('WARNING: No attenuation calculation, as no line ratios, '+rr+'*, found in '+infile)
             return
         # Read the ratios into a dictionary
-        att_ratios= {rr+name: ff['data/'+rr+name][:]
+        att_ratios= {rr+name: f['data/'+rr+name][:]
                      for name in att_rlines}
-        ff.close()     
     else: 
         mgasr_type = io.decode_string_list(header.attrs['mgasr_type'])
 
@@ -491,6 +488,16 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             print('                Possible ones= {}'.format(c.attmods))
         sys.exit()
     elif attmod == 'ratios':
+        first_value = next(iter(att_ratios.values()))
+        # Add components if attenuation ratios given for the whole
+        if first_value.ndim != 2 and coeff.ndim == 3:
+            neblines = np.sum(neblines, axis=1) 
+            coeff = np.full(neblines.shape,c.notnum)
+        print(c.line_names[photmod_sfr])
+        print(att_rlines)
+        if AGN:
+            print(neblines_agn.shape,coeff_agn.shape)
+        exit() ####here
         print(c.line_names[photmod_sfr],att_rlines)
         #find out with 'coeff' to change for values' and what to do w AGN
         print(np.shape(coeff),np.shape(att_ratios['ratio_Halpha'])); exit()
