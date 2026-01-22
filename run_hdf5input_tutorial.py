@@ -18,8 +18,8 @@ import h5py
 
 ### RUN the code with the given parameters and/or make plots
 testing = False            # If True: use only the first 50 elements
-get_emission_lines = False # Obtain nebular emission lines
-get_attenuation = False
+get_emission_lines = True # Obtain nebular emission lines
+get_attenuation = True
 get_flux = False
 plot_tests = True
 
@@ -197,15 +197,15 @@ line_att = False
 #    The calculation follows Favole et. al. 2020 and requires
 #    the above parameters: mgas_r, mgasr_type and r_type
 #    If None is passed, default parameters will be used
-#attmod = 'favole20'
-#att_config = {'Rv': None, 'albedo': None, 'costheta': None} 
+attmod = 'favole20'
+att_config = {'Rv': None, 'albedo': None, 'costheta': None} 
 # 'ratios'
 #    The calculation uses already available attenuation coefficients.
 #    att_ratios should contain the location of these coefficients, and
 #    the names of the lines with available ratios are in att_rlines.
 #    Example for
-attmod = 'ratios'
-att_config = ['Halpha', 'Hbeta', 'NII6583', 'OII3727', 'OIII5007', 'SII6716']
+#attmod = 'ratios'
+#att_config = ['Halpha', 'Hbeta', 'NII6583', 'OII3727', 'OIII5007', 'SII6716']
 
 ####################################################
 ########  Redshift evolution parameters  ###########

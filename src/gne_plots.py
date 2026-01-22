@@ -1620,8 +1620,11 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
+    # Input lines
+    line_names = ['Halpha', 'Hbeta', 'NII6584', 'OII3727',
+                  'OIII5007', 'SII6731', 'SII6717']
+
     # Define emission lines to plot and initialise LF arrays
-    line_names = ['Halpha', 'Hbeta', 'NII6584', 'OII3727', 'OIII5007', 'SII6731', 'SII6717']
     line_labels = [r'H$_{\alpha}$', r'H$_{\beta}$',
                    r'[OII]$\lambda\lambda 3727$', 
                    r'[OIII]$\lambda 5007$', r'[NII]$\lambda 6584$', 
@@ -1635,7 +1638,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     lhist = lbins + dl * 0.5
 
     # Initialise LF arrays
-    nlines = len(line_names)
+    nlines = len(line_labels)
     lf = np.zeros((nlines, len(lhist)))
     lf_att = np.zeros((nlines, len(lhist)))
 
@@ -1683,6 +1686,8 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
         f.close()
 
         # Combine luminosities if adequate
+        combined = {}
+        combined_att = {}
         line_mapping = {
             'Ha': ['Halpha'],
             'Hb': ['Hbeta'],
@@ -1691,48 +1696,23 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             'OIII': ['OIII5007'],
             'SII': ['SII6731', 'SII6717']
         }
-        print(line_mapping);exit()
-        
-        if AGN:
-            # Combine luminosities (SFR + AGN if available)
-            Ha = Ha_sfr + Ha_agn
-            Hb = Hb_sfr + Hb_agn
-            NII = NII_sfr + NII_agn
-            OII = OII_sfr + OII_agn
-            OIII = OIII_sfr + OIII_agn
-            SII = SII6731_sfr + SII6731_agn +\
-                SII6717_sfr + SII6717_agn
+
+        for out_name, in_lines in line_mapping.items():
+            arrays = [sfr_data[line] for line in in_lines]
+            if AGN:
+                arrays.extend([agn_data[line] for line in in_lines])
+            combined[out_name] = st.safe_sum_arrays(arrays)
+    
             if att:
-                Ha_att = Ha_sfr_att + Ha_agn_att
-                Hb_att = Hb_sfr_att + Hb_agn_att
-                NII_att = NII_sfr_att + NII_agn_att
-                OII_att = OII_sfr_att + OII_agn_att
-                OIII_att = OIII_sfr_att + OIII_agn_att
-                SII_att = SII6731_sfr_att + SII6731_agn_att +\
-                    SII6717_sfr_att + SII6717_agn_att
-        else:
-            Ha = Ha_sfr
-            Hb = Hb_sfr
-            NII = NII_sfr
-            OII = OII_sfr
-            OIII = OIII_sfr
-            SII = SII6731_sfr + SII6717_sfr
-            if att:
-                Ha_att = Ha_sfr_att
-                Hb_att = Hb_sfr_att
-                NII_att = NII_sfr_att
-                OII_att = OII_sfr_att
-                OIII_att = OIII_sfr_att
-                SII_att = SII6731_sfr_att + SII6717_sfr_att
-            
-        lums_int = [Ha, Hb, OII, OIII, NII, SII]
-        if att:
-            lums_att = [Ha_att, Hb_att, OII_att, OIII_att, NII_att, SII_att]
+                arrays_att = [sfr_data_att[line] for line in in_lines]
+                if AGN:
+                    arrays_att.extend([agn_data_att[line] for line in in_lines])
+                combined_att[out_name] = st.safe_sum_arrays(arrays_att)
 
         # Calculate histograms for each line
-        for iline in range(nlines):
+        for iline, line in enumerate(line_mapping.keys()):
             # Intrinsic luminosity function
-            lums = lums_int[iline]
+            lums = combined[line]
             ind = np.where(lums > 0) ###here more cuts like in bpt?
             if np.shape(ind)[1] > 0:
                 ll = np.log10(lums[ind])
@@ -1741,13 +1721,13 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
 
             if att:
                 # Dust attenuated luminosity function
-                lums = lums_att[iline]
+                lums = combined_att[line]
                 ind = np.where(lums > 0) ###here more cuts like in bpt?
                 if np.shape(ind)[1] > 0:
                     ll = np.log10(lums[ind])
                     H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
                     lf_att[iline, :] += H
-                    
+
     # Normalize by bin size and volume
     lf = lf / dl / total_volume
     if att:
