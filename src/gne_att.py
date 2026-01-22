@@ -11,6 +11,7 @@ import numpy as np
 import src.gne_io as io
 import src.gne_const as c
 import sys
+import re
 from src.gne_cosmology import emission_line_flux
 
 def get_f_saito20(z):
@@ -402,6 +403,46 @@ def att_favole20(wavelengths,lzgas,lmgas,hgas,Rv=c.Rv,costheta=c.costheta,
     return coeff                                          
 
 
+def find_line_index(line, line_names):
+    """
+    Find the index of a line in line_names, allowing for ±1 in the numeric part.
+    
+    Parameters:
+    -----------
+    line : str
+        Line name to find (e.g., 'NII6583', 'SII6716')
+    line_names : array-like
+        List of line names to search in
+    
+    Returns:
+    --------
+    int or None
+        Index of matching line, or None if not found
+    """   
+    # Try exact match
+    for i, name in enumerate(line_names):
+        if line == name:
+            return i
+    
+    # Extract names with letters and numbers
+    match = re.match(r'([A-Za-z]+)(\d+)', line)
+    if not match: 
+        return None    
+    prefix = match.group(1)
+    number = int(match.group(2))
+
+    # Search for match with ±1 tolerance
+    for i, name in enumerate(line_names):
+        name_match = re.match(r'([A-Za-z]+)(\d+)', name)
+        if name_match:
+            name_prefix = name_match.group(1)
+            name_number = int(name_match.group(2))
+            
+            if prefix == name_prefix and abs(number - name_number) <= 1:
+                return i   
+    return None
+
+
 def gne_att(infile, outpath=None, attmod='cardelli89',
             line_att=None,att_config=None,verbose=True):
     '''
@@ -493,8 +534,15 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         if first_value.ndim != 2 and coeff.ndim == 3:
             neblines = np.sum(neblines, axis=1) 
             coeff = np.full(neblines.shape,c.notnum)
+
+        for line in att_rlines:
+            ii = find_line_index(line, c.line_names[photmod_sfr])
+            if ii is not None:
+                print(att_ratios[line],coeff.shape)
+            exit()
+                #coeff[ii,:] = att_
         print(c.line_names[photmod_sfr])
-        print(att_rlines)
+        print(att_rlines) ###here
         if AGN:
             print(neblines_agn.shape,coeff_agn.shape)
         exit() ####here
