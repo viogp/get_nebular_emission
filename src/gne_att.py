@@ -529,30 +529,49 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             print('                Possible ones= {}'.format(c.attmods))
         sys.exit()
     elif attmod == 'ratios':
-        first_value = next(iter(att_ratios.values()))
         # Add components if attenuation ratios given for the whole
+        first_value = next(iter(att_ratios.values()))
         if first_value.ndim != 2 and coeff.ndim == 3:
             neblines = np.sum(neblines, axis=1) 
             coeff = np.full(neblines.shape,c.notnum)
 
+        # Assign ratios to coeff matrix, adequately
         for line in att_rlines:
             ii = find_line_index(line, c.line_names[photmod_sfr])
             if ii is not None:
-                print(att_ratios[line],coeff.shape)
-            exit()
-                #coeff[ii,:] = att_
-        print(c.line_names[photmod_sfr])
-        print(att_rlines) ###here
+                coeff[ii,:] = att_ratios[rr+line]
+
+        # Assign ratios to coeff matrix, adequately
+        valid_lnames = []
+        for line in att_rlines:
+            ii = find_line_index(line, lnames)
+            if ii is not None:
+                coeff[ii,:] = att_ratios[rr+line]
+                valid_lnames.append(lnames[ii])
+
+        # Keep only valid lines
+        valid_indices = np.array([i for i, line in enumerate(lnames)
+                                  if line in valid_lnames])
+        lnames = lnames[valid_indices]
+        neblines = neblines[valid_indices] # Modifies 1st axis with lines
+        coeff = coeff[valid_indices] # Modiies 1st axis with lines
+                
         if AGN:
-            print(neblines_agn.shape,coeff_agn.shape)
-        exit() ####here
-        print(c.line_names[photmod_sfr],att_rlines)
-        #find out with 'coeff' to change for values' and what to do w AGN
-        print(np.shape(coeff),np.shape(att_ratios['ratio_Halpha'])); exit()
-        #coeff[ii] = att_rlines ??? 
-        #if AGN:
-            #coeff_agn[ii] = att_rlines ???
-        print('Ratios to coeffs'); exit()
+            valid_lnames = []
+            for line in att_rlines:
+                ii = find_line_index(line, lnames_agn)
+                if ii is not None:
+                    #print(line, ii, min(coeff[ii,:]),max(coeff[ii,:])) ###here to remove
+                    coeff_agn[ii,:] = att_ratios[rr+line]
+                    #print(min(coeff[ii,:]),max(coeff[ii,:])) ###here to remove
+                    valid_lnames.append(lnames_agn[ii])
+
+            # Keep only valid lines
+            valid_indices = np.array([i for i, line in enumerate(lnames_agn)
+                                      if line in valid_lnames])
+            lnames_agn = lnames_agn[valid_indices]
+            neblines_agn = neblines_agn[valid_indices] # Modify first axis with lines
+            coeff_agn = coeff_agn[valid_indices] # Modify first axis with lines
     else:
         Rv = io.get_param(att_config, 'Rv', c.Rv)
         costheta = io.get_param(att_config, 'costheta', c.costheta) 
@@ -607,7 +626,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
     else:
         neblines_att[ind] = neblines[ind]*(10**(-0.4*coeff[ind]))
     lnames_att = [line + '_sfr_att' for line in lnames]
-    labels = np.full(np.shape(lnames),'erg s^-1')
+    labels = np.full(np.shape(lnames_att),'erg s^-1')
     io.write_data(lfile,group=group,params=neblines_att,
                   params_names=lnames_att,params_labels=labels)
 
@@ -619,7 +638,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             neblines_agn_att[ind_agn] = neblines_agn[ind_agn]*(
                 10**(-0.4*coeff_agn[ind_agn]))
         lnames_att = [line + '_agn_att' for line in lnames_agn]
-        labels = np.full(np.shape(lnames_agn),'erg s^-1')
+        labels = np.full(np.shape(lnames_att),'erg s^-1')
 
         io.write_data(lfile,group=group_agn,params=neblines_agn_att,
                       params_names=lnames_att,params_labels=labels)
