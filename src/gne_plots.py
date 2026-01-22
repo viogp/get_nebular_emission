@@ -2063,12 +2063,12 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     #    make_gridplots() ###here work in progress
     
     # Make NII and SII bpt plots
-    #bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
+    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
     # Make line LFs
     lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
 
     # Cumulative numbers with flux limits (if possible) 
-    #ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
+    ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
     
     return

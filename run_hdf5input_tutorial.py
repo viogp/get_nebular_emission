@@ -20,7 +20,7 @@ import h5py
 testing = False            # If True: use only the first 50 elements
 get_emission_lines = True # Obtain nebular emission lines
 get_attenuation = True
-get_flux = False
+get_flux = True
 plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
@@ -37,12 +37,12 @@ outpath = None
 # Star formation rate (SFR) or 12+log(O/H)
 # Mean metallicity of the cold gas (Z).
 subvols = 2
-#root = 'data/example_data/iz61/ivol'
-#endf   = '/ex.hdf5'
+root = 'data/example_data/iz61/ivol'
+endf   = '/ex.hdf5'
 
 #Laptop data
-root = '/home/violeta/buds/emlines/gp20data/iz39/ivol'
-endf = '/gne_input.hdf5'
+#root = '/home/violeta/buds/emlines/gp20data/iz39/ivol'
+#endf = '/gne_input.hdf5'
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -197,15 +197,15 @@ line_att = False
 #    The calculation follows Favole et. al. 2020 and requires
 #    the above parameters: mgas_r, mgasr_type and r_type
 #    If None is passed, default parameters will be used
-attmod = 'favole20'
-att_config = {'Rv': None, 'albedo': None, 'costheta': None} 
+#attmod = 'favole20'
+#att_config = {'Rv': None, 'albedo': None, 'costheta': None} 
 # 'ratios'
 #    The calculation uses already available attenuation coefficients.
 #    att_ratios should contain the location of these coefficients, and
 #    the names of the lines with available ratios are in att_rlines.
 #    Example for
-#attmod = 'ratios'
-#att_config = ['Halpha', 'Hbeta', 'NII6583', 'OII3727', 'OIII5007', 'SII6716']
+attmod = 'ratios'
+att_config = ['Halpha', 'Hbeta', 'NII6583', 'OII3727', 'OIII5007', 'SII6716']
 
 ####################################################
 ########  Redshift evolution parameters  ###########
