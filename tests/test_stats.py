@@ -1,4 +1,4 @@
-#python -m unittest tests/test_stats.py 
+# python -m unittest tests/test_stats.py 
 
 import unittest
 import numpy as np
@@ -97,7 +97,8 @@ class TestPredict(unittest.TestCase):
         a = np.zeros((2,3))
         b = st.ensure_2d(a)
         self.assertEqual(np.shape(b),(2,3))        
-    
+
+        
     def test_components2tot(self):
         # Test data with one components
         ncomp = 1; xx = np.zeros((3,ncomp))
@@ -119,6 +120,18 @@ class TestPredict(unittest.TestCase):
         vals = st.components2tot(xx, log10input=False)
         np.testing.assert_allclose(vals,expected, atol=0.001)
 
+        
+    def test_safe_sum(self):
+        arrays = [np.array([1,2,c.notnum]),np.array([2,3,4])]
+        expected = np.array([3,5,4])
+        vals = st.safe_sum_arrays(arrays)
+        np.testing.assert_allclose(vals,expected, atol=0.001)
+
+        arrays = [np.array([1,2,c.notnum]),np.array([2,3,c.notnum])]
+        expected = np.array([3,5,c.notnum])
+        vals = st.safe_sum_arrays(arrays)
+        np.testing.assert_allclose(vals,expected, atol=0.001)        
+                
     def test_romberg(self):
         expected = 0.5
         val = st.romberg(func,0,1)

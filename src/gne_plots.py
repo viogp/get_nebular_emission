@@ -1621,6 +1621,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
     # Define emission lines to plot and initialise LF arrays
+    line_names = ['Halpha', 'Hbeta', 'NII6584', 'OII3727', 'OIII5007', 'SII6731', 'SII6717']
     line_labels = [r'H$_{\alpha}$', r'H$_{\beta}$',
                    r'[OII]$\lambda\lambda 3727$', 
                    r'[OIII]$\lambda 5007$', r'[NII]$\lambda 6584$', 
@@ -1634,10 +1635,10 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     lhist = lbins + dl * 0.5
 
     # Initialise LF arrays
-    nlines = len(line_labels)
+    nlines = len(line_names)
     lf = np.zeros((nlines, len(lhist)))
     lf_att = np.zeros((nlines, len(lhist)))
-    
+
     # Read data from each subvolume
     for ivol in range(subvols):
         filenom = root + str(ivol) + endf #; print(filenom)
@@ -1646,42 +1647,52 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
         # Read SF information from file
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
-        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
-        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
-        NII_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
-        OII_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
-        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
-        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
-        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)        
+
+        ldims = f['sfr_data/Halpha_sfr'][:].ndim
+        if ldims > 1:
+            sfr_data = {line: np.sum(f[f'sfr_data/{line}_sfr'], axis=0)
+                        for line in line_names}
+        else:
+            sfr_data = {line: f[f'sfr_data/{line}_sfr'][:]
+                        for line in line_names}
 
         if att:
-            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att'],axis=0)
-            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att'],axis=0)
-            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att'],axis=0)
-            OII_sfr_att = np.sum(f['sfr_data/OII3727_sfr_att'],axis=0)
-            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att'],axis=0)
-            SII6731_sfr_att = np.sum(f['sfr_data/SII6731_sfr_att'],axis=0)
-            SII6717_sfr_att = np.sum(f['sfr_data/SII6717_sfr_att'],axis=0)        
+            # Initialize 
+            ngal = sfr_data[line_names[0]].shape[0]
+            sfr_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
 
+            for line in line_names: # Fill in available data
+                key = f'sfr_data/{line}_sfr_att'
+                if key in f:
+                    ldims = f[key].ndim
+                    if ldims > 1:
+                        sfr_data_att[line] = np.sum(f[key], axis=0)
+                    else:
+                        sfr_data_att[line] = f[key][:]
         if AGN:
             # Read AGN information if it exists
-            Ha_agn = f['agn_data/Halpha_agn'][:]
-            Hb_agn = f['agn_data/Hbeta_agn'][:]
-            OII_agn = f['agn_data/OII3727_agn'][:]
-            OIII_agn = f['agn_data/OIII5007_agn'][:]
-            NII_agn = f['agn_data/NII6584_agn'][:]
-            SII6717_agn = f['agn_data/SII6717_agn'][:]
-            SII6731_agn = f['agn_data/SII6731_agn'][:]
+            agn_data = {line: f[f'agn_data/{line}_agn'][:]
+                        for line in line_names}
             if att:
-                Ha_agn_att = f['agn_data/Halpha_agn_att'][:]
-                Hb_agn_att = f['agn_data/Hbeta_agn_att'][:]
-                OII_agn_att = f['agn_data/OII3727_agn_att'][:]
-                OIII_agn_att = f['agn_data/OIII5007_agn_att'][:]
-                NII_agn_att = f['agn_data/NII6584_agn_att'][:]
-                SII6717_agn_att = f['agn_data/SII6717_agn_att'][:]
-                SII6731_agn_att = f['agn_data/SII6731_agn_att'][:]
+                ngal = agn_data[line_names[0]].shape[0]
+                agn_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
+                for line in line_names: # Fill in available data
+                    key = f'agn_data/{line}_agn_att'
+                    if key in f:
+                        agn_data_att[line] = f[key][:]
         f.close()
 
+        # Combine luminosities if adequate
+        line_mapping = {
+            'Ha': ['Halpha'],
+            'Hb': ['Hbeta'],
+            'NII': ['NII6584'],
+            'OII': ['OII3727'],
+            'OIII': ['OIII5007'],
+            'SII': ['SII6731', 'SII6717']
+        }
+        print(line_mapping);exit()
+        
         if AGN:
             # Combine luminosities (SFR + AGN if available)
             Ha = Ha_sfr + Ha_agn
@@ -2072,12 +2083,12 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     #    make_gridplots() ###here work in progress
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
+    #bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
 
     # Make line LFs
     lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
 
     # Cumulative numbers with flux limits (if possible) 
-    ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
+    #ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
     
     return

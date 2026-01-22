@@ -561,9 +561,7 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
             for line in att_rlines:
                 ii = find_line_index(line, lnames_agn)
                 if ii is not None:
-                    #print(line, ii, min(coeff[ii,:]),max(coeff[ii,:])) ###here to remove
                     coeff_agn[ii,:] = att_ratios[rr+line]
-                    #print(min(coeff[ii,:]),max(coeff[ii,:])) ###here to remove
                     valid_lnames.append(lnames_agn[ii])
 
             # Keep only valid lines
