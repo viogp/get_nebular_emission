@@ -424,6 +424,24 @@ def get_err2Pk(k, Pk, dk, N, vol):
     return err2Pk
 
 
+def safe_sum_arrays(arrays, notnum=c.notnum):
+    """
+    Sum arrays, treating notnum as zero
+    but preserving notnum if all inputs are notnum.
+    """
+    result = np.zeros_like(arrays[0])
+    all_notnum = np.ones(len(result), dtype=bool)
+
+    for arr in arrays:
+        valid = arr > notnum
+        result[valid] = result[valid] + arr[valid]
+        # Add indexes that are notnum (not valid)
+        all_notnum = all_notnum & ~valid
+    
+    result[all_notnum] = notnum
+    return result
+
+
 def components2tot(comps, log10input=True):
     '''
     Calculate the total property as log10(sum(comps)),

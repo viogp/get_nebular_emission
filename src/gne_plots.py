@@ -1459,16 +1459,16 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
         OIII = OIII[ind]
         SII = SII[ind]
     
-        O3Hb =np.log10(OIII) - np.log10(Hb)
-        N2Ha =np.log10(NII) - np.log10(Ha)
-        S2Ha =np.log10(SII) - np.log10(Ha)
+        O3Hb = np.log10(OIII) - np.log10(Hb)
+        N2Ha = np.log10(NII) - np.log10(Ha)
+        S2Ha = np.log10(SII) - np.log10(Ha)
 
         if ismagr:
             mag_r = magr[ind]
         if ismagk:
             mag_k = magk[ind]
-    
-        sel = np.copy(ind)
+
+        sel = (np.arange(len(O3Hb)),)
         # Add further cuts if adequate
         if redshift <= 0.2:
             flux = 2e-16 # erg/s/cm^2 Favole+2024
@@ -1482,7 +1482,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
                 sel = np.where((Ha> Lmin) & (Hb> Lmin) &
                                (OIII> Lmin) & (NII> Lmin) &
                                (SII> Lmin))
-        elif 0.7 <= redshift <= 0.9:            
+        elif 0.7 <= redshift <= 0.9:
             flux = 1e-16  # erg/s/cm^2 Kashino+2019
             Lmin = flux2L(flux,redshift) #erg/s
             
@@ -1498,15 +1498,15 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
                 sel = np.where((Ha> Lmin) & (mag_k<23.5))
             else:
                 sel = np.where(Ha > Lmin)
-                
+            
         if (np.shape(sel)[1]<1):
             continue
         seltot = seltot + np.shape(sel)[1]
-                
+
         # Model spectral line ratios
         yy = O3Hb[sel] #O3/Hb
         cha = Halpha_ratio[sel]
-        
+
         xx = N2Ha[sel] #N2/Ha
         axn.scatter(xx,yy, c=cha,s=50, marker='o', cmap=cmap)
 
@@ -1524,9 +1524,10 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     sm.set_array(chatot)    
     cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
     if AGN:
-        collabel = r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'
+        collabel = (r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'+
+                    f' (z={redshift:.1f})')
     else:
-        collabel = r'$L_{\rm H_{\alpha}}$'
+        collabel = r'$L_{\rm H_{\alpha}}$'+f' (z={redshift:.1f})'
     cbar.set_label(collabel,rotation=270,labelpad=60)        
 
     if verbose:
@@ -1538,8 +1539,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
             magmsg = '(K mag. used for selection)'
         else:
             magmsg = ''
-        print('    {} gal. for BPT plots at z={} {}\n'.format(
-            seltot,redshift,magmsg))
+        print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
 
     for ii, bpt in enumerate(['NII','SII']):
         # Lines
@@ -1620,6 +1620,10 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
+    # Input lines
+    line_names = ['Halpha', 'Hbeta', 'NII6584', 'OII3727',
+                  'OIII5007', 'SII6731', 'SII6717']
+
     # Define emission lines to plot and initialise LF arrays
     line_labels = [r'H$_{\alpha}$', r'H$_{\beta}$',
                    r'[OII]$\lambda\lambda 3727$', 
@@ -1637,7 +1641,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     nlines = len(line_labels)
     lf = np.zeros((nlines, len(lhist)))
     lf_att = np.zeros((nlines, len(lhist)))
-    
+
     # Read data from each subvolume
     for ivol in range(subvols):
         filenom = root + str(ivol) + endf #; print(filenom)
@@ -1646,82 +1650,69 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
         # Read SF information from file
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
-        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
-        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
-        NII_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
-        OII_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
-        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
-        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
-        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)        
+
+        ldims = f['sfr_data/Halpha_sfr'][:].ndim
+        if ldims > 1:
+            sfr_data = {line: np.sum(f[f'sfr_data/{line}_sfr'], axis=0)
+                        for line in line_names}
+        else:
+            sfr_data = {line: f[f'sfr_data/{line}_sfr'][:]
+                        for line in line_names}
 
         if att:
-            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att'],axis=0)
-            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att'],axis=0)
-            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att'],axis=0)
-            OII_sfr_att = np.sum(f['sfr_data/OII3727_sfr_att'],axis=0)
-            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att'],axis=0)
-            SII6731_sfr_att = np.sum(f['sfr_data/SII6731_sfr_att'],axis=0)
-            SII6717_sfr_att = np.sum(f['sfr_data/SII6717_sfr_att'],axis=0)        
+            # Initialize 
+            ngal = sfr_data[line_names[0]].shape[0]
+            sfr_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
 
+            for line in line_names: # Fill in available data
+                key = f'sfr_data/{line}_sfr_att'
+                if key in f:
+                    ldims = f[key].ndim
+                    if ldims > 1:
+                        sfr_data_att[line] = np.sum(f[key], axis=0)
+                    else:
+                        sfr_data_att[line] = f[key][:]
         if AGN:
             # Read AGN information if it exists
-            Ha_agn = f['agn_data/Halpha_agn'][:]
-            Hb_agn = f['agn_data/Hbeta_agn'][:]
-            OII_agn = f['agn_data/OII3727_agn'][:]
-            OIII_agn = f['agn_data/OIII5007_agn'][:]
-            NII_agn = f['agn_data/NII6584_agn'][:]
-            SII6717_agn = f['agn_data/SII6717_agn'][:]
-            SII6731_agn = f['agn_data/SII6731_agn'][:]
+            agn_data = {line: f[f'agn_data/{line}_agn'][:]
+                        for line in line_names}
             if att:
-                Ha_agn_att = f['agn_data/Halpha_agn_att'][:]
-                Hb_agn_att = f['agn_data/Hbeta_agn_att'][:]
-                OII_agn_att = f['agn_data/OII3727_agn_att'][:]
-                OIII_agn_att = f['agn_data/OIII5007_agn_att'][:]
-                NII_agn_att = f['agn_data/NII6584_agn_att'][:]
-                SII6717_agn_att = f['agn_data/SII6717_agn_att'][:]
-                SII6731_agn_att = f['agn_data/SII6731_agn_att'][:]
+                ngal = agn_data[line_names[0]].shape[0]
+                agn_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
+                for line in line_names: # Fill in available data
+                    key = f'agn_data/{line}_agn_att'
+                    if key in f:
+                        agn_data_att[line] = f[key][:]
         f.close()
 
-        if AGN:
-            # Combine luminosities (SFR + AGN if available)
-            Ha = Ha_sfr + Ha_agn
-            Hb = Hb_sfr + Hb_agn
-            NII = NII_sfr + NII_agn
-            OII = OII_sfr + OII_agn
-            OIII = OIII_sfr + OIII_agn
-            SII = SII6731_sfr + SII6731_agn +\
-                SII6717_sfr + SII6717_agn
+        # Combine luminosities if adequate
+        combined = {}
+        combined_att = {}
+        line_mapping = {
+            'Ha': ['Halpha'],
+            'Hb': ['Hbeta'],
+            'NII': ['NII6584'],
+            'OII': ['OII3727'],
+            'OIII': ['OIII5007'],
+            'SII': ['SII6731', 'SII6717']
+        }
+
+        for out_name, in_lines in line_mapping.items():
+            arrays = [sfr_data[line] for line in in_lines]
+            if AGN:
+                arrays.extend([agn_data[line] for line in in_lines])
+            combined[out_name] = st.safe_sum_arrays(arrays)
+    
             if att:
-                Ha_att = Ha_sfr_att + Ha_agn_att
-                Hb_att = Hb_sfr_att + Hb_agn_att
-                NII_att = NII_sfr_att + NII_agn_att
-                OII_att = OII_sfr_att + OII_agn_att
-                OIII_att = OIII_sfr_att + OIII_agn_att
-                SII_att = SII6731_sfr_att + SII6731_agn_att +\
-                    SII6717_sfr_att + SII6717_agn_att
-        else:
-            Ha = Ha_sfr
-            Hb = Hb_sfr
-            NII = NII_sfr
-            OII = OII_sfr
-            OIII = OIII_sfr
-            SII = SII6731_sfr + SII6717_sfr
-            if att:
-                Ha_att = Ha_sfr_att
-                Hb_att = Hb_sfr_att
-                NII_att = NII_sfr_att
-                OII_att = OII_sfr_att
-                OIII_att = OIII_sfr_att
-                SII_att = SII6731_sfr_att + SII6717_sfr_att
-            
-        lums_int = [Ha, Hb, OII, OIII, NII, SII]
-        if att:
-            lums_att = [Ha_att, Hb_att, OII_att, OIII_att, NII_att, SII_att]
+                arrays_att = [sfr_data_att[line] for line in in_lines]
+                if AGN:
+                    arrays_att.extend([agn_data_att[line] for line in in_lines])
+                combined_att[out_name] = st.safe_sum_arrays(arrays_att)
 
         # Calculate histograms for each line
-        for iline in range(nlines):
+        for iline, line in enumerate(line_mapping.keys()):
             # Intrinsic luminosity function
-            lums = lums_int[iline]
+            lums = combined[line]
             ind = np.where(lums > 0) ###here more cuts like in bpt?
             if np.shape(ind)[1] > 0:
                 ll = np.log10(lums[ind])
@@ -1730,13 +1721,13 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
 
             if att:
                 # Dust attenuated luminosity function
-                lums = lums_att[iline]
+                lums = combined_att[line]
                 ind = np.where(lums > 0) ###here more cuts like in bpt?
                 if np.shape(ind)[1] > 0:
                     ll = np.log10(lums[ind])
                     H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
                     lf_att[iline, :] += H
-                    
+
     # Normalize by bin size and volume
     lf = lf / dl / total_volume
     if att:
@@ -1769,7 +1760,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
             if len(indy[0]) > 0:
                 logy = np.log10(y[indy])
                 ax.plot(x[indy], logy, 'r:',
-                        label='Intrinsic (z='+str(redshift)+')')
+                        label=f'Intrinsic (z={redshift:.1f})')
 
         if att:
             # Plot dust-attenuated LF (solid line)

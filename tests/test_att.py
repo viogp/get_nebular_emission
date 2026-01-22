@@ -39,5 +39,17 @@ class TestPredict(TestCase):
         assert result.shape == tau.shape
         assert np.all(np.isfinite(result))
 
+    def test_find_line_index(self):
+        line_names = ['OII3727','Hbeta']
+        ind = att.find_line_index('Hbeta',line_names)
+        self.assertEqual(1, ind)
+        ind = att.find_line_index('OII3726',line_names)
+        self.assertEqual(0, ind)
+        ind = att.find_line_index('OII3728',line_names)
+        self.assertEqual(0, ind)
+        ind = att.find_line_index('OII3730',line_names)
+        self.assertEqual(None, ind)
+
+        
 if __name__ == '__main__':
     unittest.main()
