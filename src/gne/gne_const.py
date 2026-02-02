@@ -1,8 +1,14 @@
+import os
 import numpy as np
 
 notnum    = -999.
 testlimit = 50
 eps       = 1e-10
+
+#-------------------Base directories
+repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+data_dir = os.path.join(repo_dir, 'data')
+obs_data_dir = os.path.join(data_dir, 'observational_data')
 
 #-------------------Solar constants
 Lbolsun = 3.826e33  # erg/s
@@ -69,8 +75,8 @@ xid_NLR_feltre16 = 0.5
 model_U_agn    = ['panuzzo03']
 
 photmods = ['gutkin16', 'feltre16']
-mod_lim = {'gutkin16': r"data/nebular_data/gutkin16_tables/limits_gutkin.txt",
-           'feltre16': r"data/nebular_data/feltre16_tables/limits_feltre.txt"}
+mod_lim = {'gutkin16': r"nebular_data/gutkin16_tables/limits_gutkin.txt",
+           'feltre16': r"nebular_data/feltre16_tables/limits_feltre.txt"}
 
 #--------------------------------------------
 #   Orsi et. al. 2014

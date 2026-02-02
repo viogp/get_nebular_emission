@@ -215,8 +215,9 @@ def find_line_index(line, line_names):
     return None
 
 
-def gne_att(infile, outpath=None, attmod='cardelli89',
-            line_att=None,att_config=None,verbose=True):
+def gne_att(infile, outpath=None,out_ending=None,
+            attmod='cardelli89',line_att=None,
+            att_config=None,verbose=True):
     '''
     Get the neccessary information to calculate
     dust-attenuated luminosities
@@ -227,6 +228,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
         Input file
     outpath : string
         Path to output, default is output/ 
+    out_ending : string
+        Name root for output file
     attmod : str
         Attenuation model ('cardelli89' or 'ratios')
     att_config : dict
@@ -237,7 +240,8 @@ def gne_att(infile, outpath=None, attmod='cardelli89',
        If True print out messages.
     '''
     # Add attenuation information to the line file
-    lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
+    lfile= io.get_outnom(infile,dirf=outpath,nomf=out_ending,
+                         verbose=verbose)
     nattrs = io.add2header(lfile,['attmod'],[attmod],verbose=verbose)
 
     # Get emission lines

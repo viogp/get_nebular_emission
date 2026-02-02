@@ -66,7 +66,7 @@ def create_dir(outdir):
     return True
 
 
-def get_outroot(root,ending,outpath=None,verbose=False):
+def get_outroot(snap,ending,outpath=None,verbose=False):
     '''
     Get path to output line data and the file root name
 
@@ -85,27 +85,28 @@ def get_outroot(root,ending,outpath=None,verbose=False):
 
     Returns
     -------
-    dirf, endf : string
-        Path and ending of output line data files
+    root, endf : string
+        Root and ending of output line data files
     '''
-
     endf = ending
     if ending.endswith('.txt'):
         endf = ending[:-4] + '.hdf5'
+    elif not ending.endswith('.hdf5'):
+        endf = ending + '.hdf5'
 
-    nom = os.path.splitext(root.split('iz')[-1])[0]
     if outpath is None:
-        dirf = 'output/iz' + nom
+        opath = os.path.join(c.repo_dir, 'output')
     else:
-        dirf = outpath + '/iz' + nom
-
-    if not glob.glob(dirf + '*'):
-        print('STOP: no adequate output directories {}'.format(dirf+'*')) 
+        opath = outpath
+    root = os.path.join(opath, 'iz' + str(snap), 'ivol')
+        
+    if not glob.glob(root + '*'):
+        print(f'STOP: no adequate output directories {root}*') 
         sys.exit()
 
     if verbose:
-        print(f'* Root to output: {dirf}')
-    return dirf, endf
+        print(f'* Root to output: {root}')
+    return root, endf
 
 
 def get_plotfile(root,ending,plot_type):
@@ -127,11 +128,12 @@ def get_plotfile(root,ending,plot_type):
     plotpath = root.split('ivol')[0]+'plots/'
     create_dir(plotpath)
 
-    nom = ending.split('.')[0].split('/')[-1]
+    nom = ending.split('.hdf5')[0]
+    if nom.startswith('lines_'):
+        nom = nom.split('lines_')[1]
+    
     plotfile = plotpath + plot_type + '_' + nom + '.pdf'
-
     return plotfile
-
 
 
 def get_outnom(filenom,dirf=None,nomf=None,verbose=False):
@@ -164,9 +166,10 @@ def get_outnom(filenom,dirf=None,nomf=None,verbose=False):
 
     if dirf is None:
         dirf = 'output'
-    dirf = dirf + '/iz' + afteriz + '/'
+
+    dirf = dirf.rsplit('/', 1)[0] + '/iz' + afteriz + '/'
     create_dir(dirf)
-    
+
     outfile = dirf + nom + '.hdf5'
     if verbose:
         print(f'* Output: {outfile}')

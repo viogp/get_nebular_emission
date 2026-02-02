@@ -862,7 +862,7 @@ def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
        If True print out messages.
     '''
     # Get redshift and model information from data
-    filenom = root+'0'+endf
+    filenom = os.path.join(root+'0',endf)
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -942,7 +942,7 @@ def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
 
     # Read data in each subvolume
     for ivol in range(subvols):
-        filenom = root+'0'+endf #; print(filenom); exit()
+        filenom = os.path.join(root+'0',endf) #; print(filenom); exit()
         f = h5py.File(filenom, 'r'); header = f['header']
 
         # Read information from file
@@ -1080,11 +1080,11 @@ def get_obs_bpt(redshift,bpt):
     '''
 
     xobs = -999.; yobs = -999.; obsdata = False
-    
+
     # Use different data sets for different redshifts
     if redshift <= 0.2:
         obsdata = True
-        obsfile = 'data/observational_data/favole2024.txt'
+        obsfile = os.path.join(c.obs_data_dir,'favole2024.txt')
         l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(15,9),unpack=True)
         xx, yy = [np.zeros(len(l1)) for i in range(2)]
         ind = np.where((l1>0.) & (l2>0.))
@@ -1105,12 +1105,12 @@ def get_obs_bpt(redshift,bpt):
     elif 1.45 <= redshift <= 1.75:
         obsdata = True
         if bpt=='NII':
-            obsfile = 'data/observational_data/NII_Kashino.txt'
+            obsfile = os.path.join(c.obs_data_dir,'NII_Kashino.txt')
             yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
             xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
                 
         elif bpt=='SII':
-            obsfile = 'data/observational_data/SII_Kashino.txt'
+            obsfile = os.path.join(c.obs_data_dir,'SII_Kashino.txt')
             yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
             xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
 
@@ -1321,7 +1321,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     '''
 
     # Get redshift and cosmology from data
-    filenom = root+'0'+endf
+    filenom = os.path.join(root+'0',endf)
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -1379,7 +1379,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     # Read data in each subvolume and add data to plots
     seltot = 0
     for ivol in range(subvols): ###here to go over subvols, not a range
-        filenom = root+str(ivol)+endf
+        filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
         
         # Read SF information from file
@@ -1587,7 +1587,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     '''
 
     # Get redshift and cosmology from data
-    filenom = root+'0'+endf
+    filenom = os.path.join(root+'0',endf)
     f = h5py.File(filenom, 'r') 
     header = f['header'] #; print(list(header.attrs.items()))
     redshift = header.attrs['redshift']
@@ -1644,7 +1644,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
 
     # Read data from each subvolume
     for ivol in range(subvols):
-        filenom = root + str(ivol) + endf #; print(filenom)
+        filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
 
         # Read SF information from file
@@ -1814,7 +1814,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     '''
 
     # Check if flux data exists in the file
-    filenom = root+'0'+endf
+    filenom = os.path.join(root+'0',endf)
     f = h5py.File(filenom, 'r') 
     required_flux_datasets = ['sfr_data/Halpha_sfr_flux','sfr_data/Hbeta_sfr_flux',
                               'sfr_data/NII6584_sfr_flux','sfr_data/OIII5007_sfr_flux']
@@ -1874,7 +1874,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
 
     # Read data from each subvolume
     for ivol in range(subvols):
-        filenom = root + str(ivol) + endf #; print(filenom)
+        filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
 
         # Read SF information from file
@@ -2032,19 +2032,19 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
     return
 
 
-def make_testplots(root,ending,snap,subvols=1,gridplots=False,
-                   outpath=None,verbose=True):
+def make_testplots(snap,ending,outpath=None,
+                   subvols=1,gridplots=False,verbose=True):
     '''
     Make test plots
     
     Parameters
     ----------
-    root : string
-       Path to input files
-    ending : string
-       End name of input files
     snap: integer
         Simulation snapshot number
+    out_ending : string
+       End name of input files
+    outpath : string
+       Path to input files
     subvols: integer
         Number of subvolumes to be considered
     outpath : string
@@ -2052,8 +2052,7 @@ def make_testplots(root,ending,snap,subvols=1,gridplots=False,
     verbose : boolean
        If True print out messages.
     '''
-
-    root, endf = io.get_outroot(root,ending,outpath=outpath,
+    root, endf = io.get_outroot(snap,ending,outpath=outpath,
                                 verbose=verbose)
 
     # U vs Z

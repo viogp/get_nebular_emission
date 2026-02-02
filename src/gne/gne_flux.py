@@ -119,7 +119,8 @@ def write_flux(luminosities,dataset,filenom):
     return
 
 
-def gne_flux(infile, outpath=None, line_names=None, verbose=True):
+def gne_flux(infile, outpath=None, out_ending=None,
+             line_names=None, verbose=True):
     '''
     Calculate fluxes from luminosities
     
@@ -129,13 +130,16 @@ def gne_flux(infile, outpath=None, line_names=None, verbose=True):
         Input file
     outpath : string
         Path to output, default is output/ 
+    out_ending : string
+        Name root for output file
     verbose : boolean
        If True print out messages.
     '''
     lnames = line_names
 
     # Read information from file
-    lfile= io.get_outnom(infile,dirf=outpath,verbose=verbose)
+    lfile= io.get_outnom(infile,dirf=outpath,nomf=out_ending,
+                         verbose=verbose)
     f = h5py.File(lfile, 'r') 
     header = f['header']
     photmod_sfr = header.attrs['photmod_sfr']

@@ -156,7 +156,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
                                  out_ending=out_ending,
                                  verbose=verbose)
-    print(outfile); exit()####here
+
     #----------------HII region calculation------------------------
     if verbose: print('SF:')        
     # Add relevant constants to header
@@ -209,15 +209,15 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
                                   IMF=IMF,model_nH_sfr=model_nH_sfr,
                                   model_U_sfr=model_U_sfr,verbose=verbose)
 
-    if verbose: print(' U and nH calculated.') 
-            
+    if verbose: print(' U and nH calculated.')             
     lu_o_sfr = np.copy(lu_sfr)
     lnH_o_sfr = np.copy(lnH_sfr)
     lzgas_o_sfr = np.copy(lzgas)
 
     # Obtain spectral emission lines from HII regions
     nebline_sfr = get_lines(lu_sfr.T,lzgas.T,outfile,lnH=lnH_sfr.T,
-                            photmod=photmod_sfr,origin='sfr',verbose=verbose)
+                            photmod=photmod_sfr,origin='sfr',
+                            verbose=verbose)
 
     # Change units into erg/s 
     if (photmod_sfr == 'gutkin16'):
@@ -230,7 +230,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if verbose:
         print(' Emission lines calculated.')
 
-    ### Write output
+    # Write output
     extra_param = io.read_data(infile,cut,
                                inputformat=inputformat,
                                params=extra_params,

@@ -5,12 +5,11 @@
 """
 import h5py
 import numpy as np
-import sys
+import os,sys
 import gne.gne_io as io
 import gne.gne_const as c
 import gne.gne_stats as st
 from gne.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
-
 
 def get_zfile(zmet_str, photmod='gutkin16'):
     '''
@@ -28,8 +27,9 @@ def get_zfile(zmet_str, photmod='gutkin16'):
     zfile : string
         Name of the model file with data for the given metallicity.
     '''
+    root = os.path.join(c.data_dir, 'nebular_data',
+                        photmod + '_tables', 'nebular_emission_Z')
 
-    root = 'data/nebular_data/' + photmod + '_tables/nebular_emission_Z'
     if len(zmet_str)<3:
         zmet_str = zmet_str+'0'
     zfile = root + zmet_str + '.txt'
@@ -70,7 +70,7 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
     '''
 
     try:
-        infile = c.mod_lim[photmod]
+        infile = os.path.join(c.data_dir,c.mod_lim[photmod])
     except KeyError:
         print('STOP (gne_photio.get_limits): the {}'.format(photmod) +
               ' is an unrecognised model in the dictionary mod_lim')
@@ -79,8 +79,8 @@ def get_limits(propname, photmod='gutkin16',verbose=True):
 
     # Check if the limits file exists:
     io.check_file(infile, verbose=verbose)
-    #print(infile)
 
+    # Properties
     prop = np.loadtxt(infile,dtype=str,comments='#',usecols=(0),unpack=True)
     prop = prop.tolist()
     if propname not in prop:
