@@ -2,9 +2,9 @@
 .. moduleauthor:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
 import numpy as np
-import src.gne_const as c
-import src.gne_io as io
-from src.gne_Z import get_lzgas
+import gne.gne_const as c
+import gne.gne_io as io
+from gne.gne_Z import get_lzgas
 
 def get_sfrdata(infile,cols,selection=None,
                 h0=None,units_h0=False, units_Gyr=False,

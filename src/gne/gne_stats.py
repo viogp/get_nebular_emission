@@ -9,7 +9,7 @@ Some useful functions
 """
 import sys
 import numpy as np
-import src.gne_const as c
+import gne.gne_const as c
 
 def percentiles(val, data, weights=None):
     """

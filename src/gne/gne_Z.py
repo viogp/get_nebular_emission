@@ -3,9 +3,9 @@
 .. contributions:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
 import numpy as np
-import src.gne_const as c
-import src.gne_stats as st
-import src.gne_io as io
+import gne.gne_const as c
+import gne.gne_stats as st
+import gne.gne_io as io
 
 def get_lzgas(zz,inoh=False):
     '''

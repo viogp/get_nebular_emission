@@ -8,8 +8,8 @@ import h5py
 from numpy.testing import assert_allclose
 import numpy as np
 import h5py
-import src.gne_io as io
-import src.gne_const as c
+import gne.gne_io as io
+import gne.gne_const as c
 
 opath = 'data/example_data/iz61/ivol0/'
 nom = 'ex'

@@ -6,9 +6,9 @@
 import sys
 import numpy as np
 import h5py
-import src.gne_const as c
-import src.gne_io as io
-import src.gne_stats as st
+import gne.gne_const as c
+import gne.gne_io as io
+import gne.gne_stats as st
 
 
 def surface_density_disc(R,MD,hD,profile='exponential',verbose=True):

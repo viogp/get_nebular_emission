@@ -3,8 +3,8 @@
 import unittest
 import numpy as np
 
-import src.gne_stats as st
-import src.gne_const as c
+import gne.gne_stats as st
+import gne.gne_const as c
 
 def func(x):
     return x

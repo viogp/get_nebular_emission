@@ -6,8 +6,8 @@ import numpy as np
 from numpy.testing import assert_allclose
 import os
 
-import src.gne_const as c
-import src.gne_plots as plt
+import gne.gne_const as c
+import gne.gne_plots as plt
 
 ex_root = 'output/iz61/ivol'
 ex_end = '/ex.hdf5'

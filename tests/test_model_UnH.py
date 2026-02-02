@@ -5,9 +5,9 @@ import unittest
 import os
 from unittest import TestCase
 import numpy as np
-import src.gne_io as io
-import src.gne_const as c
-import src.gne_model_UnH as unh
+import gne.gne_io as io
+import gne.gne_const as c
+import gne.gne_model_UnH as unh
 
 
 class TestPredict(TestCase):

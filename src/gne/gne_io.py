@@ -8,7 +8,7 @@ import sys
 import os
 import glob
 import numpy as np
-import src.gne_const as c
+import gne.gne_const as c
 
 def stop_if_no_file(infile):
     '''

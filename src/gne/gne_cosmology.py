@@ -55,8 +55,8 @@ Based upon the 'Cosmology Calculator' (Wright, 2006, PASP,
 
 import sys
 import numpy as np
-import src.gne_const as c
-from src.gne_stats import romberg
+import gne.gne_const as c
+from gne.gne_stats import romberg
 
 WM = None
 WV = None

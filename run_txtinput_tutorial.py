@@ -9,9 +9,9 @@ to also get the predicted attenuated luminosities.
 @authors: viogp, expox7
 """
 
-import src.gne_const as const
-from src.gne import gne, gne_att, gne_flux
-from src.gne_plots import make_testplots
+import gne.gne_const as const
+from gne.gne import gne, gne_att, gne_flux
+from gne.gne_plots import make_testplots
 
 ### RUN the code with the given parameters and/or make plots
 testing = False           # If True: use only the first 50 elements

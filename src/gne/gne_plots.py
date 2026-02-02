@@ -16,15 +16,15 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.offsetbox as moffbox
 
-import src.gne_const as c
-import src.gne_io as io
-import src.gne_stats as st
-from src.gne_stats import n_gt_x
-from src.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
-from src.gne_cosmology import set_cosmology
-from src.gne_flux import flux2L
-import src.gne_style
-plt.style.use(src.gne_style.style1)
+import gne.gne_const as c
+import gne.gne_io as io
+import gne.gne_stats as st
+from gne.gne_stats import n_gt_x
+from gne.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
+from gne.gne_cosmology import set_cosmology
+from gne.gne_flux import flux2L
+import gne.gne_style
+plt.style.use(gne.gne_style.style1)
 
 cmap = 'jet'
 n4contour = 1000

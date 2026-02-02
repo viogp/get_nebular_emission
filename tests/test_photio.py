@@ -6,9 +6,9 @@ from unittest import TestCase
 import numpy as np
 from numpy.testing import assert_allclose
 
-import src.gne_const as c
-import src.gne_io as io
-import src.gne_photio as ph
+import gne.gne_const as c
+import gne.gne_io as io
+import gne.gne_photio as ph
 
 class TestPredict(TestCase):
     decimals = 8

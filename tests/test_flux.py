@@ -5,8 +5,8 @@ import numpy as np
 from numpy.testing import assert_allclose
 from unittest.mock import patch
 
-import src.gne_cosmology as cosmo
-import src.gne_flux as fx
+import gne.gne_cosmology as cosmo
+import gne.gne_flux as fx
 
 class TestPredict(TestCase):
     def test_L2flux(self):

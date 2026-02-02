@@ -8,11 +8,11 @@ Created on Wed Apr 12 14:36:13 2023
 
 import h5py
 import numpy as np
-import src.gne_io as io
-import src.gne_const as c
+import gne.gne_io as io
+import gne.gne_const as c
 import sys
 import re
-from src.gne_cosmology import emission_line_flux
+from gne.gne_cosmology import emission_line_flux
 
 def get_f_saito20(z):
     '''

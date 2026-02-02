@@ -6,10 +6,10 @@
 import sys
 import numpy as np
 import h5py
-import src.gne_const as c
-import src.gne_io as io
-import src.gne_stats as st
-import src.gne_epsilon as e
+import gne.gne_const as c
+import gne.gne_io as io
+import gne.gne_stats as st
+import gne.gne_epsilon as e
 
 def get_alphaB(T):
     

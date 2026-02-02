@@ -58,19 +58,18 @@ Repository = "https://github.com/galform/get_nebular_emission"
 Issues = "https://github.com/galform/get_nebular_emission/issues"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
+where = ["src"]
+include = ["gne*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.txt", "*.rst", "*.dat"]
-"data" = ["*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["src/gne"]
 omit = ["tests/*"]
 
 [tool.coverage.report]

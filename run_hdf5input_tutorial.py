@@ -9,11 +9,11 @@ to also get the predicted attenuated luminosities.
 @authors: viogp
 """
 
-import src.gne_const as const
-from src.gne import gne
-from src.gne_att import gne_att
-from src.gne_flux import gne_flux
-from src.gne_plots import make_testplots
+import gne.gne_const as const
+from gne.gne import gne
+from gne.gne_att import gne_att
+from gne.gne_flux import gne_flux
+from gne.gne_plots import make_testplots
 import h5py
 
 ### RUN the code with the given parameters and/or make plots

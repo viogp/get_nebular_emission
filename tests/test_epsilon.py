@@ -2,8 +2,8 @@
 
 from unittest import TestCase
 import numpy as np
-import src.gne_const as c
-import src.gne_epsilon as e
+import gne.gne_const as c
+import gne.gne_epsilon as e
 
 class TestPredict(TestCase):
     atol = 1e-7

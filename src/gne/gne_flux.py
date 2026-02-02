@@ -5,9 +5,9 @@
 
 import h5py
 import numpy as np
-import src.gne_io as io
-import src.gne_const as c
-import src.gne_cosmology as cosmo
+import gne.gne_io as io
+import gne.gne_const as c
+import gne.gne_cosmology as cosmo
 
 def L2flux(luminosity,zz):
     """

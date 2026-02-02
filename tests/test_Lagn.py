@@ -4,8 +4,8 @@ from unittest import TestCase
 import numpy as np
 from numpy.testing import assert_allclose
 
-import src.gne_const as c
-import src.gne_Lagn as agn
+import gne.gne_const as c
+import gne.gne_Lagn as agn
 
 class TestPredict(TestCase):
     def test_Ledd(self):

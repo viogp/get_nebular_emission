@@ -6,10 +6,10 @@
 import h5py
 import numpy as np
 import sys
-import src.gne_io as io
-import src.gne_const as c
-import src.gne_stats as st
-from src.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
+import gne.gne_io as io
+import gne.gne_const as c
+import gne.gne_stats as st
+from gne.gne_cosmology import emission_line_flux, logL2flux, set_cosmology
 
 
 def get_zfile(zmet_str, photmod='gutkin16'):

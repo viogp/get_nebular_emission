@@ -5,15 +5,15 @@
 """
 import time
 import numpy as np
-import src.gne_io as io
-from src.gne_model_UnH import get_UnH_sfr, get_UnH_agn
-from src.gne_Z import correct_Z,get_zgasagn
-from src.gne_m_sfr import get_sfrdata
-from src.gne_Lagn import get_Lagn
-import src.gne_const as c
-from src.gne_stats import components2tot
-from src.gne_photio import get_lines, get_limits
-from src.gne_plots import make_testplots
+import gne.gne_io as io
+from gne.gne_model_UnH import get_UnH_sfr, get_UnH_agn
+from gne.gne_Z import correct_Z,get_zgasagn
+from gne.gne_m_sfr import get_sfrdata
+from gne.gne_Lagn import get_Lagn
+import gne.gne_const as c
+from gne.gne_stats import components2tot
+from gne.gne_photio import get_lines, get_limits
+from gne.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
         inputformat='hdf5',outpath=None,

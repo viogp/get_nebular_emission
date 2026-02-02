@@ -3,8 +3,8 @@
 .. contributions:: Violeta Gonzalez-Perez <violetagp@protonmail.com>
 """
 import numpy as np
-import src.gne_const as c
-from src.gne_io import read_data
+import gne.gne_const as c
+from gne.gne_io import read_data
 
 def get_Ledd(Mbh): # Eddington luminosity
     '''

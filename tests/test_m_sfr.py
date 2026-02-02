@@ -4,8 +4,8 @@ import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 
-import src.gne_const as c
-import src.gne_m_sfr as msf
+import gne.gne_const as c
+import gne.gne_m_sfr as msf
 
 #class TestPredict(unittest.TestCase):
         
