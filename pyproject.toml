@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "get_nebular_emission"
+version = "0.1.0"
+description = "Calculate the intensity of nebular emission lines from star forming HII regions and AGN narrow-line regions"
+readme = "README.rst"
+license = {text = "MIT"}
+requires-python = ">=3.5"
+authors = [
+    {name = "viogp"},
+]
+keywords = ["astronomy", "nebular emission", "spectral lines", "galaxies", "AGN"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+    "numpy",
+    "h5py",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+]
+plot = [
+    "matplotlib",
+]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "matplotlib",
+    "flake8",
+]
+
+[project.urls]
+Homepage = "https://github.com/galform/get_nebular_emission"
+Documentation = "https://get-nebular-emission.readthedocs.io"
+Repository = "https://github.com/galform/get_nebular_emission"
+Issues = "https://github.com/galform/get_nebular_emission/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.rst", "*.dat"]
+"data" = ["*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+]
