@@ -16,7 +16,7 @@ from gne.gne_photio import get_lines, get_limits
 from gne.gne_plots import make_testplots
 
 def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
-        inputformat='hdf5',outpath=None,
+        inputformat='hdf5',outpath=None,out_ending=None,
         units_h0=False,units_Gyr=False,units_L40h2=False,
         model_nH_sfr='kashino19',model_U_sfr='kashino19',
         photmod_sfr='gutkin16',nH_sfr=c.nH_sfr_cm3,
@@ -154,8 +154,9 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     outfile = io.generate_header(infile,redshift,snap,
                                  h0,omega0,omegab,lambda0,vol,mp,
                                  units_h0,outpath=outpath,
+                                 out_ending=out_ending,
                                  verbose=verbose)
-    
+    print(outfile); exit()####here
     #----------------HII region calculation------------------------
     if verbose: print('SF:')        
     # Add relevant constants to header

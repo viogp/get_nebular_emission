@@ -1,4 +1,4 @@
-#python -m unittest tests/test_io.py 
+# python -m unittest tests/test_io.py 
 
 import shutil
 import unittest
@@ -29,8 +29,11 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(dirf,'output/iz61/plots/uuu_ex.pdf')
 
     def test_outnom(self):
-        outf = io.get_outnom(txtfile,dirf=None,verbose=False)
+        outf = io.get_outnom(txtfile,verbose=False)
         self.assertEqual(outf,'output/iz61/ivol0/ex.hdf5')
+
+        outf = io.get_outnom(txtfile,nomf='outfile',verbose=False)
+        self.assertEqual(outf,'output/iz61/ivol0/outfile.hdf5')
 
         expath = 'uuu'
         outf = io.get_outnom(txtfile,dirf=expath,verbose=False)
@@ -100,7 +103,7 @@ class TestStringMethods(unittest.TestCase):
         hf.close()        
         shutil.rmtree(expath)
 
-
+####################################
 #    def test_read_mgas_hr(self):
 #        vb = False
 #        sel=[0,1]

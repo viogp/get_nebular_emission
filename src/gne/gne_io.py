@@ -134,7 +134,7 @@ def get_plotfile(root,ending,plot_type):
 
 
 
-def get_outnom(filenom,dirf=None,verbose=False):
+def get_outnom(filenom,dirf=None,nomf=None,verbose=False):
     '''
     Get output from a given filename
 
@@ -144,6 +144,8 @@ def get_outnom(filenom,dirf=None,verbose=False):
         Name of file
     dirf : string
         Path to output
+    nomf : string
+        Name root for output file
     verbose : boolean
         If True print out messages
 
@@ -152,9 +154,13 @@ def get_outnom(filenom,dirf=None,verbose=False):
     outfile : string
         Path to output file
     '''
-    path, nomf = filenom.rsplit('/', 1)
-    nom = nomf.split('.')[0]
+    path, nomf1 = filenom.rsplit('/', 1)
     afteriz = path.split('iz')[-1]
+
+    if nomf is None:
+        nom = nomf1.split('.')[0]
+    else:
+        nom = nomf
 
     if dirf is None:
         dirf = 'output'
@@ -162,7 +168,6 @@ def get_outnom(filenom,dirf=None,verbose=False):
     create_dir(dirf)
     
     outfile = dirf + nom + '.hdf5'
-
     if verbose:
         print(f'* Output: {outfile}')
     return outfile
@@ -262,7 +267,8 @@ def get_nheader(infile,firstchar=None):
 
 def generate_header(infile,redshift,snap,
                     h0,omega0,omegab,lambda0,vol,mp,
-                    units_h0=False,outpath=None,verbose=True):
+                    units_h0=False,outpath=None,
+                    out_ending=None,verbose=True):
     """
     Generate the header of the file with the line data
 
@@ -290,6 +296,8 @@ def generate_header(infile,redshift,snap,
         True if input units with h
     outpath : string
         Path to output
+    out_ending : string
+        Name for output file
     verbose : bool
         True for messages
  
@@ -300,7 +308,8 @@ def generate_header(infile,redshift,snap,
     """
 
     # Get the file name
-    filenom = get_outnom(infile,dirf=outpath,verbose=verbose)
+    filenom = get_outnom(infile,dirf=outpath,nomf=out_ending,
+                         verbose=verbose)
 
     # Change units if required
     if units_h0:
