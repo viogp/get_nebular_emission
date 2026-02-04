@@ -166,11 +166,11 @@ def get_outnom(filenom,dirf=None,nomf=None,verbose=False):
 
     if dirf is None:
         dirf = 'output'
+    #dirf = dirf.rsplit('/', 1)[0] + '/iz' + afteriz + '/'
+    root = os.path.join(dirf,'iz'+afteriz)
+    create_dir(root)
 
-    dirf = dirf.rsplit('/', 1)[0] + '/iz' + afteriz + '/'
-    create_dir(dirf)
-
-    outfile = dirf + nom + '.hdf5'
+    outfile = os.path.join(root, nom+'.hdf5')
     if verbose:
         print(f'* Output: {outfile}')
     return outfile

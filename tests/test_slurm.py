@@ -8,36 +8,44 @@ import shutil
 import gne.gne_const as c
 import gne.gne_slurm as su
 
+
 class TestSlurmUtilsHdf5(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up test fixtures before running tests in the class"""
         # Create a temporary directory in the system temp location
-        # This avoids conflicts with existing 'output/' directory
         cls.test_dir = tempfile.mkdtemp(prefix='gne_test_')
         
-        # Create a mock template file for testing
+        # Create a mock SLURM template file for testing
         cls.template_content = '''#!/bin/sh
 #SBATCH --job-name=JOB_NAME
 #SBATCH --output=output/JOB_NAME.out
 #SBATCH --error=output/JOB_NAME.err
 
-srun python -c "
-from src.gne import gne
-from src.gne_att import gne_att
-from src.gne_flux import gne_flux
-from src.gne_plots import make_testplots
+srun python -c '
+PARAM_CONTENT
+'
+'''
+        # Create a mock parameter file for testing
+        cls.param_content = '''import gne.gne_const as const
+from gne.gne import gne
 
-sim = 'SIM_NAME'
-snapshot = SNAP_NUM
-subvols_list = SUBVOLS_LIST
-verbose = VERBOSE
+verbose = True
+testing = False
+get_emission_lines = True
 
-get_emission_lines = GET_EMISSION
-get_attenuation = GET_ATTENUATION
-get_flux = GET_FLUX
-plot_tests = PLOT_TESTS
-"
+outpath = '/home/user/Data/Galform/SU1/'
+subvols = 2
+root = outpath+'iz87/ivol'
+endf = 'gne_input.hdf5'
+
+cutcols = ['data/Lbol_AGN']
+mincuts = [1e5]
+maxcuts = [None]
+
+for ivol in range(subvols):
+    infile = root+str(ivol)+'/'+endf
+    print(f"Processing {infile}")
 '''
         # Get the directory where slurm templates are expected
         cls.template_dir = c.slurm_temp_dir
@@ -56,6 +64,11 @@ plot_tests = PLOT_TESTS
         # Create test template
         with open(cls.taurus_template_path, 'w') as f:
             f.write(cls.template_content)
+        
+        # Create test parameter file
+        cls.param_file_path = os.path.join(cls.test_dir, 'run_gne_TestSim.py')
+        with open(cls.param_file_path, 'w') as f:
+            f.write(cls.param_content)
    
     @classmethod
     def tearDownClass(cls):
@@ -74,145 +87,118 @@ plot_tests = PLOT_TESTS
         elif os.path.exists(cls.taurus_template_path):
             os.remove(cls.taurus_template_path)
 
+    def test_extract_job_suffix_from_params(self):
+        """Test extraction of job suffix from parameter file"""
+        suffix = su.extract_job_suffix_from_params(self.param_file_path)
+        # Should extract 'Lbol_AGN' with '_min' since mincuts is not None
+        self.assertEqual(suffix, 'Lbol_AGN_min')
+
+    def test_extract_job_suffix_no_cuts(self):
+        """Test extraction when no cuts are defined"""
+        # Create a param file without cuts
+        no_cuts_file = os.path.join(self.test_dir, 'run_gne_NoCuts.py')
+        with open(no_cuts_file, 'w') as f:
+            f.write('''
+subvols = 2
+root = '/path/iz87/ivol'
+''')
+        suffix = su.extract_job_suffix_from_params(no_cuts_file)
+        self.assertEqual(suffix, 'nocut')
+
     def test_generate_job_name(self):
-        """Test job name generation with various subvolume configurations"""
-        # Single subvolume
-        job_name = su.generate_job_name('GP20SU_1', 87, [0])
-        self.assertEqual(job_name, 'gne_GP20SU_1_iz87_ivols0')
+        """Test job name generation with various configurations"""
+        # Single subvolume with auto suffix
+        job_name = su.generate_job_name(self.param_file_path, 87, [0])
+        self.assertEqual(job_name, 'gne_TestSim_iz87_iv0_Lbol_AGN_min')
         
-        # Two subvolumes
-        job_name = su.generate_job_name('GP20SU_1', 128, [0, 1])
-        self.assertEqual(job_name, 'gne_GP20SU_1_iz128_ivols0_1')
+        # Two subvolumes with auto suffix
+        job_name = su.generate_job_name(self.param_file_path, 128, [0, 1])
+        self.assertEqual(job_name, 'gne_TestSim_iz128_iv0_1_Lbol_AGN_min')
 
-        # Three subvolumes
-        job_name = su.generate_job_name('GP20SU_2', 104, [0, 1, 2])
-        self.assertEqual(job_name, 'gne_GP20SU_2_iz104_ivols0-2')
+        # Three subvolumes with auto suffix
+        job_name = su.generate_job_name(self.param_file_path, 104, [0, 1, 2])
+        self.assertEqual(job_name, 'gne_TestSim_iz104_iv0-2_Lbol_AGN_min')
         
-        # Many subvolumes
-        job_name = su.generate_job_name('GP20cosma', 39, list(range(64)))
-        self.assertEqual(job_name, 'gne_GP20cosma_iz39_ivols0-63')
-
-        job_name = su.generate_job_name('GP20UNIT1Gpc_fnl100', 97, [0])
-        self.assertEqual(job_name, 'gne_GP20UNIT1Gpc_fnl100_iz97_ivols0')
+        # With user-defined suffix
+        job_name = su.generate_job_name(self.param_file_path, 87, [0], job_suffix='custom')
+        self.assertEqual(job_name, 'gne_TestSim_iz87_iv0_custom')
 
     def test_get_slurm_template_valid(self):
         """Test reading a valid template file"""
         template = su.get_slurm_template('taurus')
         self.assertIsNotNone(template)
         self.assertIn('JOB_NAME', template)
-        self.assertIn('SIM_NAME', template)
-        self.assertIn('SNAP_NUM', template)
-        self.assertIn('SUBVOLS_LIST', template)
-        self.assertIn('VERBOSE', template)
-        self.assertIn('GET_EMISSION', template)
-        self.assertIn('GET_ATTENUATION', template)
-        self.assertIn('GET_FLUX', template)
-        self.assertIn('PLOT_TESTS', template)
+        self.assertIn('PARAM_CONTENT', template)
 
     def test_get_slurm_template_invalid(self):
         """Test that invalid HPC name causes sys.exit()"""
         with self.assertRaises(SystemExit):
             su.get_slurm_template('nonexistent_hpc')
 
+    def test_modify_param_file(self):
+        """Test modification of parameter file content"""
+        modified = su.modify_param_file(self.param_file_path, 128, [0, 1, 2, 3])
+
+        # Check subvols was modified
+        self.assertIn('subvols = 4', modified)
+        self.assertNotIn('subvols = 2', modified)
+        
+        # Check root path was modified with new snapshot
+        self.assertIn('iz128', modified)
+        self.assertNotIn('iz87', modified)
+
     def test_create_slurm_script(self):
-        """Test creating a SLURM script with placeholder substitution"""
+        """Test creating a SLURM script with parameter file embedding"""
         script_path, job_name = su.create_slurm_script(
-            'taurus', 'GP20SU_1', 87, [0, 1],
-            outdir=self.test_dir, verbose=True,
-            get_emission=True, get_attenuation=True,
-            get_flux=True, plot_tests=False
+            'taurus', self.param_file_path, 87, [0, 1],
+            outdir=self.test_dir, verbose=True
         )
         
         # Check returned values
-        self.assertEqual(job_name, 'gne_GP20SU_1_iz87_ivols0_1')
+        self.assertEqual(job_name, 'gne_TestSim_iz87_iv0_1_Lbol_AGN_min')
         self.assertTrue(script_path.endswith(f'submit_{job_name}.sh'))
         
         # Check file was created
         self.assertTrue(os.path.exists(script_path))
         
-        # Check placeholders were replaced
+        # Check content
         with open(script_path, 'r') as f:
             content = f.read()
         
-        self.assertIn('gne_GP20SU_1_iz87_ivols0_1', content)
-        self.assertIn('GP20SU_1', content)
-        self.assertIn('87', content)
-        self.assertIn('[0, 1]', content)
-        self.assertIn('verbose = True', content)
-        self.assertIn('get_emission_lines = True', content)
-        self.assertIn('get_attenuation = True', content)
-        self.assertIn('get_flux = True', content)
-        self.assertIn('plot_tests = False', content)
-        
-        # Ensure placeholders are NOT present
+        # Job name should be replaced
+        self.assertIn('gne_TestSim_iz87_iv0_1_Lbol_AGN_min', content)
         self.assertNotIn('JOB_NAME', content)
-        self.assertNotIn('SIM_NAME', content)
-        self.assertNotIn('SNAP_NUM', content)
-        self.assertNotIn('SUBVOLS_LIST', content)
-        self.assertNotIn('VERBOSE', content)
-        self.assertNotIn('GET_EMISSION', content)
-        self.assertNotIn('GET_ATTENUATION', content)
-        self.assertNotIn('GET_FLUX', content)
-        self.assertNotIn('PLOT_TESTS', content)
-
-    def test_create_slurm_script_default_outdir(self):
-        """Test creating a SLURM script with default output directory"""
-        # Use a subdirectory in test_dir to simulate 'output' behavior
-        # without touching the real 'output' directory
-        default_output = os.path.join(self.test_dir, 'output')
         
-        # Temporarily patch the default output directory behavior
-        # by creating a script with outdir=default_output
+        # Parameter content should be embedded
+        self.assertIn('get_emission_lines = True', content)
+        self.assertIn('subvols = 2', content)  # Modified for 2 subvols
+        self.assertNotIn('PARAM_CONTENT', content)
+
+    def test_create_slurm_script_with_custom_suffix(self):
+        """Test creating a SLURM script with custom job suffix"""
         script_path, job_name = su.create_slurm_script(
-            'taurus', 'TestSim', 50, [0],
-            outdir=default_output, verbose=False
+            'taurus', self.param_file_path, 90, [0],
+            outdir=self.test_dir, verbose=True,
+            job_suffix='lbol45'
         )
         
-        # Check file was created in the specified directory
-        self.assertTrue(os.path.exists(script_path))
-        self.assertTrue(script_path.startswith(default_output))
+        self.assertEqual(job_name, 'gne_TestSim_iz90_iv0_lbol45')
+
+    def test_create_slurm_script_invalid_param_file(self):
+        """Test creating a SLURM script with non-existent parameter file"""
+        with self.assertRaises(SystemExit):
+            su.create_slurm_script(
+                'taurus', 'nonexistent_file.py', 87, [0],
+                outdir=self.test_dir, verbose=True
+            )
 
     def test_create_slurm_script_invalid_hpc(self):
         """Test creating a SLURM script with invalid HPC -> sys.exit()"""
         with self.assertRaises(SystemExit):
             su.create_slurm_script(
-                'invalid_hpc', 'GP20SU_1', 87, [0],
+                'invalid_hpc', self.param_file_path, 87, [0],
                 outdir=self.test_dir, verbose=True
             )
-
-    def test_create_slurm_script_processing_flags(self):
-        """Test that processing flags are correctly substituted"""
-        # Test with all flags False
-        script_path, job_name = su.create_slurm_script(
-            'taurus', 'GP20SU_1', 87, [0],
-            outdir=self.test_dir, verbose=False,
-            get_emission=False, get_attenuation=False,
-            get_flux=False, plot_tests=False
-        )
-        
-        with open(script_path, 'r') as f:
-            content = f.read()
-        
-        self.assertIn('get_emission_lines = False', content)
-        self.assertIn('get_attenuation = False', content)
-        self.assertIn('get_flux = False', content)
-        self.assertIn('plot_tests = False', content)
-        
-        # Test with mixed flags
-        script_path2, _ = su.create_slurm_script(
-            'taurus', 'GP20SU_2', 90, [1, 2],
-            outdir=self.test_dir, verbose=True,
-            get_emission=True, get_attenuation=False,
-            get_flux=True, plot_tests=False
-        )
-        
-        with open(script_path2, 'r') as f:
-            content2 = f.read()
-        
-        self.assertIn('get_emission_lines = True', content2)
-        self.assertIn('get_attenuation = False', content2)
-        self.assertIn('get_flux = True', content2)
-        self.assertIn('plot_tests = False', content2)
 
     def test_submit_slurm_job_no_sbatch(self):
         """Test submit_slurm_job when sbatch is not available"""

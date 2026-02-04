@@ -5,43 +5,36 @@ verbose = True
 nvol = 2
 submit_jobs = False  # False to only generate scripts
 
-# Processing flags - what to run
-get_emission = True
-get_attenuation = False
-get_flux = False
-plot_tests = False
+# Parameter file to use as base (will modify subvols and root/snapshot)
+param_file = 'run_gne_SU1.py'
 
-# Galform in taurus
-taurus_sims_GP20 = [
-    #('GP20SU_1', [109, 104, 98, 90, 87, 128, 96, 78], list(range(nvol))),
-    ('GP20SU_1', [87, 128], list(range(nvol))),
-    #('GP20SU_2', [109, 104, 98, 90, 87], list(range(nvol))),
-    #('GP20UNIT1Gpc_fnl0', [98, 109, 87, 90, 104], [0] + list(range(3, nvol))),
-    #('GP20UNIT1Gpc_fnl0', [128,109,105,104,103,101,98,92,90,87,84,81,79,77], [1,2]),
-    #('GP20UNIT1Gpc_fnl100', [127, 108, 103, 97, 95, 89, 86, 77], [0]),
-    #('GP20UNIT1Gpc_fnl100', [108, 103, 97, 89, 86], list(range(1, nvol))),
+# Optional: user-defined suffix for job names
+# If None, suffix is derived from cutcols/mincuts/maxcuts in param_file
+job_suffix = None  # e.g., 'lbol45' or None
+
+# Simulations to process: list of (snapshot_list, subvols_list) tuples
+# The simulation name is already defined in the param_file's outpath/root
+taurus_runs = [
+    ([87, 128], list(range(nvol))),
+    #([109, 104, 98, 90, 87, 128, 96, 78], list(range(nvol))),
 ]
 
-# Galform in cosma
-cosma_sims_GP20 = [
-    ('GP20cosma', [39, 61], list(range(64)))
+# Galform in cosma - example
+cosma_runs = [
+    ([39, 61], list(range(64)))
 ]
 
-# Select which simulations to process
-simulations = taurus_sims_GP20
+# Select which runs to process
+runs = taurus_runs
 hpc = 'taurus'
 
 job_count = 0
-for sim, snaps, subvols in simulations:
+for snaps, subvols in runs:
     for snap in snaps:
         # Generate SLURM script
         script_path, job_name = create_slurm_script(
-            hpc, sim, snap, subvols, 
-            verbose=verbose,
-            get_emission=get_emission,
-            get_attenuation=get_attenuation,
-            get_flux=get_flux,
-            plot_tests=plot_tests
+            hpc, param_file, snap, subvols,
+            verbose=verbose, job_suffix=job_suffix
         )
         if verbose: 
             print(f'  Created script: {script_path}')
