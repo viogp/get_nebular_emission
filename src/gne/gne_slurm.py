@@ -17,9 +17,8 @@ def generate_job_name(sim, snap, subvols):
 
 def get_slurm_template(hpc):
     """Read the SLURM template file for the specified HPC."""
-    dirnom = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     fnom = f'slurm_{hpc}_template.sh'
-    template_file = c.slurm_temp_dir
+    template_file = os.path.join(c.slurm_temp_dir, fnom)
 
     # Check if template file exists
     if not os.path.exists(template_file):
