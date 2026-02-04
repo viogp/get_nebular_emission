@@ -180,7 +180,7 @@ def get_slurm_template(hpc):
 
 
 def create_slurm_script(hpc, param_file, simpath, snap, subvols,
-                        outdir=None, verbose=True, job_suffix=None):
+                        logdir=None, job_suffix=None, verbose=True):
     """
     Create a SLURM script that runs the modified parameter file.
 
@@ -222,21 +222,18 @@ def create_slurm_script(hpc, param_file, simpath, snap, subvols,
     # Get modified parameter file content
     modified_params = modify_param_file(param_file, simpath, snap, subvols)
 
-    # Escape the content for embedding in the shell script
-    # Replace single quotes with escaped version for shell
-    #escaped_params = modified_params.replace("'", "'\"'\"'")
-
     # Replace placeholders in template
     script_content = slurm_template
-    script_content = script_content.replace('JOB_NAME', job_name)
-    #script_content = script_content.replace('PARAM_CONTENT', escaped_params)
-    script_content = script_content.replace('PARAM_CONTENT', modified_params)
-    print(script_content); exit() ###here
+    script_content = script_content.replace('__GNE_LOG_DIR__', logdir)
+    script_content = script_content.replace('__GNE_JOB_NAME__', job_name)
+    script_content = script_content.replace('__GNE_PARAM_CONTENT__',
+                                            modified_params)
+
     # Write script to file
-    if outdir is None:
-        output_dir = 'output'
+    if logdir is None:
+        output_dir = 'logs'
     else:
-        output_dir = outdir
+        output_dir = logdir
     
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -273,7 +270,7 @@ def submit_slurm_job(script_path, job_name):
         return None
 
 
-def check_job_status(job_name, outdir=None, success_string='SUCCESS', verbose=True):
+def check_job_status(job_name, logdir=None, success_string='SUCCESS', verbose=True):
     """
     Check the status of a completed SLURM job by examining its output files.
 
@@ -281,7 +278,7 @@ def check_job_status(job_name, outdir=None, success_string='SUCCESS', verbose=Tr
     ----------
     job_name : string
         Name of the job (used to find .out and .err files)
-    outdir : string
+    logdir : string
         Directory containing output files, default is 'output/'
     success_string : string
         String to search for in .out file to confirm success, default is 'SUCCESS'
@@ -298,10 +295,10 @@ def check_job_status(job_name, outdir=None, success_string='SUCCESS', verbose=Tr
     error_content : string or None
         Content of .err file if there are errors, None otherwise
     """
-    if outdir is None:
-        output_dir = 'output'
+    if logdir is None:
+        output_dir = 'logs'
     else:
-        output_dir = outdir
+        output_dir = logdir
     
     out_file = os.path.join(output_dir, f'{job_name}.out')
     err_file = os.path.join(output_dir, f'{job_name}.err')
@@ -348,18 +345,30 @@ def check_job_status(job_name, outdir=None, success_string='SUCCESS', verbose=Tr
         return 'incomplete', None
 
 
-def check_all_jobs(simulations, outdir=None, success_string='SUCCESS', verbose=True):
+def check_all_jobs(runs, root, sam, param_file, subvols,
+                   logdir=None, success_string='SUCCESS',
+                   job_suffix=None, verbose=True):
     """
     Check the status of all jobs for a list of simulations.
 
     Parameters
     ----------
-    simulations : list of tuples
-        List of (sim, snaps, subvols) tuples
-    outdir : string
+    runs : list of tuples
+        List of (sim, snaps) tuples, where snaps is a list of snapshot numbers
+    root : string
+        Root path to the simulation data
+    sam : string
+        SAM name (e.g., 'Galform')
+    param_file : string
+        Path to the parameter file
+    subvols : int
+        Number of subvolumes
+    logdir : string
         Directory containing output files, default is 'output/'
     success_string : string
         String to search for in .out file to confirm success
+    job_suffix : string or None
+        User-defined suffix. If None, derived from cutcols/limits in param_file
     verbose : bool
         If True, print detailed status messages
 
@@ -376,10 +385,12 @@ def check_all_jobs(simulations, outdir=None, success_string='SUCCESS', verbose=T
         'not_found': []
     }
     
-    for sim, snaps, subvols in simulations:
+    for sim, snaps in runs:
+        simpath = os.path.join(root, sam, sim)
         for snap in snaps:
-            job_name = generate_job_name(sim, snap, subvols)
-            status, _ = check_job_status(job_name, outdir=outdir,
+            job_name = generate_job_name(param_file, simpath, snap,
+                                         subvols, job_suffix)
+            status, _ = check_job_status(job_name, logdir=logdir,
                                          success_string=success_string,
                                          verbose=verbose)
             results[status].append(job_name)
@@ -395,16 +406,16 @@ def check_all_jobs(simulations, outdir=None, success_string='SUCCESS', verbose=T
     return results
 
 
-def clean_job_files(job_name=None, outdir=None, only_show=True, verbose=True):
+def clean_job_files(job_name=None, logdir=None, only_show=True, verbose=True):
     """
     Remove .out, .err, and .sh files for a specific job or all jobs.
 
     Parameters
     ----------
     job_name : string or None
-        Name of the job to clean. If None, clean all job files in outdir.
-    outdir : string
-        Directory containing output files, default is 'output/'
+        Name of the job to clean. If None, clean all job files in logdir.
+    logdir : string
+        Directory containing output files, default is 'logs/'
     only_show : bool
         If True, only list files that would be deleted without removing them.
         Set to False to actually delete files.
@@ -416,10 +427,10 @@ def clean_job_files(job_name=None, outdir=None, only_show=True, verbose=True):
     deleted_files : list
         List of files that were deleted (or would be deleted if only_show=True)
     """
-    if outdir is None:
-        output_dir = 'output'
+    if logdir is None:
+        output_dir = 'logdir'
     else:
-        output_dir = outdir
+        output_dir = logdir
     
     if not os.path.exists(output_dir):
         if verbose:
@@ -469,19 +480,30 @@ def clean_job_files(job_name=None, outdir=None, only_show=True, verbose=True):
     return deleted_files
 
 
-def clean_all_jobs(simulations, outdir=None, only_show=True, verbose=True):
+def clean_all_jobs(runs, root, sam, param_file, subvols,
+                   logdir=None, only_show=True, job_suffix=None, verbose=True):
     """
     Remove .out, .err, and .sh files for all jobs in a simulation list.
 
     Parameters
     ----------
-    simulations : list of tuples
-        List of (sim, snaps, subvols) tuples
-    outdir : string
+    runs : list of tuples
+        List of (sim, snaps) tuples, where snaps is a list of snapshot numbers
+    root : string
+        Root path to the simulation data
+    sam : string
+        SAM name (e.g., 'Galform')
+    param_file : string
+        Path to the parameter file
+    subvols : int
+        Number of subvolumes
+    logdir : string
         Directory containing output files, default is 'output/'
     only_show : bool
         If True, only list files that would be deleted without removing them.
         Set to False to actually delete files.
+    job_suffix : string or None
+        User-defined suffix. If None, derived from cutcols/limits in param_file
     verbose : bool
         If True, print information about deleted files
 
@@ -492,10 +514,12 @@ def clean_all_jobs(simulations, outdir=None, only_show=True, verbose=True):
     """
     all_deleted = []
     
-    for sim, snaps, subvols in simulations:
+    for sim, snaps in runs:
+        simpath = os.path.join(root, sam, sim)
         for snap in snaps:
-            job_name = generate_job_name(sim, snap, subvols)
-            deleted = clean_job_files(job_name, outdir=outdir,
+            job_name = generate_job_name(param_file, simpath, snap,
+                                         subvols, job_suffix)
+            deleted = clean_job_files(job_name, logdir=logdir,
                                       only_show=only_show, verbose=False)
             all_deleted.extend(deleted)
     
