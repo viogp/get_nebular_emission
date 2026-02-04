@@ -42,6 +42,11 @@ python run_txtinput_tutorial.py
 
 By default, output data and plots will be generated in a folder within this directory called *output*.
 
+To run a batch of jobs using SLURM the following script can be used, which uses templates within the folder data/slurm_templates:
+``
+python slurm_hdf5_run.py
+``
+
 Folders
 -----------------------------
 **data** Contains the example data sets, the nebular tables used by the code and the observational data used in the test plots.
