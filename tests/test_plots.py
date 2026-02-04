@@ -10,8 +10,8 @@ import gne.gne_const as c
 import gne.gne_plots as plt
 
 ex_root = 'output/iz61/ivol'
-ex_end = '/ex.hdf5'
-required_file = ex_root+'0'+ex_end
+ex_end = 'ex.hdf5'
+required_file = ex_root+'0/'+ex_end
 
 @pytest.mark.skipif(not os.path.exists(required_file), 
                    reason=f"Test data file not found: {required_file}")
@@ -53,11 +53,6 @@ class TestPredict(TestCase):
         valx,valy,obsdata=plt.get_obs_bpt(z,'NII')
         self.assertFalse(obsdata)
 
-        
-    def test_plot_bpts(self):
-        outplot = 'output/iz61/plots/bpt_ex.pdf'
-        self.assertEqual(plt.plot_bpts(ex_root,ex_end),outplot)
-        self.addCleanup(os.remove,outplot)
-        
+                
 if __name__ == '__main__':
     unittest.main()

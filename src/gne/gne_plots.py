@@ -1322,6 +1322,7 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
 
     # Get redshift and cosmology from data
     filenom = os.path.join(root+'0',endf)
+    print(filenom) 
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
