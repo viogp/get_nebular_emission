@@ -252,7 +252,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     mgas = None; hr = None
     if mgas_r is not None:
         nattrs = io.add2header(outfile,['mgasr_type'],
-                               [mgasr_type],verbose=True)
+                               [mgasr_type],verbose=verbose)
         mgas, hr = io.get_mgas_hr(infile,cut,
                                   mgas_r,r_type,
                                   h0=h0,units_h0=units_h0,
@@ -325,4 +325,5 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,vol,mp,
     if verbose:
         tt = round(time.perf_counter() - start_total_time,2)
         print('* Total time: ', tt, 's.')
+    print(f'SUCCESS: {outfile}')
     return

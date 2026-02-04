@@ -381,7 +381,8 @@ def add2header(filenom,names,values,verbose=True):
             count += 1
     hf.close()
 
-    if verbose: print(f'* gne_io.add2header: Appended {count} attributes out of {len(names)}')
+    if verbose:
+        print(f'* gne_io.add2header: Appended {count} attributes out of {len(names)}')
     
     return count
 

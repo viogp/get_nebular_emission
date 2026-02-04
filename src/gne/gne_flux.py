@@ -220,4 +220,5 @@ def gne_flux(infile, outpath=None, out_ending=None,
         subset = neblines_agn[ind_lines_agn,:]
         write_flux(subset,outnames_agn,lfile)
 
+    print('SUCCESS (gne_flux)')
     return 

@@ -16,6 +16,9 @@ import matplotlib.patches as mpatches
 import matplotlib.lines as mlines
 import matplotlib.offsetbox as moffbox
 
+import warnings
+warnings.filterwarnings('ignore', message='Input line .* contained no data')
+
 import gne.gne_const as c
 import gne.gne_io as io
 import gne.gne_stats as st
@@ -1322,7 +1325,6 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
 
     # Get redshift and cosmology from data
     filenom = os.path.join(root+'0',endf)
-    print(filenom) 
     f = h5py.File(filenom, 'r') 
     header = f['header']
     redshift = header.attrs['redshift']
@@ -2070,5 +2072,6 @@ def make_testplots(snap,ending,outpath=None,
 
     # Cumulative numbers with flux limits (if possible) 
     ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
-    
+
+    print(f'SUCCESS: plots in {root}')
     return

@@ -417,4 +417,5 @@ def gne_att(infile, outpath=None,out_ending=None,
         io.write_data(lfile,group=group_agn,params=neblines_agn_att,
                       params_names=lnames_att,params_labels=labels)
 
+    print('SUCCESS (gne_attenuation)')
     return
