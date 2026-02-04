@@ -9,6 +9,7 @@ eps       = 1e-10
 repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 data_dir = os.path.join(repo_dir, 'data')
 obs_data_dir = os.path.join(data_dir, 'observational_data')
+slurm_temp_dir = os.path.join(data_dir, 'slurm_templates')
 
 #-------------------Solar constants
 Lbolsun = 3.826e33  # erg/s
