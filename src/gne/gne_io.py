@@ -443,10 +443,10 @@ def get_selection(infile, outfile, inputformat='hdf5',
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
             if len(cutcols)==0 or cutcols==[None]:
-                key = [k for k in hf.keys() if k != 'header'][0]
-                ind = np.arange(len(hf[key]))
+                key = [k for k in hf["data"].keys() if k != 'header'][0]
+                ind = np.arange(len(hf["data"][key]))
             else:
-                ind = np.arange(len(hf[cutcols[0]][:]))
+                ind = np.arange(len(hf["data"][cutcols[0]][:]))
 
             for i in range(len(cutcols)):
                 if cutcols[i]:
