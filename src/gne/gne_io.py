@@ -939,7 +939,7 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
             hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr', 
                                  data=nebline_sfr[:,i], maxshape=(None,None))
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
-                'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                'erg s^-1 (Photoionisation model: Lsun = 3.826e+33 erg/s per unit SFR(Mo/yr) for 10^8yr)'
                 
     return 
 
