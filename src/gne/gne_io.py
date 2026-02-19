@@ -443,8 +443,8 @@ def get_selection(infile, outfile, inputformat='hdf5',
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
             if len(cutcols)==0 or cutcols==[None]:
-                key = [k for k in hf.keys() if k != 'header'][0]
-                ind = np.arange(len(hf[key]))
+                key = [k for k in hf["data"].keys() if k != 'header'][0]
+                ind = np.arange(len(hf["data"][key]))
             else:
                 ind = np.arange(len(hf[cutcols[0]][:]))
 
@@ -939,7 +939,7 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
             hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr', 
                                  data=nebline_sfr[:,i], maxshape=(None,None))
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
-                'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                'erg s^-1 (Photoionisation model: Lsun = 3.826e+33 erg/s per unit SFR(Mo/yr) for 10^8yr)'
                 
     return 
 

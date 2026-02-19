@@ -257,7 +257,7 @@ def get_Lagn(infile,cut,inputformat='hdf5',params='Lagn',Lagn_inputs='Lagn',
             cfac = 1e40/(h0*h0)
             Lagn = Lagn*cfac
         elif units_L==2:
-            cfac = 1e40
+            cfac = np.float64(1e40)
             Lagn = Lagn*cfac
         elif units_L!=0:
             raise ValueError('units_L must be 0, 1 or 2')
