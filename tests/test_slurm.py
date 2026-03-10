@@ -4,6 +4,8 @@ import unittest
 import os
 import tempfile
 import shutil
+import sys
+from unittest.mock import patch
 
 import gne.gne_const as c
 import gne.gne_slurm as su
@@ -18,13 +20,13 @@ class TestSlurmUtilsHdf5(unittest.TestCase):
         
         # Create a mock SLURM template file for testing
         cls.template_content = '''#!/bin/sh
-#SBATCH --job-name=JOB_NAME
-#SBATCH --output=output/JOB_NAME.out
-#SBATCH --error=output/JOB_NAME.err
-
-srun python -c '
-PARAM_CONTENT
-'
+#SBATCH --job-name=__GNE_JOB_NAME__
+#SBATCH --error=__GNE_LOG_DIR__/__GNE_JOB_NAME__.err
+#SBATCH --output=__GNE_LOG_DIR__/__GNE_JOB_NAME__.out
+#
+srun python << 'EOF_PYTHON_SCRIPT'
+__GNE_PARAM_CONTENT__
+EOF_PYTHON_SCRIPT
 '''
         # Create a mock parameter file for testing
         cls.param_content = '''import gne.gne_const as const
@@ -53,17 +55,17 @@ for ivol in range(subvols):
         # Ensure template directory exists
         os.makedirs(cls.template_dir, exist_ok=True)
         
-        # Store original template if it exists (to restore later)
-        cls.taurus_template_path = os.path.join(cls.template_dir,
-                                                'slurm_taurus_template.sh')
-        cls.taurus_backup = None
-        if os.path.exists(cls.taurus_template_path):
-            with open(cls.taurus_template_path, 'r') as f:
-                cls.taurus_backup = f.read()
+        # Mock get_slurm_template
+        cls.patcher = patch('gne.gne_slurm.get_slurm_template')
+        cls.mock_get_slurm_template = cls.patcher.start()
         
-        # Create test template
-        with open(cls.taurus_template_path, 'w') as f:
-            f.write(cls.template_content)
+        def side_effect(hpc):
+            if hpc == 'taurus':
+                return cls.template_content
+            else:
+                sys.exit()
+                
+        cls.mock_get_slurm_template.side_effect = side_effect
         
         # Create test parameter file
         cls.param_file_path = os.path.join(cls.test_dir, 'run_gne_TestSim.py')
@@ -78,14 +80,10 @@ for ivol in range(subvols):
             try:
                 shutil.rmtree(cls.test_dir)
             except (OSError, PermissionError) as e:
-                print(f"Warning: Could not remove test directory {cls.test_dir}: {e}")
+                print("Warning: Could not remove test directory {}: {}".format(cls.test_dir, e))
         
-        # Restore original template or remove test template
-        if cls.taurus_backup is not None:
-            with open(cls.taurus_template_path, 'w') as f:
-                f.write(cls.taurus_backup)
-        elif os.path.exists(cls.taurus_template_path):
-            os.remove(cls.taurus_template_path)
+        # Stop patcher
+        cls.patcher.stop()
 
     def test_extract_job_suffix_from_params(self):
         """Test extraction of job suffix from parameter file"""
@@ -108,27 +106,39 @@ root = '/path/iz87/ivol'
     def test_generate_job_name(self):
         """Test job name generation with various configurations"""
         # Single subvolume with auto suffix
-        job_name = su.generate_job_name(self.param_file_path, 87, [0])
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=87, subvols=[0])
         self.assertEqual(job_name, 'gne_TestSim_iz87_iv0_Lbol_AGN_min')
         
         # Two subvolumes with auto suffix
-        job_name = su.generate_job_name(self.param_file_path, 128, [0, 1])
-        self.assertEqual(job_name, 'gne_TestSim_iz128_iv0_1_Lbol_AGN_min')
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=128, subvols=[0, 1])
+        self.assertEqual(job_name, 'gne_TestSim_iz128_iv0-1_Lbol_AGN_min')
 
         # Three subvolumes with auto suffix
-        job_name = su.generate_job_name(self.param_file_path, 104, [0, 1, 2])
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[0, 1, 2])
         self.assertEqual(job_name, 'gne_TestSim_iz104_iv0-2_Lbol_AGN_min')
+
+        # Four subvolumes with auto suffix
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[4, 5, 6, 7])
+        self.assertEqual(job_name, 'gne_TestSim_iz104_iv4-7_Lbol_AGN_min')
+
+        # Four subvolumes with auto suffix
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[5, 4, 6, 7])
+        self.assertEqual(job_name, 'gne_TestSim_iz104_iv4-7_Lbol_AGN_min')
+
+        # Four subvolumes with auto suffix
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[4, 5, 7])
+        self.assertEqual(job_name, 'gne_TestSim_iz104_iv4_5_7_Lbol_AGN_min')
         
         # With user-defined suffix
-        job_name = su.generate_job_name(self.param_file_path, 87, [0], job_suffix='custom')
+        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=87, subvols=[0], job_suffix='custom')
         self.assertEqual(job_name, 'gne_TestSim_iz87_iv0_custom')
 
     def test_get_slurm_template_valid(self):
         """Test reading a valid template file"""
         template = su.get_slurm_template('taurus')
         self.assertIsNotNone(template)
-        self.assertIn('JOB_NAME', template)
-        self.assertIn('PARAM_CONTENT', template)
+        self.assertIn('__GNE_JOB_NAME__', template)
+        self.assertIn('__GNE_PARAM_CONTENT__', template)
 
     def test_get_slurm_template_invalid(self):
         """Test that invalid HPC name causes sys.exit()"""
@@ -137,7 +147,7 @@ root = '/path/iz87/ivol'
 
     def test_modify_param_file(self):
         """Test modification of parameter file content"""
-        modified = su.modify_param_file(self.param_file_path, 128, [0, 1, 2, 3])
+        modified = su.modify_param_file(self.param_file_path, simpath='TestSim', snap=128, subvols=4)
 
         # Check subvols was modified
         self.assertIn('subvols = 4', modified)
@@ -147,15 +157,28 @@ root = '/path/iz87/ivol'
         self.assertIn('iz128', modified)
         self.assertNotIn('iz87', modified)
 
+    def test_modify_param_file_list(self):
+        """Test modification of parameter file content with list of subvolumes"""
+        modified = su.modify_param_file(self.param_file_path, simpath='TestSim', snap=128, subvols=[42, 63])
+
+        # Check subvols was modified
+        self.assertIn('subvols = [42, 63]', modified)
+        self.assertNotIn('subvols = 2', modified)
+        
+        # Check root path was modified with new snapshot
+        self.assertIn('iz128', modified)
+        self.assertNotIn('iz87', modified)
+
+
     def test_create_slurm_script(self):
         """Test creating a SLURM script with parameter file embedding"""
         script_path, job_name = su.create_slurm_script(
-            'taurus', self.param_file_path, 87, [0, 1],
-            outdir=self.test_dir, verbose=True
+            'taurus', self.param_file_path, simpath='TestSim', snap=87, subvols=[0, 1],
+            logdir=self.test_dir, verbose=True
         )
         
         # Check returned values
-        self.assertEqual(job_name, 'gne_TestSim_iz87_iv0_1_Lbol_AGN_min')
+        self.assertEqual(job_name, 'gne_TestSim_iz87_iv0-1_Lbol_AGN_min')
         self.assertTrue(script_path.endswith(f'submit_{job_name}.sh'))
         
         # Check file was created
@@ -166,19 +189,19 @@ root = '/path/iz87/ivol'
             content = f.read()
         
         # Job name should be replaced
-        self.assertIn('gne_TestSim_iz87_iv0_1_Lbol_AGN_min', content)
-        self.assertNotIn('JOB_NAME', content)
+        self.assertIn('gne_TestSim_iz87_iv0-1_Lbol_AGN_min', content)
+        self.assertNotIn('__GNE_JOB_NAME__', content)
         
         # Parameter content should be embedded
         self.assertIn('get_emission_lines = True', content)
-        self.assertIn('subvols = 2', content)  # Modified for 2 subvols
-        self.assertNotIn('PARAM_CONTENT', content)
+        self.assertIn('subvols = [0, 1]', content)
+        self.assertNotIn('__GNE_PARAM_CONTENT__', content)
 
     def test_create_slurm_script_with_custom_suffix(self):
         """Test creating a SLURM script with custom job suffix"""
         script_path, job_name = su.create_slurm_script(
-            'taurus', self.param_file_path, 90, [0],
-            outdir=self.test_dir, verbose=True,
+            'taurus', self.param_file_path, simpath='TestSim', snap=90, subvols=[0],
+            logdir=self.test_dir, verbose=True,
             job_suffix='lbol45'
         )
         
@@ -188,16 +211,16 @@ root = '/path/iz87/ivol'
         """Test creating a SLURM script with non-existent parameter file"""
         with self.assertRaises(SystemExit):
             su.create_slurm_script(
-                'taurus', 'nonexistent_file.py', 87, [0],
-                outdir=self.test_dir, verbose=True
+                'taurus', 'nonexistent_file.py', simpath='TestSim', snap=87, subvols=[0],
+                logdir=self.test_dir, verbose=True
             )
 
     def test_create_slurm_script_invalid_hpc(self):
         """Test creating a SLURM script with invalid HPC -> sys.exit()"""
         with self.assertRaises(SystemExit):
             su.create_slurm_script(
-                'invalid_hpc', self.param_file_path, 87, [0],
-                outdir=self.test_dir, verbose=True
+                'invalid_hpc', self.param_file_path, simpath='TestSim', snap=87, subvols=[0],
+                logdir=self.test_dir, verbose=True
             )
 
     def test_submit_slurm_job_no_sbatch(self):

@@ -1,7 +1,7 @@
 #python -m unittest tests/test_plots.py 
 
+import unittest
 import pytest
-from unittest import TestCase
 import numpy as np
 from numpy.testing import assert_allclose
 import os
@@ -16,7 +16,7 @@ required_file = ex_root+'0/'+ex_end
 @pytest.mark.skipif(not os.path.exists(required_file), 
                    reason=f"Test data file not found: {required_file}")
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     def test_contour2Dsigma(self):
         levels,colors = plt.contour2Dsigma()
         assert_allclose(levels[1:],c.sigma_2Dprobs,rtol=0.01)

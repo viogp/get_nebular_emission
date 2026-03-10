@@ -3,14 +3,13 @@
 import shutil
 import unittest
 import os
-from unittest import TestCase
 import numpy as np
 import gne.gne_io as io
 import gne.gne_const as c
 import gne.gne_model_UnH as unh
 
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     decimals = 8
     atol = 1e-7
 

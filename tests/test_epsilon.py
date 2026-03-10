@@ -1,11 +1,11 @@
 #python -m unittest tests/test_epsilon.py 
 
-from unittest import TestCase
+import unittest
 import numpy as np
 import gne.gne_const as c
 import gne.gne_epsilon as e
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     atol = 1e-7
     
     def test_surface_density_disc(self):

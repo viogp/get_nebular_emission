@@ -1,13 +1,14 @@
 #python -m unittest tests/test_Lagn.py 
 
-from unittest import TestCase
+import unittest
+from unittest.mock import patch
 import numpy as np
 from numpy.testing import assert_allclose
 
 import gne.gne_const as c
 import gne.gne_Lagn as agn
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     def test_Ledd(self):
         mbh0 = 1e-38; val0 = 1.26
         self.assertAlmostEqual(agn.get_Ledd(mbh0),val0,2)
@@ -68,6 +69,36 @@ class TestPredict(TestCase):
         mdot.fill(mdot0); mbh.fill(mbh0); val.fill(val0)
         assert_allclose(agn.get_Lagn_H14(mdot,mbh),val,rtol=0.01)
         
+
+
+class TestGetLagn(unittest.TestCase):
+    @patch('gne.gne_Lagn.read_data')
+    def test_get_Lagn_input_Lagn(self, mock_read_data):
+        # Setup mock return value
+        # read_data returns a tuple of arrays.
+        # For Lagn_inputs='Lagn', it expects one array returned in vals[0]
+        lagn_val = np.array([1.0, 2.0, 3.0])
+        mock_read_data.return_value = (lagn_val,)
+
+        # Test case 1: units_L=0 (default)
+        result = agn.get_Lagn(infile='dummy.hdf5', cut=None, Lagn_inputs='Lagn', units_L=0)
+        assert_allclose(result, lagn_val)
+
+        # Test case 2: units_L=1
+        h0 = 0.7
+        expected_result = lagn_val * 1e40 / (h0 * h0)
+        result = agn.get_Lagn(infile='dummy.hdf5', cut=None, Lagn_inputs='Lagn', units_L=1, h0=h0)
+        assert_allclose(result, expected_result)
+
+        # Test case 3: units_L=2
+        expected_result = lagn_val * 1e40
+        result = agn.get_Lagn(infile='dummy.hdf5', cut=None, Lagn_inputs='Lagn', units_L=2)
+        assert_allclose(result, expected_result)
+
+        # Test case 4: units_L=3 (ValueError)
+        with self.assertRaisesRegex(ValueError, 'units_L must be 0, 1 or 2'):
+            agn.get_Lagn(infile='dummy.hdf5', cut=None, Lagn_inputs='Lagn', units_L=3)
+
 
 if __name__ == '__main__':
     unittest.main()

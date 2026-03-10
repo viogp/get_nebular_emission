@@ -171,6 +171,10 @@ def get_outnom(filenom,dirf=None,nomf=None,verbose=False):
     create_dir(root)
 
     outfile = os.path.join(root, nom+'.hdf5')
+    if outfile == filenom:
+        outfile = os.path.join(root, nom+'_output.hdf5')
+        print(f'WARNING: outfile is the same as filenom {filenom}. Renaming outfile to {outfile}')
+
     if verbose:
         print(f'* Output: {outfile}')
     return outfile
@@ -420,6 +424,9 @@ def get_selection(infile, outfile, inputformat='hdf5',
     '''
 
     selection = None
+
+    if cutcols is None:
+        cutcols = [None]
     
     check_file(infile, verbose=verbose)
 
@@ -435,7 +442,12 @@ def get_selection(infile, outfile, inputformat='hdf5',
         sys.exit()
     elif inputformat=='hdf5':
         with h5py.File(infile, 'r') as hf:
-            ind = np.arange(len(hf[cutcols[0]][:]))
+            if len(cutcols)==0 or cutcols==[None]:
+                key = [k for k in hf["data"].keys() if k != 'header'][0]
+                ind = np.arange(len(hf["data"][key]))
+            else:
+                ind = np.arange(len(hf[cutcols[0]][:]))
+
             for i in range(len(cutcols)):
                 if cutcols[i]:
                     param = hf[cutcols[i]][:]
@@ -451,7 +463,11 @@ def get_selection(infile, outfile, inputformat='hdf5',
             selection = ind[:limit]
     elif inputformat=='txt':
         ih = get_nheader(infile)
-        ind = np.arange(len(np.loadtxt(infile,usecols=cutcols[0],skiprows=ih)))
+
+        if len(cutcols) == 0 or cutcols == [None]:
+            ind = np.arange(len(np.loadtxt(infile, usecols=0, skiprows=ih)))
+        else:
+            ind = np.arange(len(np.loadtxt(infile,usecols=cutcols[0],skiprows=ih)))
 
         for i in range(len(cutcols)):
             if cutcols[i]:
@@ -923,7 +939,7 @@ def write_sfr_data(filenom,lu_sfr,lnH_sfr,lzgas_sfr,nebline_sfr,
             hfdat.create_dataset(c.line_names[photmod_sfr][i] + '_sfr', 
                                  data=nebline_sfr[:,i], maxshape=(None,None))
             hfdat[c.line_names[photmod_sfr][i] + '_sfr'].dims[0].label = \
-                'Line units: [Lsun = 3.826E+33egr s^-1 per unit SFR(Mo/yr) for 10^8yr]'
+                'erg s^-1 (Photoionisation model: Lsun = 3.826e+33 erg/s per unit SFR(Mo/yr) for 10^8yr)'
                 
     return 
 
@@ -961,24 +977,27 @@ def write_agn_data(filenom,Lagn,lu_agn,lzgas_agn,
 
         hfdat.create_dataset('Lagn', data=Lagn, maxshape=(None))
         hfdat['Lagn'].dims[0].label = 'L_bol (erg/s)'
-        
-        hfdat.create_dataset('lu_agn', data=np.squeeze(lu_agn), maxshape=(None))
+
+        lu_agn_val = lu_agn.reshape(-1)
+        hfdat.create_dataset('lu_agn', data=lu_agn_val, maxshape=(None))
         hfdat['lu_agn'].dims[0].label = 'log10(U) (dimensionless)'
 
-        hfdat.create_dataset('lz_agn', data=np.squeeze(lzgas_agn), maxshape=(None))
+        lzgas_agn_val = lzgas_agn.reshape(-1)
+        hfdat.create_dataset('lz_agn', data=lzgas_agn_val, maxshape=(None))
         hfdat['lz_agn'].dims[0].label = 'log10(Z)'
 
         if epsilon_agn is not None:
-            hfdat.create_dataset('epsilon_NLR', data=np.squeeze(epsilon_agn),
+            epsilon_agn_val = epsilon_agn.reshape(-1)
+            hfdat.create_dataset('epsilon_NLR', data=epsilon_agn_val,
                                  maxshape=(None))
             hfdat['epsilon_NLR'].dims[0].label = \
                 'AGN NLRs volume filling factor (dimensionless)'
 
         for i in range(len(c.line_names[photmod_agn])):
             ndata = nebline_agn[0,i,:]
-            hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn', 
+            hfdat.create_dataset(c.line_names[photmod_agn][i] + '_agn',
                                  data=ndata, maxshape=(None))
             hfdat[c.line_names[photmod_agn][i] + '_agn'].dims[0].label = \
                 'erg s^-1'
-    return 
+    return
 

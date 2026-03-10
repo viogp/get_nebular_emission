@@ -1,13 +1,13 @@
 #python -m unittest tests/test_att.py 
 
-from unittest import TestCase
+import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 
 import gne.gne_const as c
 import gne.gne_att as att
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     def test_get_f_saito20(self):
         expect = 1
         self.assertAlmostEqual(att.get_f_saito20(2.9),expect,2)
@@ -52,4 +52,4 @@ class TestPredict(TestCase):
 
         
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

@@ -19,7 +19,7 @@ hf5file = opath+nom+'.hdf5'
 class TestStringMethods(unittest.TestCase):
     def test_outroot(self):
         snap = 61
-        rootdir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        rootdir = c.repo_dir
         expath = os.path.join(rootdir,'output','iz'+str(snap),'ivol')
         dirf, endf = io.get_outroot(snap,'example.txt')
         self.assertEqual(dirf,expath)
@@ -95,7 +95,7 @@ class TestStringMethods(unittest.TestCase):
         filenom = io.generate_header(hf5file,0,100,h0,0.4,0.3,0.6,1,1e8,
                                      outpath=expath,verbose=False)
         # Updated expectation: get_outnom strips 'test' from path
-        self.assertEqual(filenom,'output/iz61/ivol0/'+nom+'.hdf5')
+        self.assertEqual(filenom,'output/test/iz61/ivol0/'+nom+'.hdf5')
         
         names = ['a','b',None]
         values = [1,'b',3]

@@ -24,6 +24,7 @@ parts/
 sdist/
 var/
 venv/
+.venv/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -80,3 +81,8 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+#VScode
+.vscode/
+*.code-workspace
+

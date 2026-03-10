@@ -57,9 +57,11 @@ units_h0=True
 # units_Gyr=False if input units [SFR,Mdot]=[Mass]/yr (default)
 # units_Gyr=True  if input units [SFR,Mdot]=[Mass]/Gyr 
 units_Gyr=True 
-# units_L40h2=False if input units [L]=erg/s  (default)
-# units_L40h2=True  if input units [L]=1e40 h^-2 erg/s
-units_L40h2=True
+# Type of input units for luminosity, per component:
+# 0: input units [L]=erg/s  (default);
+# 1: input units [L]=1e40 h^-2 erg/s
+# 2: input units [L]=1e40 erg/s
+units_L=1
 
 ####################################################
 ############  Emission from SF regions #############
@@ -263,7 +265,7 @@ for ivol in range(subvols):
     if get_emission_lines:  # Obtain nebular emission lines
         gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
             inputformat=inputformat,outpath=outpath,
-            units_h0=units_h0,units_Gyr=units_Gyr,units_L40h2=units_L40h2,
+            units_h0=units_h0,units_Gyr=units_Gyr,units_L=units_L,
             model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
             photmod_sfr=photmod_sfr,
             m_sfr_z=m_sfr_z,mtot2mdisk=mtot2mdisk,

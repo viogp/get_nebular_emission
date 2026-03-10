@@ -1,8 +1,8 @@
 #python -m unittest tests/test_photio.py 
 
+import unittest
 import shutil
 import os
-from unittest import TestCase
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -10,7 +10,7 @@ import gne.gne_const as c
 import gne.gne_io as io
 import gne.gne_photio as ph
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     decimals = 8
     atol = 1e-7
 

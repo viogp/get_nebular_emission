@@ -1,6 +1,6 @@
 # python -m unittest tests/test_flux.py 
 
-from unittest import TestCase
+import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 from unittest.mock import patch
@@ -8,7 +8,7 @@ from unittest.mock import patch
 import gne.gne_cosmology as cosmo
 import gne.gne_flux as fx
 
-class TestPredict(TestCase):
+class TestPredict(unittest.TestCase):
     def test_L2flux(self):
         """Set up cosmology for tests."""
         cosmo.set_cosmology(omega0=0.3, omegab=0.045, lambda0=0.7, h0=0.7)
