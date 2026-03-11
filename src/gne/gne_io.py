@@ -109,6 +109,59 @@ def get_outroot(snap,ending,outpath=None,verbose=False):
     return root, endf
 
 
+def get_metadata(filenom, verbose=True):
+    """
+    Extract cosmology and metadata from line file.
+    
+    Parameters
+    ----------
+    filenom : string
+        Path to line file
+    verbose : boolean
+        If True print out messages
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - redshift, omega0, omegab, lambda0, h0
+        - vol
+        - photmod_sfr, photmod_agn (if AGN exists)
+        - AGN : boolean flag
+    """
+    f = h5py.File(filenom, 'r')
+    header = f['header']
+    boxside = header.attrs['boxside_Mpc']
+    veff = header.attrs['eff_vol_Mpc3']
+
+    metadata = {
+        'redshift': header.attrs['redshift'],
+        'omega0': header.attrs['omega0'],
+        'omegab': header.attrs['omegab'],
+        'lambda0': header.attrs['lambda0'],
+        'h0': header.attrs['h0'],
+        'vol_eff': veff,
+        'photmod_sfr': header.attrs['photmod_sfr'],
+        'AGN': 'agn_data' in f.keys(),
+        'att': 'attmod' in f.keys(),
+    }  
+    if metadata['AGN']:
+        metadata['photmod_agn'] = header.attrs['photmod_NLR']
+    if metadata['att']:
+        metadata['attmod'] = header.attrs['attmod']  
+    f.close()
+
+    # Message if reduced samples at input 
+    eff_boxside = pow(veff, 1./3.)
+    effdiff = abs(eff_boxside - boxside)
+    if effdiff>1e-5 and verbose:
+        effp = 100*veff/(boxside**3)
+        print(f'    Side of the effective box = {eff_boxside:.1f} Mpc;') 
+        print(f'     out of the original {boxside:.1f} Mpc ({effp:.1f}%)\n')
+    
+    return metadata
+
+
 def get_plotfile(root,ending,plot_type):
     '''
     Get the path and name to a plot

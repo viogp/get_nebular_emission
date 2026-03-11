@@ -1613,7 +1613,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     h0 = header.attrs['h0']
     boxside = header.attrs['boxside_Mpc']
     photmod_sfr = header.attrs['photmod_sfr']
-    total_volume = header.attrs['eff_vol_Mpc3']
+    vol_eff = header.attrs['eff_vol_Mpc3']
 
     # Read AGN information if it exists
     if 'agn_data' not in f.keys():
@@ -1750,16 +1750,10 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                     lf_att[iline, :] += H
 
     # Normalize by bin size and volume
-    lf = lf / dl / total_volume
+    lf = lf / dl / vol_eff
     if att:
-        lf_att = lf_att / dl / total_volume
+        lf_att = lf_att / dl / vol_eff
 
-    # Message if reduced samples at input ###here
-    eff_boxside = pow(total_volume, 1./3.)
-    effdiff = abs(eff_boxside - boxside)
-    if effdiff>1e-5 and verbose:
-        effp = total_volume/(boxside**3)
-        print(f'    Side of the effective box (Mpc/h) = {pow(total_volume, 1./3.):.1f}; out of the original {boxside:.1f} Mpc ({effp:.1f}%)\n')
 
     # Plot settings
     fig, axes = plt.subplots(2, 3, figsize=(30,21))
@@ -1859,7 +1853,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     lambda0 = header.attrs['lambda0']
     h0 = header.attrs['h0']
     photmod_sfr = header.attrs['photmod_sfr']
-    total_volume = header.attrs['eff_vol_Mpc3']
+    vol_eff = header.attrs['eff_vol_Mpc3']
 
     # Read AGN information if it exists
     if 'agn_data' not in f.keys():
@@ -1979,12 +1973,12 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
                     ncum_att[iline,:] = ncum_att[iline,:] + H
                     
     # Get number per volume
-    ncum = ncum/total_volume
+    ncum = ncum/vol_eff
     if att:
-        ncum_att = ncum_att/total_volume
+        ncum_att = ncum_att/vol_eff
 
     if verbose:
-        print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
+        print(f'    Side of the explored box (Mpc/h) = {pow(vol_eff, 1./3.):.2f}\n')
 
     # Plot settings
     nfigs = 2
@@ -2063,7 +2057,7 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
 
 
 def make_testplots(snap,ending,outpath=None,
-                   subvols=1,gridplots=False,verbose=True):
+                   subvols=[0],gridplots=False,verbose=True):
     '''
     Make test plots
     
@@ -2086,6 +2080,17 @@ def make_testplots(snap,ending,outpath=None,
                                 verbose=verbose)
     plots_dir = os.path.join(os.path.dirname(root), 'plots')
 
+    # Get metadata from line files
+    ivol0 = str(subvols[0])
+    filenom = os.path.join(root+ivol0,endf)
+    metadata = io.get_metadata(filenom, verbose=verbose)
+
+    # Set cosmology once
+    set_cosmology(omega0=metadata['omega0'],
+                  omegab=metadata['omegab'],
+                  lambda0=metadata['lambda0'],
+                  h0=metadata['h0'])  
+    
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
 
