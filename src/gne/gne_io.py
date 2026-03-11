@@ -273,7 +273,8 @@ def get_nheader(infile,firstchar=None):
 
 
 def generate_header(infile,redshift,snap,
-                    h0,omega0,omegab,lambda0,vol,mp,
+                    h0,omega0,omegab,lambda0,
+                    mp,boxside,effvol,
                     units_h0=False,outpath=None,
                     out_ending=None,verbose=True):
     """
@@ -295,16 +296,18 @@ def generate_header(infile,redshift,snap,
         Baryonic density at z=0
     lambda0 : float
         Cosmological constant z=0
-    vol : float
-        Simulation volume
     mp : float
         Simulation resolution, particle mass
+    boxside : float
+        Side of the simulation box
+    effvol : float
+        Simulation effective volume (if downsampled in input)
     units_h0: boolean
         True if input units with h
     outpath : string
         Path to output
     out_ending : string
-        Name for output file
+        Name for output file, if different from root
     verbose : bool
         True for messages
  
@@ -320,8 +323,9 @@ def generate_header(infile,redshift,snap,
 
     # Change units if required
     if units_h0:
-        vol = vol/(h0*h0*h0)
         mp = mp/h0
+        boxside = boxside/h0
+        effvol = effvol/(h0*h0*h0)
 
     # Generate the output file (the file is rewrtitten)
     hf = h5py.File(filenom, 'w')
@@ -335,10 +339,11 @@ def generate_header(infile,redshift,snap,
     head.attrs[u'omega0'] = omega0
     head.attrs[u'omegab'] = omegab
     head.attrs[u'lambda0'] = lambda0
-    head.attrs[u'vol_Mpc3'] = vol
     head.attrs[u'mp_Msun'] = mp
+    head.attrs[u'boxside_Mpc'] = boxside
+    head.attrs[u'eff_vol_Mpc3'] = effvol
     hf.close()
-    
+
     return filenom
 
 

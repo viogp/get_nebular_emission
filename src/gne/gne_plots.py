@@ -1611,8 +1611,9 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     omegab = header.attrs['omegab']
     lambda0 = header.attrs['lambda0']
     h0 = header.attrs['h0']
+    boxside = header.attrs['boxside_Mpc']
     photmod_sfr = header.attrs['photmod_sfr']
-    total_volume = header.attrs['vol_Mpc3']
+    total_volume = header.attrs['eff_vol_Mpc3']
 
     # Read AGN information if it exists
     if 'agn_data' not in f.keys():
@@ -1753,8 +1754,12 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     if att:
         lf_att = lf_att / dl / total_volume
 
-    if verbose:
-        print(f'    Side of the explored box (Mpc/h) = {pow(total_volume, 1./3.):.2f}\n')
+    # Message if reduced samples at input ###here
+    eff_boxside = pow(total_volume, 1./3.)
+    effdiff = abs(eff_boxside - boxside)
+    if effdiff>1e-5 and verbose:
+        effp = total_volume/(boxside**3)
+        print(f'    Side of the effective box (Mpc/h) = {pow(total_volume, 1./3.):.1f}; out of the original {boxside:.1f} Mpc ({effp:.1f}%)\n')
 
     # Plot settings
     fig, axes = plt.subplots(2, 3, figsize=(30,21))
@@ -1854,7 +1859,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     lambda0 = header.attrs['lambda0']
     h0 = header.attrs['h0']
     photmod_sfr = header.attrs['photmod_sfr']
-    total_volume = header.attrs['vol_Mpc3']
+    total_volume = header.attrs['eff_vol_Mpc3']
 
     # Read AGN information if it exists
     if 'agn_data' not in f.keys():
@@ -2079,6 +2084,7 @@ def make_testplots(snap,ending,outpath=None,
     '''
     root, endf = io.get_outroot(snap,ending,outpath=outpath,
                                 verbose=verbose)
+    plots_dir = os.path.join(os.path.dirname(root), 'plots')
 
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
@@ -2095,5 +2101,5 @@ def make_testplots(snap,ending,outpath=None,
     # Cumulative numbers with flux limits (if possible) 
     ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
 
-    print(f'SUCCESS: plots in {root}')
+    print(f'SUCCESS: plots in {plots_dir}')
     return

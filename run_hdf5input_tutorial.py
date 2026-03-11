@@ -14,14 +14,15 @@ from gne.gne import gne
 from gne.gne_att import gne_att
 from gne.gne_flux import gne_flux
 from gne.gne_plots import make_testplots
-import h5py
+import os, h5py
 
+verbose = True
 ### RUN the code with the given parameters and/or make plots
 testing = False            # If True: use only the first 50 elements
-get_emission_lines = False # Obtain nebular emission lines
+get_emission_lines = True # Obtain nebular emission lines
 get_attenuation = True
-get_flux = False
-plot_tests = False
+get_flux = True
+plot_tests = True
 
 # Calculate emission from AGNs: AGN = True
 AGN = True
@@ -38,11 +39,7 @@ outpath = None
 # Mean metallicity of the cold gas (Z).
 subvols = 2
 root = 'data/example_data/iz61/ivol'
-endf   = '/ex.hdf5'
-
-#Laptop data
-#root = '/home/violeta/buds/emlines/gp20data/iz39/ivol'
-#endf = '/gne_input.hdf5'
+endf   = 'ex.hdf5'
 
 ### INPUT FORMAT ('txt' for text files; 'hdf5' for HDF5 files)
 inputformat = 'hdf5'
@@ -230,13 +227,13 @@ root_z0 = None
 #          for selections in plots (optional)
 extra_params_names = ['type','mh','xgal','ygal','zgal',
                       'vxgal','vygal','vzgal',
-                      'magK','magR','M_SMBH']
+                      'magK','magR','M_SMBH','index']
 extra_params = ['data/type','data/mhhalo',
                 'data/xgal','data/ygal','data/zgal',
                 'data/vxgal','data/vygal','data/vzgal',
                 'data/mag_UKIRT-K_o_tot_ext',
                 'data/mag_SDSSz0.1-r_o_tot_ext',
-                'data/M_SMBH']
+                'data/M_SMBH','data/index']
 if attmod == 'ratios':
     for line in att_config:
         extra_params_names.append('ratio_'+line)
@@ -258,14 +255,16 @@ maxcuts = [None]
 ##################################################################
 #############    Run the code and/or make plots   ################
 ##################################################################
+list_subvols = subvols
+if isinstance(subvols, int):
+    list_subvols = list(range(subvols))
 
-verbose = True
-for ivol in range(subvols):
-    infile = root+str(ivol)+endf
+for ivol in list_subvols:
+    infile = os.path.join(root+str(ivol),endf)
 
     infile_z0 = root_z0
     if root_z0 is not None:
-        infile_z0 = root_z0+str(ivol)+endf
+        infile_z0 = os.path.join(root_z0+str(ivol),endf) 
 
     # Get the redshift, cosmology and volume of the model galaxies
     f = h5py.File(infile) 
@@ -283,11 +282,12 @@ for ivol in range(subvols):
     except:
         p = 1
     f.close()
-    vol = p*boxside**3
-        
+    effvol = p*boxside**3
+
     if get_emission_lines:  
         # Obtain nebular emission lines
-        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,vol,mp,
+        gne(infile,redshift,snapshot,h0,omega0,omegab,lambda0,
+            mp,boxside,effvol,
             inputformat=inputformat,outpath=outpath,
             units_h0=units_h0,units_Gyr=units_Gyr,units_L=units_L,
             model_nH_sfr=model_nH_sfr, model_U_sfr=model_U_sfr,
@@ -308,14 +308,15 @@ for ivol in range(subvols):
             testing=testing,verbose=verbose)
 
     if get_attenuation: # Obtain dust-attenuated luminosities
-        gne_att(infile,outpath=outpath,attmod=attmod,line_att=line_att,
+        gne_att(infile,outpath=outpath,
+                attmod=attmod,line_att=line_att,
                 att_config=att_config,verbose=verbose)
 
     if get_flux: # Calculate fluxes from luminosities
-        gne_flux(infile,outpath=outpath,verbose=verbose,
-                 line_names=['Halpha','Hbeta','NII6584','OIII5007'])
+        gne_flux(infile,outpath=outpath,
+                 line_names=['Halpha','Hbeta','NII6584','OIII5007'],
+                 verbose=verbose)
 
 if plot_tests:  # Make test plots
-    make_testplots(root,endf,snapshot,subvols=subvols,
-                   gridplots=False,
-                   outpath=outpath,verbose=verbose)
+    make_testplots(snapshot,endf,outpath=outpath,
+                   subvols=subvols,gridplots=False,verbose=verbose)
