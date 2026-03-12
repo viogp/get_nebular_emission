@@ -1312,7 +1312,8 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
     return bptnom
 
 
-def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
+def plot_bpts(root, endf, subvols=[0], outpath=None,
+              metadata=None,verbose=True):
     '''
     Make the 2 BPT diagrams without attenuation
     
@@ -1322,35 +1323,22 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
        Path to input files. 
     endf : string
        Ending of input files. 
-    subvols: integer or list of integers
-        Number of subvolumes to be considered
+    subvols: List of integers
+        List of subvolumes to be considered
     outpath : string
-        Path to output, default is output/ 
+        Path to output, default is output/
+    metadata : dictionary
+        Cosmology and other metadata information
     verbose : boolean
        If True print out messages.
     '''
-
-    # Get redshift and cosmology from data
-    filenom = os.path.join(root+'0',endf)
-    f = h5py.File(filenom, 'r') 
-    header = f['header']
-    redshift = header.attrs['redshift']
-    omega0 = header.attrs['omega0']
-    omegab = header.attrs['omegab']
-    lambda0 = header.attrs['lambda0']
-    h0 = header.attrs['h0']
-    photmod_sfr = header.attrs['photmod_sfr']
-
-    # Read AGN information if it exists
-    if 'agn_data' not in f.keys():
-        AGN = False
-    else:
-        AGN = True
-        photmod_agn = header.attrs['photmod_NLR']
-    f.close()
     
-    # Set the cosmology from the simulation
-    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
+    # Get metadata
+    photmod_sfr = metadata['photmod_sfr']
+    AGN = metadata['AGN']
+    if AGN:
+        photmod_agn = metadata['photmod_agn']
+    redshift = metadata['redshift']
 
     # Read limits for properties and photoionisation models
     minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
@@ -1388,13 +1376,8 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
 
     # Read data in each subvolume and add data to plots
     seltot = 0
-    list_subvols = subvols
-    if isinstance(subvols, int):
-        list_subvols = list(range(subvols))
-
     chatot = None
-    
-    for ivol in list_subvols: ###here to go over subvols, not a range
+    for ivol in subvols:
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
         
@@ -1583,8 +1566,8 @@ def plot_bpts(root, endf, subvols=1, outpath=None, verbose=True):
     return bptnom
 
 
-
-def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
+def plot_lfs(root, endf, subvols=[0], outpath=None,
+             metadata=None,verbose=True):
     '''
     Make line luminosity function plots
     
@@ -1597,41 +1580,23 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     subvols: integer or list of integers
         Number of subvolumes to be considered
     outpath : string
-        Path to output, default is output/ 
+        Path to output, default is output/
+    metadata : dictionary
+        Cosmology and other metadata information
     verbose : boolean
        If True print out messages.
     '''
 
-    # Get redshift and cosmology from data
-    filenom = os.path.join(root+'0',endf)
-    f = h5py.File(filenom, 'r') 
-    header = f['header'] #; print(list(header.attrs.items()))
-    redshift = header.attrs['redshift']
-    omega0 = header.attrs['omega0']
-    omegab = header.attrs['omegab']
-    lambda0 = header.attrs['lambda0']
-    h0 = header.attrs['h0']
-    boxside = header.attrs['boxside_Mpc']
-    photmod_sfr = header.attrs['photmod_sfr']
-    vol_eff = header.attrs['eff_vol_Mpc3']
-
-    # Read AGN information if it exists
-    if 'agn_data' not in f.keys():
-        AGN = False
-    else:
-        AGN = True
-        photmod_agn = header.attrs['photmod_NLR']
-
-    # Read dust-attenuated information if it exists
-    if 'attmod' in header.attrs:
-        att = True
-        attmod = header.attrs['attmod']
-    else:
-        att = False
-    f.close()
-
-    # Set the cosmology from the simulation
-    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
+    # Get metadata
+    vol_eff = metadata['vol_eff']
+    redshift = metadata['redshift']    
+    photmod_sfr = metadata['photmod_sfr']
+    AGN = metadata['AGN']
+    if AGN:
+        photmod_agn = metadata['photmod_agn']
+    att = metadata['att']
+    if att:
+        attmod = metadata['attmod']
 
     # Read limits for properties and photoionisation models
     minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
@@ -1660,11 +1625,7 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     lf_att = np.zeros((nlines, len(lhist)))
 
     # Read data from each subvolume
-    list_subvols = subvols
-    if isinstance(subvols, int):
-        list_subvols = list(range(subvols))
-    
-    for ivol in list_subvols:
+    for ivol in subvols:
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
 
@@ -1750,10 +1711,9 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
                     lf_att[iline, :] += H
 
     # Normalize by bin size and volume
-    lf = lf / dl / vol_eff
+    lf = lf/dl/vol_eff
     if att:
-        lf_att = lf_att / dl / vol_eff
-
+        lf_att = lf_att/dl/vol_eff
 
     # Plot settings
     fig, axes = plt.subplots(2, 3, figsize=(30,21))
@@ -1813,8 +1773,8 @@ def plot_lfs(root, endf, subvols=1, outpath=None, verbose=True):
     return nom
 
 
-
-def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
+def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
+                    metadata=None,verbose=True):
     '''
     Make plots with the cumulative numbers as a function of flux
     
@@ -1827,51 +1787,23 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     subvols: integer or list of integers
         Number of subvolumes to be considered
     outpath : string
-        Path to output, default is output/ 
+        Path to output, default is output/
+    metadata : dictionary
+        Cosmology and other metadata information
     verbose : boolean
        If True print out messages.
     '''
 
-    # Check if flux data exists in the file
-    filenom = os.path.join(root+'0',endf)
-    f = h5py.File(filenom, 'r') 
-    required_flux_datasets = ['sfr_data/Halpha_sfr_flux','sfr_data/Hbeta_sfr_flux',
-                              'sfr_data/NII6584_sfr_flux','sfr_data/OIII5007_sfr_flux']
-    flux_data_exists = any(dataset in f for dataset in required_flux_datasets)
-    if not flux_data_exists:
-        f.close()
-        if verbose:
-            print(f'WARNING (plot_ncumu_flux): No flux data found in {filenom}. '
-                  f'Skipping cumulative flux plot.')
-        return None
-    
-    # Get redshift and cosmology from data
-    header = f['header'] #; print(list(header.attrs.items()))
-    redshift = header.attrs['redshift']
-    omega0 = header.attrs['omega0']
-    omegab = header.attrs['omegab']
-    lambda0 = header.attrs['lambda0']
-    h0 = header.attrs['h0']
-    photmod_sfr = header.attrs['photmod_sfr']
-    vol_eff = header.attrs['eff_vol_Mpc3']
-
-    # Read AGN information if it exists
-    if 'agn_data' not in f.keys():
-        AGN = False
-    else:
-        AGN = True
-        photmod_agn = header.attrs['photmod_NLR']
-
-    # Read dust-attenuated information if it exists
-    if 'attmod' in header.attrs:
-        att = True
-        attmod = header.attrs['attmod']
-    else:
-        att = False
-    f.close()
-
-    # Set the cosmology from the simulation
-    set_cosmology(omega0=omega0,omegab=omegab,lambda0=lambda0,h0=h0)
+    # Get metadata
+    vol_eff = metadata['vol_eff']
+    redshift = metadata['redshift']    
+    photmod_sfr = metadata['photmod_sfr']
+    AGN = metadata['AGN']
+    if AGN:
+        photmod_agn = metadata['photmod_agn']
+    att = metadata['att']
+    if att:
+        attmod = metadata['attmod']
 
     # Read limits for properties and photoionisation models
     minU, maxU = get_limits(propname='logUs', photmod=photmod_sfr)
@@ -1892,11 +1824,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     ncum_att = np.zeros((nlines, len(fbins)))
 
     # Read data from each subvolume
-    list_subvols = subvols
-    if isinstance(subvols, int):
-        list_subvols = list(range(subvols))
-    
-    for ivol in list_subvols:
+    for ivol in subvols:
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
 
@@ -1977,9 +1905,6 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
     if att:
         ncum_att = ncum_att/vol_eff
 
-    if verbose:
-        print(f'    Side of the explored box (Mpc/h) = {pow(vol_eff, 1./3.):.2f}\n')
-
     # Plot settings
     nfigs = 2
     fig, axes = plt.subplots(1, 2, figsize=(30,21))
@@ -2022,6 +1947,7 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
         # Legend
         if len(ind[0]) > 0:
             ax.legend(loc='best',frameon=False)
+    fig.suptitle(f'z = {redshift}')
     plt.tight_layout()
     
     # Output
@@ -2031,7 +1957,6 @@ def plot_ncumu_flux(root, endf, subvols=1, outpath=None, verbose=True):
          print(f'* Cumulative numbers vs flux plots: {nom}')
     
     return nom
-
 
 
 def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
@@ -2069,8 +1994,8 @@ def make_testplots(snap,ending,outpath=None,
        End name of input files
     outpath : string
        Path to input files
-    subvols: integer or list of integers
-        Number of subvolumes to be considered
+    subvols: list of integers
+        List of subvolumes to be considered
     outpath : string
         Path to output, default is output/ 
     verbose : boolean
@@ -2085,11 +2010,11 @@ def make_testplots(snap,ending,outpath=None,
     filenom = os.path.join(root+ivol0,endf)
     metadata = io.get_metadata(filenom, verbose=verbose)
 
-    # Set cosmology once
-    set_cosmology(omega0=metadata['omega0'],
-                  omegab=metadata['omegab'],
-                  lambda0=metadata['lambda0'],
-                  h0=metadata['h0'])  
+    # Set cosmology only once
+    set_cosmology(omega0 = metadata['omega0'],
+                  omegab = metadata['omegab'],
+                  lambda0 = metadata['lambda0'],
+                  h0 = metadata['h0'])  
     
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
@@ -2098,13 +2023,22 @@ def make_testplots(snap,ending,outpath=None,
     #    make_gridplots() ###here work in progress
     
     # Make NII and SII bpt plots
-    bpt = plot_bpts(root,endf,subvols=subvols,verbose=verbose)
-
+    bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
+                    metadata=metadata,verbose=verbose)
+    
     # Make line LFs
-    lfs = plot_lfs(root,endf,subvols=subvols,verbose=verbose)
+    lfs = plot_lfs(root,endf,subvols=subvols,outpath=outpath,
+                   metadata=metadata,verbose=verbose)
 
     # Cumulative numbers with flux limits (if possible) 
-    ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,verbose=verbose)
+    if (metadata['flux']):
+        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
+                                     outpath=outpath,metadata=metadata,
+                                     verbose=verbose)
+    else:
+        if verbose:
+            print(f'WARNING: No flux data found in {filenom}.\n'
+                  f'         Skipping cumulative flux plot.')
 
     print(f'SUCCESS: plots in {plots_dir}')
     return

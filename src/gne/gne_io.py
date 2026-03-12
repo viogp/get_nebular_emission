@@ -143,12 +143,20 @@ def get_metadata(filenom, verbose=True):
         'vol_eff': veff,
         'photmod_sfr': header.attrs['photmod_sfr'],
         'AGN': 'agn_data' in f.keys(),
-        'att': 'attmod' in f.keys(),
-    }  
+        'att': 'attmod' in header.attrs,
+    }
+    # AGN info
     if metadata['AGN']:
         metadata['photmod_agn'] = header.attrs['photmod_NLR']
+    # Attenuation info
     if metadata['att']:
-        metadata['attmod'] = header.attrs['attmod']  
+        metadata['attmod'] = header.attrs['attmod']
+    # Flux info
+    fsfr = f['sfr_data']
+    required_flux_datasets =['Halpha_sfr_flux','Hbeta_sfr_flux',
+                             'NII6584_sfr_flux','OIII5007_sfr_flux']
+    metadata['flux'] = any(dataset in fsfr for dataset
+                           in required_flux_datasets)
     f.close()
 
     # Message if reduced samples at input 
