@@ -616,6 +616,38 @@ def read_data(infile, cut, inputformat='hdf5', params=[None],
     return outparams
 
 
+def read_and_add(f, prop_name, verbose=True):
+    """
+    Read property from HDF5, add if shape is (n, 2).
+    
+    Parameters
+    ----------
+    f : h5py.File
+        Open HDF5 file object.
+    prop_name : str
+        Name of the dataset to read.
+    verbose : bool
+        If True, print warnings about unexpected shapes.
+        
+    Returns
+    -------
+    numpy.ndarray
+        1D array of summed values or original data if already 1D.
+    """
+    data = f[prop_name][:]
+    result = data
+    
+    # Check if it's 2D and has exactly 2 columns
+    if data.ndim == 2:
+        result = np.sum(data, axis=1)
+        if data.shape[1] != 2:
+            # Unexpected case: 2D but not 2 columns
+            if verbose:
+                print(f"  [WARN] '{prop_name}': Detected shape {data.shape}. Expected (n, 2) for summation.")        
+        
+    return result
+
+
 def get_ncomponents(cols):
     '''
     Get the number of components to estimate the emission lines from
