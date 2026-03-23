@@ -1616,19 +1616,12 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
 
-        # Read SF information from file
-        prop0 = f[props[0]][:]
-        prop1in = f[props[1]][:]
-        if prop1in.ndim == 2 and prop1in.shape[1] == 2:
-            prop1 = np.sum(prop1in, axis=1)
-        else:
-            prop1 = prop1in  # Keep as-is if already 1D
-        prop2in = f[props[2]][:]
-        if prop2in.ndim == 2 and prop2in.shape[1] == 2:
-            prop2 = np.sum(prop2in, axis=1)
-        else:
-            prop2 = prop2in  # Keep as-is if already 1D
-        print(type(prop2),np.shape(prop2)); exit()
+        # Read information from file
+        prop_data = {}
+        for prop_name in props:
+            prop_data[prop_name] = io.read_and_flatten(f, prop_name,
+                                                       verbose=True)
+        print(type(prop_data[props[0]])); exit() ####here
         ldims = f['sfr_data/Halpha_sfr'][:].ndim
         if ldims > 1:
             sfr_data = {line: np.sum(f[f'sfr_data/{line}_sfr'], axis=0)
