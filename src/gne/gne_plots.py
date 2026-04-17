@@ -1567,6 +1567,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
 
 def plot_lf(root, endf, subvols=[0], outpath=None,
+            outnom = 'masses',
             props=['data/mh','data/lm_s','data/lm_gas'],
             prop_labels=[r'M$_{\rm h}(M_{\odot})$',
                          r'M$_{\rm *}(M_{\odot})$',
@@ -1583,15 +1584,26 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
     endf : string
        Ending of input files. 
     subvols: integer or list of integers
-        Number of subvolumes to be considered
+       Number of subvolumes to be considered
     outpath : string
-        Path to output, default is output/
+       Path to output, default is output/
+    outnom : string
+       Root name for output plot
+    props : array of strings
+       Dataset names to be plotted
+    prop_labels : array of strings
+       Dataset names for plot labels
+    xmin : float
+       Minimum value for the histogram
+    xmax : float
+       Maximum value for the histogram
+    dx : float
+       Histogram bin size
     metadata : dictionary
-        Cosmology and other metadata information
+        Cosmology and other metadata information    
     verbose : boolean
        If True print out messages.
     '''
-
     # Get metadata
     vol_eff = metadata['vol_eff']
     redshift = metadata['redshift']    
@@ -1605,7 +1617,7 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
 
     # Initialise histogram bins for luminosity functions
     xbins = np.arange(xmin, xmax, dx)
-    xhist = xbins + dx * 0.5
+    xhist = xbins + dx*0.5
 
     # Initialise LF arrays
     nprops = len(props)
@@ -1613,152 +1625,48 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
 
     # Read data from each subvolume
     for ivol in subvols:
+        # Read information from file and get histogram
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
-
-        # Read information from file
-        prop_data = {}
-        for prop_name in props:
-            prop_data[prop_name] = io.read_and_flatten(f, prop_name,
-                                                       verbose=True)
-        print(type(prop_data[props[0]])); exit() ####here
-        ldims = f['sfr_data/Halpha_sfr'][:].ndim
-        if ldims > 1:
-            sfr_data = {line: np.sum(f[f'sfr_data/{line}_sfr'], axis=0)
-                        for line in line_names}
-        else:
-            sfr_data = {line: f[f'sfr_data/{line}_sfr'][:]
-                        for line in line_names}
-
-        if att:
-            # Initialize 
-            ngal = sfr_data[line_names[0]].shape[0]
-            sfr_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
-
-            for line in line_names: # Fill in available data
-                key = f'sfr_data/{line}_sfr_att'
-                if key in f:
-                    ldims = f[key].ndim
-                    if ldims > 1:
-                        sfr_data_att[line] = np.sum(f[key], axis=0)
-                    else:
-                        sfr_data_att[line] = f[key][:]
-        if AGN:
-            # Read AGN information if it exists
-            agn_data = {line: f[f'agn_data/{line}_agn'][:]
-                        for line in line_names}
-            if att:
-                ngal = agn_data[line_names[0]].shape[0]
-                agn_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
-                for line in line_names: # Fill in available data
-                    key = f'agn_data/{line}_agn_att'
-                    if key in f:
-                        agn_data_att[line] = f[key][:]
+        for iprop, prop_name in enumerate(props):
+            yall = io.read_and_add(f,prop_name,verbose=verbose)
+            ind = np.where(yall > 0) 
+            if np.shape(ind)[1] > 0:
+                yy = np.log10(yall[ind])
+                H, dum = np.histogram(yy,bins=np.append(xbins,xmax))
+                yhist[iprop, :] += H
         f.close()
 
-        # Combine luminosities if adequate
-        combined = {}
-        combined_att = {}
-        line_mapping = {
-            'Ha': ['Halpha'],
-            'Hb': ['Hbeta'],
-            'NII': ['NII6584'],
-            'OII': ['OII3727'],
-            'OIII': ['OIII5007'],
-            'SII': ['SII6731', 'SII6717']
-        }
-
-        for out_name, in_lines in line_mapping.items():
-            arrays = [sfr_data[line] for line in in_lines]
-            if AGN:
-                arrays.extend([agn_data[line] for line in in_lines])
-            combined[out_name] = st.safe_sum_arrays(arrays)
-    
-            if att:
-                arrays_att = [sfr_data_att[line] for line in in_lines]
-                if AGN:
-                    arrays_att.extend([agn_data_att[line] for line in in_lines])
-                combined_att[out_name] = st.safe_sum_arrays(arrays_att)
-
-        # Calculate histograms for each line
-        for iline, line in enumerate(line_mapping.keys()):
-            # Intrinsic luminosity function
-            lums = combined[line]
-            ind = np.where(lums > 0) ###here more cuts like in bpt?
-            if np.shape(ind)[1] > 0:
-                ll = np.log10(lums[ind])
-                H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
-                lf[iline, :] += H
-
-            if att:
-                # Dust attenuated luminosity function
-                lums = combined_att[line]
-                ind = np.where(lums > 0) ###here more cuts like in bpt?
-                if np.shape(ind)[1] > 0:
-                    ll = np.log10(lums[ind])
-                    H, dum = np.histogram(ll,bins=np.append(lbins,lmax))
-                    lf_att[iline, :] += H
-
     # Normalize by bin size and volume
-    lf = lf/dl/vol_eff
-    if att:
-        lf_att = lf_att/dl/vol_eff
+    yhist = yhist/dx/vol_eff
 
     # Plot settings
-    fig, axes = plt.subplots(2, 3, figsize=(30,21))
-    axes = axes.flatten()
+    plt.figure(figsize=(18, 18.))
+    xtit = r'$\log_{10}$'+'(Property)' 
+    plt.xlabel(xtit)
     ytit = r'$\log_{10}(\Phi/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
-    xmin = 39.0
-    xmax = 44.0
-    ymin = -5.5
-    ymax = -1.0
+    plt.ylabel(ytit)
 
-    # Plot each line
-    for iline in range(nlines):
-        ax = axes[iline]
-        xtit = r'$\log_{10}$(L' + line_labels[iline] +\
-            r'$/\mathrm{erg\,s^{-1}})$' 
-        # Plot intrinsic LF (dotted line)
-        ilf = lf[iline, :]
+    # Plot each property
+    for iprop, prop_name in enumerate(props):
+        leg = prop_labels[iprop]
+        ilf = yhist[iprop, :]
         ind = np.where(ilf > 0)
         if len(ind[0]) > 0:
-            x = lhist[ind]
+            x = xhist[ind]
             y = ilf[ind]
             indy = np.where(y > 0)
             if len(indy[0]) > 0:
                 logy = np.log10(y[indy])
-                ax.plot(x[indy], logy, 'r:',
-                        label=f'Intrinsic (z={redshift:.1f})')
-
-        if att:
-            # Plot dust-attenuated LF (solid line)
-            ilf = lf_att[iline, :]
-            ind = np.where(ilf > 0)
-            if len(ind[0]) > 0:
-                x = lhist[ind]
-                y = ilf[ind]
-                indy = np.where(y > 0)
-                if len(indy[0]) > 0:
-                    logy = np.log10(y[indy])
-                    ax.plot(x[indy], logy, 'b-',
-                            label='Dust-attenuated')
-            
-        # Set axis properties
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
-        ax.minorticks_on()
-        ax.set_xlabel(xtit); ax.set_ylabel(ytit)
-        if (iline==0) and len(ind[0]) > 0:
-            ax.legend(loc='best',frameon=False)
-    
-    plt.tight_layout()
+                plt.plot(x[indy], logy,label=leg)
+    plt.legend(loc='best',frameon=False)
     
     # Output
-    nom = io.get_plotfile(root,endf,'lf')
+    outf = outnom+'f'
+    nom = io.get_plotfile(root,endf,outf)
     plt.savefig(nom)
     if verbose:
-         print(f'* LFs plots: {nom}')
-    
+         print(f'* Function plot: {nom}')    
     return nom
 
 
@@ -2218,35 +2126,35 @@ def make_testplots(snap,ending,outpath=None,
     #if gridplots:
     #    make_gridplots() ###here work in progress
 
-    ### Characterisation of global properties
-    if (metadata['AGN']):
-        lbol_lf = plot_lf(root,endf,subvols=subvols,outpath=outpath,
-                          metadata=metadata,verbose=verbose)
+    #### Characterisation of global properties
+    #if (metadata['AGN']):
+    #    lbol_lf = plot_lf(root,endf,subvols=subvols,outpath=outpath,
+    #                      metadata=metadata,verbose=verbose)
         
     ### Characterisation of properties of ionising regions
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
         
-    #### Line plots
-    ## Make NII and SII bpt plots
-    #bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
-    #                metadata=metadata,verbose=verbose)
-    #
-    ## Make line LFs
-    #lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-    #               metadata=metadata,verbose=verbose)
-    #
-    ## Cumulative numbers with flux limits (if possible) 
-    #if (metadata['flux'] and metadata['redshift']>0):
-    #    ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-    #                                 outpath=outpath,metadata=metadata,
-    #                                 verbose=verbose)
-    #else:
-    #    if verbose:
-    #        if (metadata['flux']):
-    #            print(f'WARNING: Skipping cumulative flux plot at z=0.')
-    #        else:
-    #            print(f'WARNING: No flux data found in {filenom}.')
+    # Line plots
+    # Make NII and SII bpt plots
+    bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
+                    metadata=metadata,verbose=verbose)
+    
+    # Make line LFs
+    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+                   metadata=metadata,verbose=verbose)
+    
+    # Cumulative numbers with flux limits (if possible) 
+    if (metadata['flux'] and metadata['redshift']>0):
+        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
+                                     outpath=outpath,metadata=metadata,
+                                     verbose=verbose)
+    else:
+        if verbose:
+            if (metadata['flux']):
+                print(f'WARNING: Skipping cumulative flux plot at z=0.')
+            else:
+                print(f'WARNING: No flux data found in {filenom}.')
 
     print(f'SUCCESS: plots in {plots_dir}')
     return
