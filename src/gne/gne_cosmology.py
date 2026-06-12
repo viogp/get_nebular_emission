@@ -563,7 +563,7 @@ def band_corrected_distance_modulus(z):
     if (z < zlow_lim):
         bcdm = 0.0
     else:
-        dref = 10.0/mega # 10pc in Mpc
+        dref = 10.0/c.mega # 10pc in Mpc
         dL = luminosity_distance(z)
         bcdm = 5.0*np.log10(dL/dref) - 2.5*np.log10(1.0+z)
     return bcdm

@@ -1986,7 +1986,8 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         flux_int = [Ha, HaN2, O3, O3Hb]
         if att:
             flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
-        
+
+        print(min(Ha),max(Ha),np.mean(Ha)); exit() ###here
         # Calculate the cumulative numbers for each line
         for iline in range(nlines):
             # Intrinsic flux
@@ -2014,7 +2015,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
     nfigs = 2
     fig, axes = plt.subplots(1, 2, figsize=(30,21))
     axes = axes.flatten()
-    ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3}\,\mathrm{dex}^{-1})$'
+    ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3})$'
     xmin = fmin
     xmax = fmax
     ymin = -2
@@ -2052,7 +2053,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         # Legend
         if len(ind[0]) > 0:
             ax.legend(loc='best',frameon=False)
-    fig.suptitle(f'z = {redshift}')
+    fig.suptitle(f'z = {redshift:.1f}')
     plt.tight_layout()
     
     # Output

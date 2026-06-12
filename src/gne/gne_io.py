@@ -10,21 +10,6 @@ import glob
 import numpy as np
 import gne.gne_const as c
 
-def stop_if_no_file(infile):
-    '''
-    It stops the program if a file does not exists
-
-    Parameters
-    -------
-    infile : string
-        Input file
-    '''
-    
-    if (not os.path.isfile(infile)):
-        print('STOP: no input file {}'.format(infile)) 
-        sys.exit()
-    return
-
 
 def check_file(infile,verbose=False):
     '''
