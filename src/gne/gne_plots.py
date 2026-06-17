@@ -22,6 +22,7 @@ warnings.filterwarnings('ignore', message='Input line .* contained no data')
 import gne.gne_const as c
 import gne.gne_io as io
 import gne.gne_stats as st
+import gne.gne_plot_obs as obs
 from gne.gne_stats import n_gt_x
 from gne.gne_photio import get_limits,read_gutkin16_grids,read_feltre16_grids
 from gne.gne_cosmology import set_cosmology
@@ -1069,71 +1070,6 @@ def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
     return plotnom
 
 
-def get_obs_bpt(redshift,bpt):
-    '''
-    Get observational data for BPT diagrams at a given redshift
-    
-    Parameters
-    ----------
-    redshift : float
-       Redshift of interest
-    bpt: string
-        Type of BPT diagram: 'NII' (OIII/Hbeta vs N2/Ha)
-        or 'SII' (OIII/Hbeta vs S2/Ha)
-
-    Returns
-    -------
-    xobs, yobs : array of floats
-       Ratios for each observed spectral emission line
-    obsdata : boolean
-       True if there is any observational data at the given redshift
-    '''
-
-    xobs = -999.; yobs = -999.; obsdata = False
-
-    # Use different data sets for different redshifts
-    if redshift <= 0.2:
-        obsdata = True
-        obsfile = os.path.join(c.obs_data_dir,'favole2024.txt')
-        l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(15,9),unpack=True)
-        xx, yy = [np.zeros(len(l1)) for i in range(2)]
-        ind = np.where((l1>0.) & (l2>0.))
-        if (np.shape(ind)[1]>0): #O3/Hb
-            yy[ind] = np.log10(l1[ind]/l2[ind])
-            
-        if bpt=='NII': #N2/Ha
-            l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(18,6),unpack=True)
-            ind = np.where((l1>0.) & (l2>0.))
-            if (np.shape(ind)[1]>0):
-                xx[ind] = np.log10(l1[ind]/l2[ind]) 
-        elif bpt=='SII': #S2/Ha
-            l1,l2 = np.loadtxt(obsfile,skiprows=1,usecols=(21,6),unpack=True)
-            ind = np.where((l1>0.) & (l2>0.))
-            if (np.shape(ind)[1]>0):
-                xx[ind] = np.log10(l1[ind]/l2[ind]) 
-
-    elif 1.45 <= redshift <= 1.75:
-        obsdata = True
-        if bpt=='NII':
-            obsfile = os.path.join(c.obs_data_dir,'NII_Kashino.txt')
-            yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-                
-        elif bpt=='SII':
-            obsfile = os.path.join(c.obs_data_dir,'SII_Kashino.txt')
-            yy = np.loadtxt(obsfile,skiprows=18,usecols=(6)) #O3/Hb
-            xx = np.loadtxt(obsfile,skiprows=18,usecols=(3)) #N2/Ha
-
-    if obsdata:
-        ind = np.where((xx>c.notnum) & (yy>c.notnum))
-        if (np.shape(ind)[1]>0):
-            xobs = xx[ind]
-            yobs = yy[ind]
-        else:
-            obsdata = False
-
-    return xobs,yobs,obsdata
-
 
 def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
                          alpha=-1.7,verbose=True):
@@ -1173,7 +1109,7 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
-        xobs, yobs, obsdata = get_obs_bpt(0.,bpt)
+        xobs, yobs, obsdata = obs.get_obs_bpt(0.,bpt)
         if obsdata and bpt=='NII':
             x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
             levels,colors= contour2Dsigma()
@@ -1364,7 +1300,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
-        xobs, yobs, obsdata = get_obs_bpt(redshift,bpt)
+        xobs, yobs, obsdata = obs.get_obs_bpt(redshift,bpt)
         if obsdata and bpt=='NII':
             x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
             levels,colors= contour2Dsigma()
@@ -1987,7 +1923,6 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         if att:
             flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
 
-        print(min(Ha),max(Ha),np.mean(Ha)); exit() ###here
         # Calculate the cumulative numbers for each line
         for iline in range(nlines):
             # Intrinsic flux
@@ -2136,16 +2071,16 @@ def make_testplots(snap,ending,outpath=None,
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
         
-    # Line plots
-    # Make NII and SII bpt plots
-    bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
-                    metadata=metadata,verbose=verbose)
+    ## Line plots
+    ## Make NII and SII bpt plots
+    #bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
+    #                metadata=metadata,verbose=verbose)
     
-    # Make line LFs
-    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-                   metadata=metadata,verbose=verbose)
-    
-    # Cumulative numbers with flux limits (if possible) 
+    ## Make line LFs
+    #lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+    #               metadata=metadata,verbose=verbose)
+    #
+    # Cumulative numbers with flux limits (if possible)
     if (metadata['flux'] and metadata['redshift']>0):
         ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
                                      outpath=outpath,metadata=metadata,
