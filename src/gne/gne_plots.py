@@ -1955,7 +1955,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
     xmax = fmax
     ymin = -2
     ymax = -1.0
-
+    
     line = -2
     for ifig in range(nfigs):
         ax = axes[ifig]
@@ -1964,6 +1964,13 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         ax.set_ylim([ymin, ymax])
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
+
+        if ifig == 0: #Add Pozzetti's model no3 if in z range
+            xobs,yobs,obsdata = obs.get_pozzetti(redshift,outpath=None)
+            if obsdata:
+                ll = 'Pozzetti model 3'
+                ax.plot(xobs, yobs, '-',color=grey,label=ll)
+        
         line += 2
         for iline in [line,line+1]:
             color = plt.cm.tab10(iline % 10)

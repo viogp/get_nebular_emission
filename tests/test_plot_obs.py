@@ -44,6 +44,14 @@ class TestPredict(unittest.TestCase):
         valx,valy,obsdata=obs.get_obs_bpt(z,'NII')
         self.assertFalse(obsdata)
 
-                
+    def test_get_pozzetti(self):
+        for z in [0.2,2.5]:
+            valx,valy,obsdata=obs.get_pozzetti(z)
+            self.assertTrue(obsdata)
+        for z in [0,2.6]:
+            valx,valy,obsdata=obs.get_pozzetti(z)
+            self.assertFalse(obsdata)
+
+        
 if __name__ == '__main__':
     unittest.main()

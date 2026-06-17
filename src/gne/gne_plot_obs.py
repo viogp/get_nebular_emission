@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import gne.gne_stats as st
 import gne.gne_const as c
 
 def get_obs_bpt(redshift,bpt):
@@ -66,3 +67,43 @@ def get_obs_bpt(redshift,bpt):
             obsdata = False
 
     return xobs,yobs,obsdata
+
+
+def get_pozzetti(redshift,outpath=None):
+    xobs = -999.; yobs = -999.; pozzetti_mod = False
+    nomtab = 'pozzetti_tab3.txt'
+    pozzetti_table = os.path.join(c.obs_data_dir,nomtab)
+    nomtabMpc = nomtab.replace('tab3','tab3_Mpc')
+    
+    # Read table 3 form Pozzetti+2018
+    data = np.loadtxt(pozzetti_table)
+    zmin = data[:,0]
+    zmax = data[:,1]
+    nzz  = len(zmin)
+
+    # Find if redshift within the intervals
+    edges = np.insert(zmax,0,zmin[0])
+    izz = st.locate_interval(redshift,edges,side='left')
+    if (izz<0) or (izz>nzz-1):
+        return xobs,yobs,pozzetti_mod
+    pozzetti_mod = True
+
+    # Check if Pozzeti's table in Mpc exists for this cosmology
+    if outpath is None:
+        opath = os.path.join(c.repo_dir, 'output')
+    else:
+        opath = outpath
+    print(opath)    
+    
+    # Check if Pozzetti's table needs converting
+    #if not outpath:
+    #    outfile = os.path.join('output',pozzetti_table)
+    #outfile = outfile
+    #file_exists = io.check_file(outfile)
+    #
+    #if file_exists:
+    #    data = np.loadtxt(pozzetti_table)
+    #    m1 = data[izz,2:7]
+    #    m2 = data[izz,7:12]
+    #    m3 = data[izz,12:]
+    return xobs,yobs,pozzetti_mod
