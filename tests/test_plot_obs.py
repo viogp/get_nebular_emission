@@ -12,6 +12,13 @@ import gne.gne_plot_obs as obs
 ex_root = 'output/iz61/ivol'
 ex_end = 'ex.hdf5'
 required_file = ex_root+'0/'+ex_end
+omega0 = 0.3
+omegab = 0.02
+lambda0 = 0.7
+h0 = 0.67
+metadata = {'redshift': 1.03,
+    'omega0': omega0,'omegab': omegab,
+    'lambda0': lambda0, 'h0': h0,}
 
 @pytest.mark.skipif(not os.path.exists(required_file), 
                    reason=f"Test data file not found: {required_file}")
@@ -45,13 +52,38 @@ class TestPredict(unittest.TestCase):
         self.assertFalse(obsdata)
 
     def test_get_pozzetti(self):
-        for z in [0.2,2.5]:
-            valx,valy,obsdata=obs.get_pozzetti(z)
-            self.assertTrue(obsdata)
-        for z in [0,2.6]:
-            valx,valy,obsdata=obs.get_pozzetti(z)
-            self.assertFalse(obsdata)
+        x = np.array([0.5, 1, 2, 3, 5])
+        y = [-0.00608293,0.00194805]
 
+        i = 0
+        for z in [0.2, 2.5]:
+            metatest = {'redshift': z,
+                        'omega0': omega0,'omegab': omegab,
+                        'lambda0': lambda0, 'h0': h0,}
+            valx, valy, pp = obs.get_pozzetti(metadata=metatest)
+            self.assertTrue(pp)
+            np.testing.assert_allclose(valx,x, atol=0.001)
+            self.assertAlmostEqual(valy[0],y[i],places=5)
+            i += 1
+            
+        for z in [0, 2.6]:
+            metatest = {'redshift': z,
+                        'omega0': omega0,'omegab': omegab,
+                        'lambda0': lambda0, 'h0': h0,}
+            valx, valy, pp = obs.get_pozzetti(metadata=metatest)
+            self.assertFalse(pp)
+            self.assertAlmostEqual(valx,-999,places=5) 
+            self.assertAlmostEqual(valy,-999,places=5) 
         
+        om = str(omega0)
+        ob = str(omegab)
+        l0 = str(lambda0)
+        hh = str(h0)
+        cosmo_str = ('_m'+om+'_b'+ob+'_l'+l0+'_h'+hh).replace('.','p')
+        nomtabMpc = 'pozzettiMpc'+cosmo_str+'.txt'
+        pozzettiMpc = os.path.join('output',nomtabMpc)
+        pp = os.path.isfile(pozzettiMpc)
+        self.assertTrue(pp, f"File {pozzettiMpc} does not exist")
+
 if __name__ == '__main__':
     unittest.main()

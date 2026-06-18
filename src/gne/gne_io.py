@@ -162,7 +162,7 @@ def get_metadata(filenom, verbose=True):
     if effdiff>1e-5 and verbose:
         effp = 100*veff/(boxside**3)
         print(f'    Side of the effective box = {eff_boxside:.1f} Mpc;') 
-        print(f'     out of the original {boxside:.1f} Mpc ({effp:.1f}%)\n')
+        print(f'     out of the original {boxside:.1f} Mpc ({effp:.1f}% in volume)\n')
     
     return metadata
 

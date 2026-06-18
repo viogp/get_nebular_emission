@@ -1966,10 +1966,12 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
         if ifig == 0: #Add Pozzetti's model no3 if in z range
-            xobs,yobs,obsdata = obs.get_pozzetti(redshift,outpath=None)
+            xobs,yobs,obsdata = obs.get_pozzetti(metadata=metadata,
+                                                 outpath=None,
+                                                 verbose=verbose)
             if obsdata:
                 ll = 'Pozzetti model 3'
-                ax.plot(xobs, yobs, '-',color=grey,label=ll)
+                ax.plot(xobs, yobs, '-',color='gray',label=ll)
         
         line += 2
         for iline in [line,line+1]:
@@ -2086,7 +2088,7 @@ def make_testplots(snap,ending,outpath=None,
     ## Make line LFs
     #lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
     #               metadata=metadata,verbose=verbose)
-    #
+    
     # Cumulative numbers with flux limits (if possible)
     if (metadata['flux'] and metadata['redshift']>0):
         ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,

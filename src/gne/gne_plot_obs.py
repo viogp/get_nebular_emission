@@ -1,7 +1,9 @@
 import os
 import numpy as np
+import gne.gne_cosmology as cosmo
 import gne.gne_stats as st
 import gne.gne_const as c
+import gne.gne_io as io
 
 def get_obs_bpt(redshift,bpt):
     '''
@@ -69,11 +71,10 @@ def get_obs_bpt(redshift,bpt):
     return xobs,yobs,obsdata
 
 
-def get_pozzetti(redshift,outpath=None):
+def get_pozzetti(metadata=None,outpath=None,verbose=False):
     xobs = -999.; yobs = -999.; pozzetti_mod = False
     nomtab = 'pozzetti_tab3.txt'
     pozzetti_table = os.path.join(c.obs_data_dir,nomtab)
-    nomtabMpc = nomtab.replace('tab3','tab3_Mpc')
     
     # Read table 3 form Pozzetti+2018
     data = np.loadtxt(pozzetti_table)
@@ -81,29 +82,67 @@ def get_pozzetti(redshift,outpath=None):
     zmax = data[:,1]
     nzz  = len(zmin)
 
+    mods = data[:,2:]
+    nmod = np.shape(mods)[1]
+
     # Find if redshift within the intervals
+    redshift = metadata['redshift']
     edges = np.insert(zmax,0,zmin[0])
     izz = st.locate_interval(redshift,edges,side='left')
     if (izz<0) or (izz>nzz-1):
         return xobs,yobs,pozzetti_mod
     pozzetti_mod = True
 
+    # Name of Pozzetti's table in Mpc for a cosmology
+    omega0 = metadata['omega0']
+    omegab = metadata['omegab']
+    lambda0 = metadata['lambda0']
+    h0 = metadata['h0']
+
+    om = str(omega0)
+    ob = str(omegab)
+    l0 = str(lambda0)
+    hh = str(h0)
+    cosmo_str = ('_m'+om+'_b'+ob+'_l'+l0+'_h'+hh).replace('.','p')
+    nomtabMpc = 'pozzettiMpc'+cosmo_str+'.txt'
+
     # Check if Pozzeti's table in Mpc exists for this cosmology
     if outpath is None:
         opath = os.path.join(c.repo_dir, 'output')
     else:
         opath = outpath
-    print(opath)    
-    
-    # Check if Pozzetti's table needs converting
-    #if not outpath:
-    #    outfile = os.path.join('output',pozzetti_table)
-    #outfile = outfile
-    #file_exists = io.check_file(outfile)
-    #
-    #if file_exists:
-    #    data = np.loadtxt(pozzetti_table)
-    #    m1 = data[izz,2:7]
-    #    m2 = data[izz,7:12]
-    #    m3 = data[izz,12:]
+    pozzettiMpc = os.path.join(opath,nomtabMpc)
+    file_exists = io.check_file(pozzettiMpc)
+
+    # Generate the table in Mpc if needed
+    if (not file_exists):
+        cosmo.set_cosmology(omega0=omega0, omegab=omegab,
+                            lambda0=lambda0,h0=h0)
+        for j in range(nmod):
+            for i in range(nzz):
+                data[i,j+2] = cosmo.ndeg2nV(mods[i,j],zmin[i],zmax[i])
+
+        # Read header lines from original table
+        with open(pozzetti_table, 'r') as fin:
+            header_lines = [line for line in fin if line.startswith('#')]
+            header_lines = [line.replace('deg-2', '(Mpc/h)^-3') for line in header_lines]
+
+        with open(pozzettiMpc,'w') as f:
+            # Write cosmology info
+            header = f'# omega0={omega0}, omegab={omegab},lambda0={lambda0}, h0={h0}'
+            f.write(header + '\n') 
+            # Write table info
+            for line in header_lines:
+                f.write(line)
+            # Write out the converted values
+            np.savetxt(f, data, fmt=['%.1f']*2+['%.5e']*nmod)  
+        if verbose:
+            print('Table 3 in Pozzetti+2016 converted to (Mpc/h)^3:\n',pozzettiMpc)
+            
+    # Read the data for model 3    
+    data = np.loadtxt(pozzettiMpc)
+    yobs = data[izz,12:] # Model 3 (for 1)2:7, 2)7:12)
+
+    # Flux limits, units of 1e-16 erg cm-2 s-1
+    xobs = np.array([0.5, 1, 2, 3, 5])
     return xobs,yobs,pozzetti_mod
