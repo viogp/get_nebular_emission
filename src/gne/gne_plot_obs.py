@@ -138,11 +138,20 @@ def get_pozzetti(metadata=None,outpath=None,verbose=False):
             np.savetxt(f, data, fmt=['%.1f']*2+['%.5e']*nmod)  
         if verbose:
             print('Table 3 in Pozzetti+2016 converted to (Mpc/h)^3:\n',pozzettiMpc)
-            
-    # Read the data for model 3    
-    data = np.loadtxt(pozzettiMpc)
-    yobs = data[izz,12:] # Model 3 (for 1)2:7, 2)7:12)
 
     # Flux limits, units of 1e-16 erg cm-2 s-1
-    xobs = np.array([0.5, 1, 2, 3, 5])
+    xx = np.array([0.5, 1, 2, 3, 5])
+    xx *= 1e-16
+
+    # Read the data for model 3    
+    data = np.loadtxt(pozzettiMpc)
+    yy = data[izz,12:] # Model 3 (for 1)2:7, 2)7:12)
+
+    ind = np.where(yy>0)
+    if np.shape(ind)[1]>1:
+        xobs = np.log10(xx[ind])
+        yobs = np.log10(yy[ind])
+    else:
+        pozzetti_mod = False
+    
     return xobs,yobs,pozzetti_mod

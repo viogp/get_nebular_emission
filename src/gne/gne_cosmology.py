@@ -711,7 +711,7 @@ def ndeg2nV(ndeg,z1,z2,verbose=False):
     nV = ndeg*dz*asky/dV
     
     if verbose:
-        print('n (dz={:.1f}) = {:.4e} (Mpc/h)^-3'.format(dz,nV))
+        print(f'{ndeg} deg-2 (dz={dz:.1f}) = {nV:.4e} (Mpc/h)^-3')
     
     return nV
 

@@ -1970,8 +1970,10 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
                                                  outpath=None,
                                                  verbose=verbose)
             if obsdata:
-                ll = 'Pozzetti model 3'
+                ll = 'Model3 Pozzetti+2018'
                 ax.plot(xobs, yobs, '-',color='gray',label=ll)
+                if verbose:
+                    print('Model3 Pozzetti+2018: ',xobs,yobs)
         
         line += 2
         for iline in [line,line+1]:
