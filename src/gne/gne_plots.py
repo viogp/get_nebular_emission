@@ -1837,7 +1837,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
 
     # Get metadata
     vol_eff = metadata['vol_eff']
-    redshift = metadata['redshift']    
+    redshift = metadata['redshift']
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
     if AGN:
@@ -1961,7 +1961,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         ax = axes[ifig]
         xtit = r'$\log_{10}(F_{\rm lim}/\mathrm{erg\,s^{-1}\,cm^{-2}})$'
         ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        #ax.set_ylim([ymin, ymax])
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
@@ -1974,7 +1974,14 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
                 ax.plot(xobs, yobs, '-',color='gray',label=ll)
                 if verbose:
                     print('Model3 Pozzetti+2018: ',xobs,yobs)
-        
+                # Reyes-Peraza+25
+                ll = 'Reyes-Peraza+25'
+                xobs = np.array([1.041*1e-16,1.325*1e-16,2*1e-16])
+                h3 = 0.6774*0.6774*0.6774
+                yobs = h3*np.array([1.299*1e-3,6.731*1e-4,1.723*1e-4])
+                ax.plot(np.log10(xobs),np.log10(yobs),
+                        '--',color='gray',label=ll)
+                    
         line += 2
         for iline in [line,line+1]:
             color = plt.cm.tab10(iline % 10)

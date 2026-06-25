@@ -87,6 +87,7 @@ def get_pozzetti(metadata=None,outpath=None,verbose=False):
 
     # Find if redshift within the intervals
     redshift = metadata['redshift']
+    redshift = 1.3 ####here
     edges = np.insert(zmax,0,zmin[0])
     izz = st.locate_interval(redshift,edges,side='left')
     if (izz<0) or (izz>nzz-1):
@@ -120,12 +121,13 @@ def get_pozzetti(metadata=None,outpath=None,verbose=False):
                             lambda0=lambda0,h0=h0)
         for j in range(nmod):
             for i in range(nzz):
-                data[i,j+2] = cosmo.ndeg2nV(mods[i,j],zmin[i],zmax[i])
+                n_Mpch = cosmo.ndeg2nV(mods[i,j],zmin[i],zmax[i])
+                data[i,j+2] = n_Mpch*h0*h0*h0 #Mpc-3
 
         # Read header lines from original table
         with open(pozzetti_table, 'r') as fin:
             header_lines = [line for line in fin if line.startswith('#')]
-            header_lines = [line.replace('deg-2', '(Mpc/h)^-3') for line in header_lines]
+            header_lines = [line.replace('deg-2', 'Mpc-3') for line in header_lines]
 
         with open(pozzettiMpc,'w') as f:
             # Write cosmology info

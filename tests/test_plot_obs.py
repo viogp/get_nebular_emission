@@ -53,7 +53,7 @@ class TestPredict(unittest.TestCase):
 
     def test_get_pozzetti(self):
         x = np.array([0.5, 1, 2, 3, 5])
-        y = [-0.00608293,0.00194805]
+        y = [-0.00608293*h0*h0*h0,0.00194805*h0*h0*h0]
 
         i = 0
         for z in [0.2, 2.5]:

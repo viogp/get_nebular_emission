@@ -270,7 +270,7 @@ def gne(infile,redshift,snap,h0,omega0,omegab,lambda0,
                              extra_params_names=['h_gas'],
                              extra_params_labels=['Scalelength(Mpc)'],
                              verbose=verbose)
-    
+
     #----------------NLR AGN calculation------------------------
     if AGN:
         if verbose: print('AGN:')
