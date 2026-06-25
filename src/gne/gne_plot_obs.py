@@ -120,8 +120,9 @@ def get_pozzetti(metadata=None,outpath=None,verbose=False):
                             lambda0=lambda0,h0=h0)
         for j in range(nmod):
             for i in range(nzz):
-                n_Mpch = cosmo.ndeg2nV(mods[i,j],zmin[i],zmax[i])
-                data[i,j+2] = n_Mpch*h0*h0*h0 #Mpc-3
+                if (mods[i,j]>0):
+                    n_Mpch = cosmo.ndeg2nV(mods[i,j],zmin[i],zmax[i])
+                    data[i,j+2] = n_Mpch*h0*h0*h0 #Mpc-3
 
         # Read header lines from original table
         with open(pozzetti_table, 'r') as fin:
