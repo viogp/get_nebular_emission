@@ -87,7 +87,6 @@ def get_pozzetti(metadata=None,outpath=None,verbose=False):
 
     # Find if redshift within the intervals
     redshift = metadata['redshift']
-    redshift = 1.3 ####here
     edges = np.insert(zmax,0,zmin[0])
     izz = st.locate_interval(redshift,edges,side='left')
     if (izz<0) or (izz>nzz-1):
