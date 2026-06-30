@@ -1953,15 +1953,12 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
     ytit = r'$\log_{10}(n_{\rm gal}(>F_{\rm lim})/\mathrm{Mpc}^{-3})$'
     xmin = fmin
     xmax = fmax
-    ymin = -2
-    ymax = -1.0
     
     line = -2
     for ifig in range(nfigs):
         ax = axes[ifig]
         xtit = r'$\log_{10}(F_{\rm lim}/\mathrm{erg\,s^{-1}\,cm^{-2}})$'
         ax.set_xlim([xmin, xmax])
-        #ax.set_ylim([ymin, ymax])
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
 
@@ -1972,18 +1969,8 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
             if obsdata:
                 ll = 'Model3 Pozzetti+2018 (att.)'
                 ax.plot(xobs, yobs, '-',color='gray',label=ll)
-                if verbose:
-                    print('Model3 Pozzetti+2018: ',xobs,yobs)
-
-                # Reyes-Peraza+25 for z~1.3
-                zz = metadata['redshift']
-                if (abs(zz-1.321)<0.1):
-                    ll = 'Reyes-Peraza+25'
-                    xobs = np.array([1.041*1e-16,1.325*1e-16,2*1e-16])
-                    h3 = 0.6774*0.6774*0.6774
-                    yobs = h3*np.array([1.299*1e-3,6.731*1e-4,1.723*1e-4])
-                    ax.plot(np.log10(xobs),np.log10(yobs),
-                            '--',color='gray',label=ll)
+                #if verbose:
+                #    print('Model3 Pozzetti+2018: ',xobs,yobs)
                     
         line += 2
         for iline in [line,line+1]:
@@ -2092,14 +2079,14 @@ def make_testplots(snap,ending,outpath=None,
     # U vs Z
     #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
         
-    ## Line plots
-    ## Make NII and SII bpt plots
-    #bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
-    #                metadata=metadata,verbose=verbose)
+    # Line plots
+    # Make NII and SII bpt plots
+    bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
+                    metadata=metadata,verbose=verbose)
     
-    ## Make line LFs
-    #lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-    #               metadata=metadata,verbose=verbose)
+    # Make line LFs
+    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+                        metadata=metadata,verbose=verbose)
     
     # Cumulative numbers with flux limits (if possible)
     if (metadata['flux'] and metadata['redshift']>0):
