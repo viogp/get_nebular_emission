@@ -952,7 +952,7 @@ def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
     first_vol = True
 
     for ivol in list_subvols:
-        filenom = os.path.join(root+'0',endf) #; print(filenom); exit()
+        filenom = os.path.join(root+ivol,endf) #; print(filenom); exit()
         f = h5py.File(filenom, 'r'); header = f['header']
 
         # Read information from file
