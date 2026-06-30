@@ -23,13 +23,13 @@ class TestPredict(unittest.TestCase):
                             lambda0=lambda0,h0=h0)
         # Table 1 in Reyes-Peraza+25
         z1 = 0.9; z2 = 1.8
-        ndeg = [4377,2268,580.7] 
+        ndeg = [4377,2268,580.7]
         nMpc = [1.299*1e-3,6.731*1e-4,1.723*1e-4]
 
         # Conversion
         for ii in range(len(ndeg)):
             nV=cosmo.ndeg2nV(ndeg[ii],z1,z2,verbose=verbose)
-            self.assertAlmostEqual(nV,nMpc[ii],places=3)
+            self.assertAlmostEqual(nV,nMpc[ii],places=4)
 
 if __name__ == '__main__':
     unittest.main()
