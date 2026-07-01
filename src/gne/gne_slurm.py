@@ -178,7 +178,6 @@ def get_slurm_template(hpc):
     """Read the SLURM template file for the specified HPC."""
     fnom = f'slurm_{hpc}_template.sh'
     template_file = os.path.join(c.slurm_temp_dir, fnom)
-
     # Check if template file exists
     if not os.path.exists(template_file):
         print(f'ERROR: Template file {template_file} not found')
@@ -231,7 +230,7 @@ def create_slurm_script(hpc, param_file, simpath, snap, subvols,
     slurm_template = get_slurm_template(hpc)
 
     # Get modified parameter file content
-    modified_params = modify_param_file(param_file, simpath, snap, subvols)
+    modified_params=modify_param_file(param_file, simpath, snap, subvols)
 
     # Replace placeholders in template
     script_content = slurm_template
@@ -244,40 +243,40 @@ def create_slurm_script(hpc, param_file, simpath, snap, subvols,
     if logdir is None:
         output_dir = 'logs'
     else:
-        output_dir = logdir
-    
-    # Create output directory if it doesn't exist
+        output_dir = logdir    
     os.makedirs(output_dir, exist_ok=True)
-    
     script_path = os.path.join(output_dir, f'submit_{job_name}.sh')
-
     with open(script_path, 'w') as f:
         f.write(script_content)
-    
+
     return script_path, job_name
 
 
 def submit_slurm_job(script_path, job_name):
     """Submit a SLURM job and return the job ID."""
-    try:
-        process = subprocess.Popen(
-            ['sbatch', script_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        stdout, stderr = process.communicate()
-        
-        if process.returncode == 0:
-            # Extract job ID from output (format: "Submitted batch job XXXXX")
-            output = stdout.decode('utf-8').strip()
-            job_id = output.split()[-1] if output else 'unknown'
-            print(f'  Submitted {job_name}: Job ID {job_id}')
-            return job_id
-        else:
-            print(f'  ERROR submitting {job_name}: {stderr.decode("utf-8")}')
-            return None
-    except FileNotFoundError:
-        print(f'  WARNING: sbatch not found. Script saved to {script_path}')
+    job_id = None
+    
+    # Check if the slurm script exists
+    if not os.path.exists(script_path):
+        print(f'ERROR: Script file {script_path} not found')
+        return None
+
+    # Submit the job
+    process = subprocess.Popen(
+        ['sbatch', script_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    stdout, stderr = process.communicate()
+
+    if process.returncode == 0:
+        # Extract job ID from output (format: "Submitted batch job XXXXX")
+        output = stdout.decode('utf-8').strip()
+        job_id = output.split()[-1] if output else 'unknown'
+        print(f'  Submitted {job_name}: Job ID {job_id}')
+        return job_id
+    else:
+        print(f'  ERROR submitting {job_name}: {stderr.decode("utf-8")}')
         return None
 
 
@@ -442,7 +441,7 @@ def clean_job_files(job_name=None, logdir=None, only_show=True, verbose=True):
         output_dir = 'logdir'
     else:
         output_dir = logdir
-    
+
     if not os.path.exists(output_dir):
         if verbose:
             print(f'Directory {output_dir} does not exist')
@@ -533,7 +532,7 @@ def clean_all_jobs(runs, root, sam, param_file, subvols,
             deleted = clean_job_files(job_name, logdir=logdir,
                                       only_show=only_show, verbose=False)
             all_deleted.extend(deleted)
-    
+
     # Print summary
     if verbose:
         action = 'Would delete' if only_show else 'Deleted'
