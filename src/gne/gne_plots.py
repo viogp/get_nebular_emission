@@ -1961,16 +1961,6 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         ax.set_xlim([xmin, xmax])
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
-
-        if ifig == 0: #Add Pozzetti's model no3 if in z range
-            xobs,yobs,obsdata = obs.get_pozzetti(metadata=metadata,
-                                                 outpath=None,
-                                                 verbose=verbose)
-            if obsdata:
-                ll = 'Model3 Pozzetti+2018 (att.)'
-                ax.plot(xobs, yobs, '-',color='gray',label=ll)
-                #if verbose:
-                #    print('Model3 Pozzetti+2018: ',xobs,yobs)
                     
         line += 2
         for iline in [line,line+1]:
@@ -1992,6 +1982,16 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
                     y = np.log10(yy[ind])
                     ll = line_labels[iline]+'(att.)'
                     ax.plot(x, y,'--',color=color,label=ll)
+
+        if ifig == 0: #Add Pozzetti's model no3 if in z range
+            xobs,yobs,obsdata = obs.get_pozzetti(metadata=metadata,
+                                                 outpath=None,
+                                                 verbose=verbose)
+            if obsdata:
+                ll = 'Model3 Pozzetti+2018 (att.)'
+                ax.plot(xobs, yobs, '-',color='gray',label=ll)
+                #if verbose:
+                #    print('Model3 Pozzetti+2018: ',xobs,yobs)
             
         # Legend
         if len(ind[0]) > 0:
