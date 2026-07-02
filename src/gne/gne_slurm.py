@@ -78,7 +78,7 @@ def extract_job_suffix_from_params(param_file):
         return 'nocut'
 
 
-def generate_job_name(param_file, simpath, snap, subvols,
+def generate_job_name(param_file, simpath, snap, model,
                       job_suffix=None):
     """
     Generate a unique job name based on parameter file, snap, and subvols.
@@ -91,8 +91,8 @@ def generate_job_name(param_file, simpath, snap, subvols,
         Path to the catalogues
     snap : int
         Snapshot number
-    subvols : integer or list of integers
-        List of subvolumes
+    model : string
+        Identifier of the model
     job_suffix : string or None
         User-defined suffix. If None, derived from cutcols/limits in param_file
         
@@ -104,25 +104,25 @@ def generate_job_name(param_file, simpath, snap, subvols,
     # Extract base name from simpath
     base_name = os.path.basename(simpath)
     
-    # Create subvols representation
-    subvols_str = str(subvols)
-    if isinstance(subvols, list):
-        subvols_str = str(subvols[0])
-        if len(subvols) > 1:
-            subvols_sort = subvols.copy()
-            subvols_sort.sort()
-            item_0 = subvols_sort[0]
-            item_n = subvols_sort[-1]
-            if subvols_sort == list(range(item_0, item_n + 1)):
-                subvols_str = f'{item_0}-{item_n}'
-            else:
-                subvols_str = "_".join(map(str, subvols))        
+    ## Create subvols representation
+    #subvols_str = str(subvols)
+    #if isinstance(subvols, list):
+    #    subvols_str = str(subvols[0])
+    #    if len(subvols) > 1:
+    #        subvols_sort = subvols.copy()
+    #        subvols_sort.sort()
+    #        item_0 = subvols_sort[0]
+    #        item_n = subvols_sort[-1]
+    #        if subvols_sort == list(range(item_0, item_n + 1)):
+    #            subvols_str = f'{item_0}-{item_n}'
+    #        else:
+    #            subvols_str = "_".join(map(str, subvols))        
     
     # Get suffix from cutcols if not provided
     if job_suffix is None:
         job_suffix = extract_job_suffix_from_params(param_file)
     
-    return f'gne_{base_name}_iz{snap}_iv{subvols_str}_{job_suffix}'
+    return f'gne_{base_name}_iz{snap}_{model}_{job_suffix}'
 
 
 def modify_param_file(param_file, simpath, snap, subvols):
@@ -189,7 +189,7 @@ def get_slurm_template(hpc):
     return slurm_template
 
 
-def create_slurm_script(hpc, param_file, simpath, snap, subvols,
+def create_slurm_script(hpc, param_file, simpath, snap, model,
                         logdir=None, job_suffix=None, verbose=True):
     """
     Create a SLURM script that runs the modified parameter file.
@@ -202,8 +202,8 @@ def create_slurm_script(hpc, param_file, simpath, snap, subvols,
         Path to the parameter file (e.g., 'run_gne_SU1.py')
     snap : int
         Simulation snapshot number 
-    subvols : list of integers
-        List of subvolumes
+    sam : string
+        Name of the SA model used
     logdir : string
         Name of log directory
     verbose : bool
@@ -224,7 +224,7 @@ def create_slurm_script(hpc, param_file, simpath, snap, subvols,
         sys.exit()
     
     job_name = generate_job_name(param_file, simpath, snap,
-                                 subvols, job_suffix)
+                                 model, job_suffix)
 
     # Read the SLURM template
     slurm_template = get_slurm_template(hpc)
