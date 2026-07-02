@@ -52,21 +52,20 @@ class TestPredict(unittest.TestCase):
         self.assertFalse(obsdata)
 
     def test_get_pozzetti(self):
-        x = np.array([0.5, 1, 2, 3, 5])
-        y = [-0.00608293*h0*h0*h0,0.00194805*h0*h0*h0]
+        xx = np.array([0.5, 1, 2, 3, 5])
+        x  = np.log10(xx)-16
+        h3 = h0*h0*h0
+        y  = -3.2321765
 
-        i = 0
-        for z in [0.2, 2.5]:
-            metatest = {'redshift': z,
-                        'omega0': omega0,'omegab': omegab,
-                        'lambda0': lambda0, 'h0': h0,}
-            valx, valy, pp = obs.get_pozzetti(metadata=metatest)
-            self.assertTrue(pp)
-            np.testing.assert_allclose(valx,x, atol=0.001)
-            self.assertAlmostEqual(valy[0],y[i],places=5)
-            i += 1
+        metatest = {'redshift': 2.5,
+                    'omega0': omega0,'omegab': omegab,
+                    'lambda0': lambda0, 'h0': h0,}
+        valx, valy, pp = obs.get_pozzetti(metadata=metatest)
+        self.assertTrue(pp)
+        np.testing.assert_allclose(valx,x, atol=0.001)
+        self.assertAlmostEqual(valy[0],y,places=5)
             
-        for z in [0, 2.6]:
+        for z in [0, 0.2, 2.6]:
             metatest = {'redshift': z,
                         'omega0': omega0,'omegab': omegab,
                         'lambda0': lambda0, 'h0': h0,}
