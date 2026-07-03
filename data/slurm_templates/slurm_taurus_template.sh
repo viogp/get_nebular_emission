@@ -5,8 +5,8 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=16
 #SBATCH --job-name=__GNE_JOB_NAME__
-#SBATCH --error=__GNE_LOG_DIR__/__GNE_JOB_NAME__.err
-#SBATCH --output=__GNE_LOG_DIR__/__GNE_JOB_NAME__.out
+#SBATCH --error=__GNE_LOG_DIR__/%x_ivol%a_%A.err
+#SBATCH --output=__GNE_LOG_DIR__/%x_ivol%a_%A.err
 #SBATCH --partition=all
 #SBATCH --exclude=epi
 #SBATCH --time=05:00:00

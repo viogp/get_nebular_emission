@@ -5,124 +5,31 @@ import re
 import subprocess
 import gne.gne_const as c
 
-def extract_job_suffix_from_params(param_file):
+def generate_job_name(model, snap, job_suffix=None):
     """
-    Extract job suffix from parameter file based on cutcols and limits.
+    Generate an informative prefix for job names
     
     Parameters
     ----------
-    param_file : string
-        Path to the parameter file
-        
-    Returns
-    -------
-    suffix : string
-        A suffix string derived from cutcols and mincuts/maxcuts
-    """
-    cutcols = None
-    mincuts = None
-    maxcuts = None
-    
-    with open(param_file, 'r') as f:
-        content = f.read()
-    
-    # Extract cutcols
-    match = re.search(r"cutcols\s*=\s*\[([^\]]+)\]", content)
-    if match:
-        # Extract the variable names, clean them up
-        cutcols_str = match.group(1)
-        # Get just the last part of paths like 'data/Lbol_AGN' -> 'Lbol_AGN'
-        parts = re.findall(r"['\"]([^'\"]+)['\"]", cutcols_str)
-        cutcols = [p.split('/')[-1] for p in parts]
-    
-    # Extract mincuts
-    match = re.search(r"mincuts\s*=\s*\[([^\]]+)\]", content)
-    if match:
-        mincuts_str = match.group(1)
-        # Handle None and numeric values
-        mincuts = []
-        for val in mincuts_str.split(','):
-            val = val.strip()
-            if val == 'None':
-                mincuts.append(None)
-            else:
-                # Just note that there's a min cut
-                mincuts.append('min')
-    
-    # Extract maxcuts
-    match = re.search(r"maxcuts\s*=\s*\[([^\]]+)\]", content)
-    if match:
-        maxcuts_str = match.group(1)
-        maxcuts = []
-        for val in maxcuts_str.split(','):
-            val = val.strip()
-            if val == 'None':
-                maxcuts.append(None)
-            else:
-                maxcuts.append('max')
-    
-    # Build suffix from cutcols and cuts
-    suffix_parts = []
-    if cutcols:
-        for i, col in enumerate(cutcols):
-            part = col
-            if mincuts and i < len(mincuts) and mincuts[i] is not None:
-                part += '_min'
-            if maxcuts and i < len(maxcuts) and maxcuts[i] is not None:
-                part += '_max'
-            suffix_parts.append(part)
-    
-    if suffix_parts:
-        return '_'.join(suffix_parts)
-    else:
-        return 'nocut'
-
-
-def generate_job_name(param_file, simpath, snap, model,
-                      job_suffix=None):
-    """
-    Generate a unique job name based on parameter file, snap, and subvols.
-    
-    Parameters
-    ----------
-    param_file : string
-        Path to file
-    simpath : string
-        Path to the catalogues
-    snap : int
-        Snapshot number
     model : string
         Identifier of the model
+    snap : int
+        Snapshot number
     job_suffix : string or None
-        User-defined suffix. If None, derived from cutcols/limits in param_file
+        User-defined suffix. 
         
     Returns
     -------
     job_name : string
-        Unique job name
+        Informative job name
     """
-    # Extract base name from simpath
-    base_name = os.path.basename(simpath)
-    
-    ## Create subvols representation
-    #subvols_str = str(subvols)
-    #if isinstance(subvols, list):
-    #    subvols_str = str(subvols[0])
-    #    if len(subvols) > 1:
-    #        subvols_sort = subvols.copy()
-    #        subvols_sort.sort()
-    #        item_0 = subvols_sort[0]
-    #        item_n = subvols_sort[-1]
-    #        if subvols_sort == list(range(item_0, item_n + 1)):
-    #            subvols_str = f'{item_0}-{item_n}'
-    #        else:
-    #            subvols_str = "_".join(map(str, subvols))        
-    
     # Get suffix from cutcols if not provided
     if job_suffix is None:
-        job_suffix = extract_job_suffix_from_params(param_file)
+        job_name = f'gne_{model}_iz{snap}'
+    else:
+        job_name = f'gne_{model}_iz{snap}_{job_suffix}'
     
-    return f'gne_{base_name}_iz{snap}_{model}_{job_suffix}'
+    return job_name
 
 
 def modify_param_file(param_file, simpath, snap, subvols):

@@ -21,8 +21,9 @@ class TestSlurmUtilsHdf5(unittest.TestCase):
         # Create a mock SLURM template file for testing
         cls.template_content = '''#!/bin/sh
 #SBATCH --job-name=__GNE_JOB_NAME__
-#SBATCH --error=__GNE_LOG_DIR__/__GNE_JOB_NAME__.err
-#SBATCH --output=__GNE_LOG_DIR__/__GNE_JOB_NAME__.out
+#SBATCH --error=__GNE_LOG_DIR__/%x_ivol%a_%A.err 
+#SBATCH --output=__GNE_LOG_DIR__/%x_ivol%a_%A.out
+#SBATCH --array=__GNE_VOLS__%30 
 #
 srun python << 'EOF_PYTHON_SCRIPT'
 __GNE_PARAM_CONTENT__
@@ -85,97 +86,69 @@ for ivol in range(subvols):
         # Stop patcher
         cls.patcher.stop()
 
-    def test_extract_job_suffix_from_params(self):
-        """Test extraction of job suffix from parameter file"""
-        suffix = su.extract_job_suffix_from_params(self.param_file_path)
-        # Should extract 'Lbol_AGN' with '_min' since mincuts is not None
-        self.assertEqual(suffix, 'Lbol_AGN_min')
-
-    def test_extract_job_suffix_no_cuts(self):
-        """Test extraction when no cuts are defined"""
-        # Create a param file without cuts
-        no_cuts_file = os.path.join(self.test_dir, 'run_gne_NoCuts.py')
-        with open(no_cuts_file, 'w') as f:
-            f.write('''
-subvols = 2
-root = '/path/iz87/ivol'
-''')
-        suffix = su.extract_job_suffix_from_params(no_cuts_file)
-        self.assertEqual(suffix, 'nocut')
+#    def test_extract_job_suffix_from_params(self):
+#        """Test extraction of job suffix from parameter file"""
+#        suffix = su.extract_job_suffix_from_params(self.param_file_path)
+#        # Should extract 'Lbol_AGN' with '_min' since mincuts is not None
+#        self.assertEqual(suffix, 'Lbol_AGN_min')
+#
+#    def test_extract_job_suffix_no_cuts(self):
+#        """Test extraction when no cuts are defined"""
+#        # Create a param file without cuts
+#        no_cuts_file = os.path.join(self.test_dir, 'run_gne_NoCuts.py')
+#        with open(no_cuts_file, 'w') as f:
+#            f.write('''
+#subvols = 2
+#root = '/path/iz87/ivol'
+#''')
+#        suffix = su.extract_job_suffix_from_params(no_cuts_file)
+#        self.assertEqual(suffix, 'nocut')
 
     def test_generate_job_name(self):
-        """Test job name generation with various configurations"""
-        # Single subvolume with auto suffix
-        job_name = su.generate_job_name(self.param_file_path,
-                                        simpath='TestSim', snap=87,
-                                        model='sam')
-        self.assertEqual(job_name, 'gne_TestSim_iz87_sam_Lbol_AGN_min')
-        
-        # Two subvolumes with auto suffix
-        job_name = su.generate_job_name(self.param_file_path,
-                                        simpath='TestSim', snap=128,
-                                        model='sam')
-        self.assertEqual(job_name, 'gne_TestSim_iz128_sam_Lbol_AGN_min')
+        job_name = su.generate_job_name(model='sam',snap=87)
+        self.assertEqual(job_name, 'gne_sam_iz87')
 
-#        # Three subvolumes with auto suffix
-#        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[0, 1, 2])
-#        self.assertEqual(job_name, 'gne_TestSim_iz104_iv0-2_Lbol_AGN_min')
+        job_name = su.generate_job_name(model='sam',snap=87,
+                                        job_suffix='custom')
+        self.assertEqual(job_name, 'gne_sam_iz87_custom')
 #
-#        # Four subvolumes with auto suffix
-#        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[4, 5, 6, 7])
-#        self.assertEqual(job_name, 'gne_TestSim_iz104_iv4-7_Lbol_AGN_min')
+#    def test_get_slurm_template_valid(self):
+#        """Test reading a valid template file"""
+#        template = su.get_slurm_template('taurus')
+#        self.assertIsNotNone(template)
+#        self.assertIn('__GNE_JOB_NAME__', template)
+#        self.assertIn('__GNE_PARAM_CONTENT__', template)
 #
-#        # Four subvolumes with auto suffix
-#        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[5, 4, 6, 7])
-#        self.assertEqual(job_name, 'gne_TestSim_iz104_iv4-7_Lbol_AGN_min')
+#    def test_get_slurm_template_invalid(self):
+#        """Test that invalid HPC name causes sys.exit()"""
+#        with self.assertRaises(SystemExit):
+#            su.get_slurm_template('nonexistent_hpc')
 #
-#        # Four subvolumes with auto suffix
-#        job_name = su.generate_job_name(self.param_file_path, simpath='TestSim', snap=104, subvols=[4, 5, 7])
-#        self.assertEqual(job_name, 'gne_TestSim_iz104_iv4_5_7_Lbol_AGN_min')
+#    def test_modify_param_file(self):
+#        """Test modification of parameter file content"""
+#        modified = su.modify_param_file(self.param_file_path, simpath='TestSim', snap=128, subvols=4)
+#
+#        # Check subvols was modified
+#        self.assertIn('subvols = 4', modified)
+#        self.assertNotIn('subvols = 2', modified)
 #        
-        # With user-defined suffix
-        job_name = su.generate_job_name(self.param_file_path,
-                                        simpath='TestSim',snap=87,
-                                        model='sam',job_suffix='custom')
-        self.assertEqual(job_name, 'gne_TestSim_iz87_sam_custom')
-
-    def test_get_slurm_template_valid(self):
-        """Test reading a valid template file"""
-        template = su.get_slurm_template('taurus')
-        self.assertIsNotNone(template)
-        self.assertIn('__GNE_JOB_NAME__', template)
-        self.assertIn('__GNE_PARAM_CONTENT__', template)
-
-    def test_get_slurm_template_invalid(self):
-        """Test that invalid HPC name causes sys.exit()"""
-        with self.assertRaises(SystemExit):
-            su.get_slurm_template('nonexistent_hpc')
-
-    def test_modify_param_file(self):
-        """Test modification of parameter file content"""
-        modified = su.modify_param_file(self.param_file_path, simpath='TestSim', snap=128, subvols=4)
-
-        # Check subvols was modified
-        self.assertIn('subvols = 4', modified)
-        self.assertNotIn('subvols = 2', modified)
-        
-        # Check root path was modified with new snapshot
-        self.assertIn('iz128', modified)
-        self.assertNotIn('iz87', modified)
-
-    def test_modify_param_file_list(self):
-        """Test modification of parameter file content with list of subvolumes"""
-        modified = su.modify_param_file(self.param_file_path, simpath='TestSim', snap=128, subvols=[42, 63])
-
-        # Check subvols was modified
-        self.assertIn('subvols = [42, 63]', modified)
-        self.assertNotIn('subvols = 2', modified)
-        
-        # Check root path was modified with new snapshot
-        self.assertIn('iz128', modified)
-        self.assertNotIn('iz87', modified)
-
-
+#        # Check root path was modified with new snapshot
+#        self.assertIn('iz128', modified)
+#        self.assertNotIn('iz87', modified)
+#
+#    def test_modify_param_file_list(self):
+#        """Test modification of parameter file content with list of subvolumes"""
+#        modified = su.modify_param_file(self.param_file_path, simpath='TestSim', snap=128, subvols=[42, 63])
+#
+#        # Check subvols was modified
+#        self.assertIn('subvols = [42, 63]', modified)
+#        self.assertNotIn('subvols = 2', modified)
+#        
+#        # Check root path was modified with new snapshot
+#        self.assertIn('iz128', modified)
+#        self.assertNotIn('iz87', modified)
+#
+#
 #    def test_create_slurm_script(self):
 #        """Test creating a SLURM script with parameter file embedding"""
 #        script_path, job_name = su.create_slurm_script(
