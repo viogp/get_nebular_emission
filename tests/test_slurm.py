@@ -103,7 +103,8 @@ endf = 'gne_input.hdf5'
         script_path = su.create_slurm_script('taurus',
                                              self.param_file_path,
                                              'TestSim','sam','96','5,46',
-                                             logdir=self.test_dir, verbose=verbose)
+                                             logdir=self.test_dir,
+                                             verbose=verbose)
         # Check returned values
         self.assertIn('gne_sam_iz96',script_path)
         
