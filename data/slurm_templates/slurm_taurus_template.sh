@@ -10,7 +10,7 @@
 #SBATCH --partition=all
 #SBATCH --exclude=epi
 #SBATCH --time=05:00:00
-#SBATCH --array=__GNE_VOL0__-__GNE_VOLN__%30
+#SBATCH --array=__GNE_VOLS__%30
 #
 export GNE_SUBVOL_INDEX=$SLURM_ARRAY_TASK_ID
 srun python << 'EOF_PYTHON_SCRIPT'
