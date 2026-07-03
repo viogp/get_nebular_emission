@@ -4,6 +4,7 @@ import sys
 import re
 import subprocess
 import gne.gne_const as c
+from datetime import datetime
 
 def generate_job_name(model, snap, job_suffix=None):
     """
@@ -32,7 +33,22 @@ def generate_job_name(model, snap, job_suffix=None):
     return job_name
 
 
-def modify_param_file(param_file, simpath, snap, subvols):
+def get_slurm_template(hpc):
+    """Read the SLURM template file for the specified HPC."""
+    fnom = f'slurm_{hpc}_template.sh'
+    template_file = os.path.join(c.slurm_temp_dir, fnom)
+    # Check if template file exists
+    if not os.path.exists(template_file):
+        print(f'ERROR: Template file {template_file} not found')
+        sys.exit()
+
+    # Read template content
+    with open(template_file, 'r') as f:
+        slurm_template = f.read()
+    return slurm_template
+
+
+def modify_param_file(param_file, simpath, snap):
     """
     Read parameter file and modify the subvols and root lines.
     
@@ -44,8 +60,6 @@ def modify_param_file(param_file, simpath, snap, subvols):
         Path to model catalogues
     snap : int
         Snapshot number to set in root path
-    subvols : int
-        Number of subvolumes
         
     Returns
     -------
@@ -63,14 +77,6 @@ def modify_param_file(param_file, simpath, snap, subvols):
         flags=re.MULTILINE
     )
         
-    # Modify subvols line:
-    content = re.sub(
-        r'^(\s*subvols\s*=\s*)\d+',
-        rf'\g<1>{subvols}',
-        content,
-        flags=re.MULTILINE
-    )
-
     # Modify root line: replace iz<number> with iz<snap>
     # This handles patterns like: root = ...'iz87/ivol'
     lines = content.split('\n')
@@ -81,22 +87,7 @@ def modify_param_file(param_file, simpath, snap, subvols):
     return content
 
 
-def get_slurm_template(hpc):
-    """Read the SLURM template file for the specified HPC."""
-    fnom = f'slurm_{hpc}_template.sh'
-    template_file = os.path.join(c.slurm_temp_dir, fnom)
-    # Check if template file exists
-    if not os.path.exists(template_file):
-        print(f'ERROR: Template file {template_file} not found')
-        sys.exit()
-
-    # Read template content
-    with open(template_file, 'r') as f:
-        slurm_template = f.read()
-    return slurm_template
-
-
-def create_slurm_script(hpc, param_file, simpath, snap, model,
+def create_slurm_script(hpc, param_file, simpath, model, snap, subvols,
                         logdir=None, job_suffix=None, verbose=True):
     """
     Create a SLURM script that runs the modified parameter file.
@@ -107,59 +98,66 @@ def create_slurm_script(hpc, param_file, simpath, snap, model,
         HPC machine to submit jobs
     param_file : string
         Path to the parameter file (e.g., 'run_gne_SU1.py')
+    model : string
+        Name of the used model
     snap : int
         Simulation snapshot number 
-    sam : string
-        Name of the SA model used
+    subvols : string
+        String with numbers indicating the range or list of subvolumes
     logdir : string
         Name of log directory
     verbose : bool
         Verbose output flag
     job_suffix : string or None
-        User-defined suffix for job name. If None, derived from cutcols/limits
+        User-defined suffix for job name.
     
     Returns
     -------
     script_path : string
         Path to the generated SLURM script
     job_name : string
-        Name of the job
+        Prefix for slurm job
     """
     # Check parameter file exists
     if not os.path.exists(param_file):
         print(f'ERROR: Parameter file {param_file} not found')
         sys.exit()
     
-    job_name = generate_job_name(param_file, simpath, snap,
-                                 model, job_suffix)
+    job_name = generate_job_name(model,snap,job_suffix=job_suffix)
 
     # Read the SLURM template
     slurm_template = get_slurm_template(hpc)
 
     # Get modified parameter file content
-    modified_params=modify_param_file(param_file, simpath, snap, subvols)
+    modified_params=modify_param_file(param_file, simpath, snap)
 
     # Replace placeholders in template
     script_content = slurm_template
     script_content = script_content.replace('__GNE_LOG_DIR__', logdir)
     script_content = script_content.replace('__GNE_JOB_NAME__', job_name)
+    script_content = script_content.replace('__GNE_VOLS__', subvols)
     script_content = script_content.replace('__GNE_PARAM_CONTENT__',
                                             modified_params)
 
-    # Write script to file
+    # Output directory
     if logdir is None:
         output_dir = 'logs'
     else:
         output_dir = logdir    
     os.makedirs(output_dir, exist_ok=True)
-    script_path = os.path.join(output_dir, f'submit_{job_name}.sh')
+
+    # Write script to file
+    now = datetime.now()
+    date_time = now.strftime("%d_%m_%Y_%Hh_%Mm_%Ss%f")
+    snom = f'submit_{job_name}_{date_time}.sh'
+    script_path = os.path.join(output_dir, snom)
     with open(script_path, 'w') as f:
         f.write(script_content)
 
-    return script_path, job_name
+    return script_path
 
 
-def submit_slurm_job(script_path, job_name):
+def submit_slurm_job(script_path,verbose=False):
     """Submit a SLURM job and return the job ID."""
     job_id = None
     
@@ -180,10 +178,11 @@ def submit_slurm_job(script_path, job_name):
         # Extract job ID from output (format: "Submitted batch job XXXXX")
         output = stdout.decode('utf-8').strip()
         job_id = output.split()[-1] if output else 'unknown'
-        print(f'  Submitted {job_name}: Job ID {job_id}')
+        if verbose:
+            print(f'  Submitted {script_path}, with job ID {job_id}')
         return job_id
     else:
-        print(f'  ERROR submitting {job_name}: {stderr.decode("utf-8")}')
+        print(f'  ERROR submitting {script_path}: {stderr.decode("utf-8")}')
         return None
 
 
