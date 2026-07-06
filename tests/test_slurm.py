@@ -119,24 +119,22 @@ endf = 'gne_input.hdf5'
         self.assertNotIn('__GNE_PARAM_CONTENT__', content)
         self.assertNotIn('__GNE_VOLS__', content)
 
-            
+
     def test_submit_slurm_job_no_sbatch(self):
         """Test submit_slurm_job when sbatch is not available"""
-        # Check if sbatch is available
-        import shutil as sh
-        if sh.which('sbatch') is not None:
-            self.skipTest("sbatch is available; skipping test to avoid submitting jobs")
-        
         # Create a dummy script file
         dummy_script = os.path.join(self.test_dir, 'dummy_script.sh')
         with open(dummy_script, 'w') as f:
             f.write('#!/bin/sh\necho "test"')
-        
-        # This should handle the FileNotFoundError gracefully
-        job_id = su.submit_slurm_job(dummy_script)
-        
-        # Should return None when sbatch is not found
-        self.assertIsNone(job_id)
+    
+        with patch('shutil.which', return_value=None):
+            with patch('subprocess.Popen', side_effect=FileNotFoundError(2, 'No such file or directory', 'sbatch')):
+                try:
+                    job_id = su.submit_slurm_job(dummy_script)
+                    # Expect None when sbatch unavailable
+                    self.assertIsNone(job_id)
+                except FileNotFoundError:
+                    self.fail("submit_slurm_job raised FileNotFoundError instead of returning None")
 
         
 if __name__ == '__main__':

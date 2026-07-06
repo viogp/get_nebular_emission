@@ -166,14 +166,17 @@ def submit_slurm_job(script_path,verbose=False):
         print(f'ERROR: Script file {script_path} not found')
         return None
 
-    # Submit the job
-    process = subprocess.Popen(
-        ['sbatch', script_path],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    try:
+        # Submit the job
+        process = subprocess.Popen(
+            ['sbatch', script_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+    except FileNotFoundError:
+        print("Warning: sbatch not found. Job submission skipped.")
+        return None
+    
     stdout, stderr = process.communicate()
-
     if process.returncode == 0:
         # Extract job ID from output (format: "Submitted batch job XXXXX")
         output = stdout.decode('utf-8').strip()
