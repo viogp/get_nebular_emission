@@ -188,38 +188,28 @@ def submit_slurm_job(script_path,verbose=False):
         return None
 
 
-def check_job_status(job_name, logdir=None, success_string='SUCCESS', verbose=True):
+def check_job_status(err_file, success_string='SUCCESS',verbose=True):
     """
-    Check the status of a completed SLURM job by examining its output files.
+    Check the status of a completed SLURM job.
 
     Parameters
     ----------
-    job_name : string
-        Name of the job (used to find .out and .err files)
-    logdir : string
-        Directory containing output files, default is 'output/'
+    err_file : string
+        Name of the error file
     success_string : string
-        String to search for in .out file to confirm success, default is 'SUCCESS'
+        String to search for in .out file to confirm success.
     verbose : bool
         If True, print detailed status messages
 
     Returns
     -------
     status : string
-        'success' - job completed successfully (.err empty, .out contains success_string)
-        'error' - job has errors (.err file is not empty)
-        'incomplete' - job may not have finished (.out missing success_string)
+        'success' - *.err empty, .out contains success_string
+        'error' - *.err file is not empty
+        'incomplete' - *.out missing success_string
         'not_found' - output files not found
-    error_content : string or None
-        Content of .err file if there are errors, None otherwise
     """
-    if logdir is None:
-        output_dir = 'logs'
-    else:
-        output_dir = logdir
-    
-    out_file = os.path.join(output_dir, f'{job_name}.out')
-    err_file = os.path.join(output_dir, f'{job_name}.err')
+    out_file = err_file.replace(".err",".out")
     
     # Check if files exist
     out_exists = os.path.exists(out_file)
@@ -228,7 +218,7 @@ def check_job_status(job_name, logdir=None, success_string='SUCCESS', verbose=Tr
     if not out_exists and not err_exists:
         if verbose:
             print(f'  {job_name}: NOT FOUND - output files do not exist')
-        return 'not_found', None
+        return 'not_found'
     
     # Check .err file (should be empty)
     has_errors = False
@@ -252,15 +242,15 @@ def check_job_status(job_name, logdir=None, success_string='SUCCESS', verbose=Tr
     
     # Determine overall status
     if has_errors:
-        return 'error', error_content
+        return 'error'
     elif has_success:
         if verbose:
             print(f'  {job_name}: SUCCESS')
-        return 'success', None
+        return 'success'
     else:
         if verbose:
             print(f'  {job_name}: INCOMPLETE - "{success_string}" not found in .out file')
-        return 'incomplete', None
+        return 'incomplete'
 
 
 def check_all_jobs(model, snap, logdir, job_suffix=None,
@@ -301,16 +291,17 @@ def check_all_jobs(model, snap, logdir, job_suffix=None,
         'incomplete': [],
         'not_found': []
     }
-    
-    for sim, snaps in runs:
-        simpath = os.path.join(root, sam, sim)
-        for snap in snaps:
-            job_name = generate_job_name(param_file, simpath, snap,
-                                         subvols, job_suffix)
-            status, _ = check_job_status(job_name, logdir=logdir,
-                                         success_string=success_string,
-                                         verbose=verbose)
-            results[status].append(job_name)
+
+    if job_suffix is None:
+        contains = f'{logdir}/*{model}*{snap}*'
+    else:
+        contains = f'{logdir}/*{model}*{snap}*{job_suffix}*'
+
+    fnames = [f for f in glob.glob(contains) if f.endswith('.err')]
+    for iname in fnames:
+        status = check_job_status(iname,success_string='SUCCESS',
+                                     verbose=verbose)
+        results[status].append(iname)
     
     # Print summary
     if verbose:
