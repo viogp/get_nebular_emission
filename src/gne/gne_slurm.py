@@ -351,7 +351,9 @@ def clean_all_jobs(model, snap, logdir, job_suffix=None,
     """
     all_deleted = []
 
-    fnames = glob.glob(f'{logdir}/*{model}*{snap}*')
+    suffixes = ('err', 'out', 'sh')
+    fnames = [f for f in glob.glob(f'{logdir}/*{model}*{snap}*')
+              if any(f.endswith(suf) for suf in suffixes)]
     for iname in fnames:
         if os.path.exists(iname):
             all_deleted.append(iname)
