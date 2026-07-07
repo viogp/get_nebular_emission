@@ -1,7 +1,6 @@
 ''' Auxiliary functions for SLURM submission - HDF5 input processing '''
-import os
-import sys
-import re
+import os, sys
+import re, glob
 import subprocess
 import gne.gne_const as c
 from datetime import datetime
@@ -325,122 +324,39 @@ def check_all_jobs(runs, root, sam, param_file, subvols,
     return results
 
 
-def clean_job_files(job_name=None, logdir=None, only_show=True, verbose=True):
-    """
-    Remove .out, .err, and .sh files for a specific job or all jobs.
-
-    Parameters
-    ----------
-    job_name : string or None
-        Name of the job to clean. If None, clean all job files in logdir.
-    logdir : string
-        Directory containing output files, default is 'logs/'
-    only_show : bool
-        If True, only list files that would be deleted without removing them.
-        Set to False to actually delete files.
-    verbose : bool
-        If True, print information about deleted files
-
-    Returns
-    -------
-    deleted_files : list
-        List of files that were deleted (or would be deleted if only_show=True)
-    """
-    if logdir is None:
-        output_dir = 'logdir'
-    else:
-        output_dir = logdir
-
-    if not os.path.exists(output_dir):
-        if verbose:
-            print(f'Directory {output_dir} does not exist')
-        return []
-    
-    deleted_files = []
-    
-    if job_name is not None:
-        # Clean files for a specific job
-        extensions = ['.out', '.err']
-        for ext in extensions:
-            filepath = os.path.join(output_dir, f'{job_name}{ext}')
-            if os.path.exists(filepath):
-                deleted_files.append(filepath)
-                if not only_show:
-                    os.remove(filepath)
-        
-        # Also remove the submit script
-        script_path = os.path.join(output_dir, f'submit_{job_name}.sh')
-        if os.path.exists(script_path):
-            deleted_files.append(script_path)
-            if not only_show:
-                os.remove(script_path)
-    else:
-        # Clean all .out, .err, and .sh files in the directory
-        for filename in os.listdir(output_dir):
-            if filename.endswith('.out') or filename.endswith('.err') or filename.endswith('.sh'):
-                filepath = os.path.join(output_dir, filename)
-                deleted_files.append(filepath)
-                if not only_show:
-                    os.remove(filepath)
-    
-    # Print results
-    if verbose:
-        action = 'Would delete' if only_show else 'Deleted'
-        if deleted_files:
-            print(f'{action} {len(deleted_files)} file(s):')
-            for f in deleted_files:
-                print(f'  {f}')
-        else:
-            print('No files to delete')
-        
-        if only_show and deleted_files:
-            print('\n(Set only_show=False to delete.)')
-    
-    return deleted_files
-
-
-def clean_all_jobs(runs, root, sam, param_file, subvols,
-                   logdir=None, only_show=True, job_suffix=None, verbose=True):
+def clean_all_jobs(model, snap, logdir, job_suffix=None,
+                   only_show=True, verbose=True):
     """
     Remove .out, .err, and .sh files for all jobs in a simulation list.
 
     Parameters
     ----------
-    runs : list of tuples
-        List of (sim, snaps) tuples, where snaps is a list of snapshot numbers
-    root : string
-        Root path to the simulation data
-    sam : string
-        SAM name (e.g., 'Galform')
-    param_file : string
-        Path to the parameter file
-    subvols : int
-        Number of subvolumes
+    model : string
+        Model name (e.g., 'Galform')
+    snap : string
+        Snapshot name
     logdir : string
-        Directory containing output files, default is 'output/'
-    only_show : bool
-        If True, only list files that would be deleted without removing them.
-        Set to False to actually delete files.
+        Directory containing log files
     job_suffix : string or None
-        User-defined suffix. If None, derived from cutcols/limits in param_file
+        User-defined suffix.
+    only_show : bool
+        If True, only list files that would be deleted.
     verbose : bool
         If True, print information about deleted files
 
     Returns
     -------
     deleted_files : list
-        List of all files that were deleted (or would be deleted if only_show=True)
+        List of all files that would be or were deleted
     """
     all_deleted = []
-    
-    for sim, snaps in runs:
-        simpath = os.path.join(root, sam, sim)
-        for snap in snaps:
-            job_name = generate_job_name(param_file, simpath, snap,
-                                         subvols, job_suffix)
-            deleted = clean_job_files(job_name, logdir=logdir,
-                                      only_show=only_show, verbose=False)
-            all_deleted.extend(deleted)
+
+    fnames = glob.glob(f'{logdir}/*{model}*{snap}*')
+    for iname in fnames:
+        if os.path.exists(iname):
+            all_deleted.append(iname)
+            if not only_show:
+                os.remove(iname)
 
     # Print summary
     if verbose:
