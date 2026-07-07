@@ -263,9 +263,8 @@ def check_job_status(job_name, logdir=None, success_string='SUCCESS', verbose=Tr
         return 'incomplete', None
 
 
-def check_all_jobs(runs, root, sam, param_file, subvols,
-                   logdir=None, success_string='SUCCESS',
-                   job_suffix=None, verbose=True):
+def check_all_jobs(model, snap, logdir, job_suffix=None,
+                   success_string='SUCCESS', verbose=True):
     """
     Check the status of all jobs for a list of simulations.
 
@@ -351,8 +350,13 @@ def clean_all_jobs(model, snap, logdir, job_suffix=None,
     """
     all_deleted = []
 
+    if job_suffix is None:
+        contains = f'{logdir}/*{model}*{snap}*'
+    else:
+        contains = f'{logdir}/*{model}*{snap}*{job_suffix}*'
+
     suffixes = ('err', 'out', 'sh')
-    fnames = [f for f in glob.glob(f'{logdir}/*{model}*{snap}*')
+    fnames = [f for f in glob.glob(contains)
               if any(f.endswith(suf) for suf in suffixes)]
     for iname in fnames:
         if os.path.exists(iname):
