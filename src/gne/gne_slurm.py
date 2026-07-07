@@ -215,9 +215,11 @@ def check_job_status(err_file, success_string='SUCCESS',verbose=True):
     out_exists = os.path.exists(out_file)
     err_exists = os.path.exists(err_file)
     
-    if not out_exists and not err_exists:
-        if verbose:
-            print(f'  {job_name}: NOT FOUND - output files do not exist')
+    if not out_exists or not err_exists:
+        if verbose and not out_exists:
+            print(f' Log not found: {out_file}')
+        elif verbose and not err_exists:
+            print(f' Log not found: {err_file}')
         return 'not_found'
     
     # Check .err file (should be empty)
@@ -229,8 +231,7 @@ def check_job_status(err_file, success_string='SUCCESS',verbose=True):
         if error_content:
             has_errors = True
             if verbose:
-                print(f'  {job_name}: ERROR - .err file is not empty')
-                print(f'    Error content: {error_content[:200]}...' if len(error_content) > 200 else f'    Error content: {error_content}')
+                print(f' ERROR message in {err_file}')
     
     # Check .out file for success string
     has_success = False
@@ -245,11 +246,11 @@ def check_job_status(err_file, success_string='SUCCESS',verbose=True):
         return 'error'
     elif has_success:
         if verbose:
-            print(f'  {job_name}: SUCCESS')
+            print(f'  SUCCESS for {out_file}')
         return 'success'
     else:
         if verbose:
-            print(f'  {job_name}: INCOMPLETE - "{success_string}" not found in .out file')
+            print(f'  No {success_string} found, incomplete run {out_file}')
         return 'incomplete'
 
 
@@ -260,22 +261,16 @@ def check_all_jobs(model, snap, logdir, job_suffix=None,
 
     Parameters
     ----------
-    runs : list of tuples
-        List of (sim, snaps) tuples, where snaps is a list of snapshot numbers
-    root : string
-        Root path to the simulation data
-    sam : string
-        SAM name (e.g., 'Galform')
-    param_file : string
-        Path to the parameter file
-    subvols : int
-        Number of subvolumes
+    model : string
+        Model name (e.g., 'Galform')
+    snap : string
+        Sanpshot number
     logdir : string
-        Directory containing output files, default is 'output/'
+        Directory containing output files
+    job_suffix : string or None
+        User-defined suffix    
     success_string : string
         String to search for in .out file to confirm success
-    job_suffix : string or None
-        User-defined suffix. If None, derived from cutcols/limits in param_file
     verbose : bool
         If True, print detailed status messages
 
