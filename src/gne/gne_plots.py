@@ -57,55 +57,6 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
     return levels,colors
 
 
-def lines_BPT(x, BPT, line):
-    '''
-    
-    Boundary lines for the distinction of ELG types in BPT diagrams.
-    It assummes OIII/Hb on the y axis.
- 
-    Parameters
-    ----------
-    
-    x : floats
-       Array of points on the x axis to define the lines. 
-       It should correspond to the wanted BPT.
-    BPT : string
-       Key corresponding to the wanted x axis for the BPT.
-    line : string
-       Key corresponding to the wanted boundary line for the BPT.
-    
-    Returns
-    -------
-    boundary : floats
-    Values of the boundary line in the desired range.
-    '''
-
-    boundary = np.zeros(len(x)); boundary.fill(-999.)
-    
-    if BPT=='NII':
-        if line=='Kauffmann2003':
-            x0 = 0.05
-            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.3
-        elif line=='Kewley2001':
-            x0 = 0.47
-            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.19
-        elif line=='LINER_NIIlim':
-            boundary = np.log10(0.6) # Kauffmann 2003
-        elif line=='LINER_OIIIlim':
-            boundary = np.log10(3) # Kauffmann 2003
-    elif BPT=='SII':
-        if line=='Kewley2001':
-            x0 = 0.32
-            boundary[x<x0] = 0.72/(x[x<x0] - x0) + 1.3
-        elif line=='Kewley2006':
-            boundary = 1.89*x + 0.76
-    else:
-        print('STOP (gne_plots.lines_BPT): ',
-              'BPT plot not recognized.')
-        return None
-            
-    return boundary
-
 
 
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
@@ -508,10 +459,10 @@ def lines_BPT(x, BPT, line):
 #                    
 #                    x = np.arange(xmin, xmax+0.1, 0.03)
 #                    
-#                    SFR_Composite = lines_BPT(x,'NII','SFR_Composite')
-#                    Composite_AGN = lines_BPT(x,'NII','Composite_AGN')
-#                    LINER_NIIlim = lines_BPT(x,'NII','LINER_NIIlim')
-#                    LINER_OIIIlim = lines_BPT(x,'NII','LINER_OIIIlim')
+#                    SFR_Composite = obs.lines_BPT(x,'NII','SFR_Composite')
+#                    Composite_AGN = obs.lines_BPT(x,'NII','Composite_AGN')
+#                    LINER_NIIlim = obs.lines_BPT(x,'NII','LINER_NIIlim')
+#                    LINER_OIIIlim = obs.lines_BPT(x,'NII','LINER_OIIIlim')
 #                    
 #                    plt.plot(x[x<0.05],SFR_Composite[x<0.05],'k--',markersize=3)
 #                    plt.plot(x[x<0.47],Composite_AGN[x<0.47],'k.',markersize=3)
@@ -525,8 +476,8 @@ def lines_BPT(x, BPT, line):
 #                    
 #                    x = np.arange(xmin, xmax+0.1, 0.03)
 #                    
-#                    SFR_AGN = lines_BPT(x,'SII','SFR_AGN')
-#                    Seyfert_LINER = lines_BPT(x,'SII','Seyfert_LINER')
+#                    SFR_AGN = obs.lines_BPT(x,'SII','SFR_AGN')
+#                    Seyfert_LINER = obs.lines_BPT(x,'SII','Seyfert_LINER')
 #                    
 #                    plt.plot(x[x<0.32], SFR_AGN[x<0.32], 'k.', markersize=3)
 #                    
@@ -1123,17 +1074,17 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
         # Lines
         xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
         if bpt=='NII':
-            yline = lines_BPT(xline,bpt,'Kauffmann2003')
+            yline = obs.lines_BPT(xline,bpt,'Kauffmann2003')
             axn.plot(xline,yline,'k--')
 
-            yline = lines_BPT(xline,bpt,'Kewley2001')
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
             axn.plot(xline,yline,'k-')
             
         elif bpt=='SII':
-            yline = lines_BPT(xline,bpt,'Kewley2001')
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
             axs.plot(xline,yline,'k-')
 
-            ylinel = lines_BPT(xline,bpt,'Kewley2006')
+            ylinel = obs.lines_BPT(xline,bpt,'Kewley2006')
             axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
 
@@ -1312,7 +1263,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
     # Read data in each subvolume and add data to plots
     seltot = 0
-    chatot = None
+    chatot=None; O3Hb_tot=None; N2Ha_tot=None; S2Ha_tot=None 
     for ivol in subvols:
         filenom = os.path.join(root+str(ivol),endf)
         f = h5py.File(filenom, 'r')
@@ -1381,7 +1332,6 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             print('STOP BPT plots: not enough adequate data')
             return None
 
-        # For colourbar
         if AGN:
             Halpha_ratio = Ha_agn[ind]/Ha[ind]
         else:
@@ -1439,59 +1389,89 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         seltot = seltot + np.shape(sel)[1]
 
         # Model spectral line ratios
-        yy = O3Hb[sel] #O3/Hb
-        cha = Halpha_ratio[sel]
-
-        xx = N2Ha[sel] #N2/Ha
-        axn.scatter(xx,yy, c=cha,s=50, marker='o', cmap=cmap)
-
-        xx = S2Ha[sel] #S2/Ha
-        axs.scatter(xx,yy, c=cha,s=50, marker='o', cmap=cmap)
-
-        # Join all data for the colourbar
         if chatot is None:
-            chatot = cha
+            chatot = Halpha_ratio[sel]
+            O3Hb_tot = O3Hb[sel] 
+            N2Ha_tot = N2Ha[sel]
+            S2Ha_tot = S2Ha[sel] 
         else:
-            chatot = np.append(chatot,cha)
+            chatot = np.append(chatot,Halpha_ratio[sel])
+            O3Hb_tot = np.append(O3Hb_tot, O3Hb[sel])
+            N2Ha_tot = np.append(N2Ha_tot, N2Ha[sel])
+            S2Ha_tot = np.append(S2Ha_tot, S2Ha[sel]) 
 
-    # Add colorbar
-    sm = cm.ScalarMappable(cmap=cmap) # Create ScalarMappable
-    sm.set_array(chatot)    
-    cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
+    # Contour plots for model galaxies
     if AGN:
-        collabel = (r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'+
-                    f' (z={redshift:.1f})')
+        agn_bins = [
+            {'name':'low','sel': lambda x: x < 0.3,
+             'color': 'blue',
+             'label': r'$L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}<0.3$'},
+            {'name': 'mid','sel': lambda x: (x >= 0.3) & (x <= 0.7),
+             'color': 'green',
+             'label': r'$0.3\leq L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}\leq0.7$'},
+            {'name': 'high','sel': lambda x: x > 0.7,
+             'color': 'red',
+             'label': r'$L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}>0.7$'}]
     else:
-        collabel = r'$L_{\rm H_{\alpha}}$'+f' (z={redshift:.1f})'
-    cbar.set_label(collabel,rotation=270,labelpad=60)        
+        agn_bins = [
+            {'name': 'all', 'sel': lambda x: np.ones_like(x, dtype=bool),
+             'color': 'blue',  'label': r'$L_{\rm H\alpha}$'+f' (z={redshift:.1f})'}]
 
-    if verbose:
-        if ismagr and ismagk:
-            magmsg = '(R and K mag. used for selection)'
-        elif ismagr:
-            magmsg = '(R mag. used for selection)'
-        elif ismagk:
-            magmsg = '(K mag. used for selection)'
-        else:
-            magmsg = ''
-        print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
-
-    for ii, bpt in enumerate(['NII','SII']):
-        # Lines
-        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
-        if bpt=='NII':
-            yline = lines_BPT(xline,bpt,'Kauffmann2003')
-            axn.plot(xline,yline,'k--')
-
-            yline = lines_BPT(xline,bpt,'Kewley2001')
-            axn.plot(xline,yline,'k-')
-            
-        elif bpt=='SII':
-            yline = lines_BPT(xline,bpt,'Kewley2001')
-            axs.plot(xline,yline,'k-')
-
-            ylinel = lines_BPT(xline,bpt,'Kewley2006')
-            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
+    for ib, agn_bin in enumerate(agn_bins):
+#        ind = agn_bin['sel'](chatot)
+#    nsel = np.sum(ind)
+#    if nsel == 0:
+#        continue
+#
+#    xx_b = xx[ind]
+#    yy_b = yy[ind]
+#
+#    if nsel > n4contour:
+#        xc, yc, zc = st.get_cumulative_2Ddensity(xx_b, yy_b, n_grid=100)
+#        levels, colors = contour2Dsigma(color=agn_bin['color'])
+#        axn.contourf(xc, yc, zc, levels=levels, colors=colors)
+#    else:
+#        axn.scatter(xx_b, yy_b, c=agn_bin['color'], s=50,
+#                    marker='o', label=agn_bin['label'])
+##################################
+#    
+#    sm = cm.ScalarMappable(cmap=cmap) # Create ScalarMappable
+#    sm.set_array(chatot)    
+#    cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
+#    if AGN:
+#        collabel = (r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'+
+#                    f' (z={redshift:.1f})')
+#    else:
+#        collabel = r'$L_{\rm H_{\alpha}}$'+f' (z={redshift:.1f})'
+#    cbar.set_label(collabel,rotation=270,labelpad=60)        
+#
+#    if verbose:
+#        if ismagr and ismagk:
+#            magmsg = '(R and K mag. used for selection)'
+#        elif ismagr:
+#            magmsg = '(R mag. used for selection)'
+#        elif ismagk:
+#            magmsg = '(K mag. used for selection)'
+#        else:
+#            magmsg = ''
+#        print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
+#
+#    for ii, bpt in enumerate(['NII','SII']):
+#        # Lines
+#        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
+#        if bpt=='NII':
+#            yline = obs.lines_BPT(xline,bpt,'Kauffmann2003')
+#            axn.plot(xline,yline,'k--')
+#
+#            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
+#            axn.plot(xline,yline,'k-')
+#            
+#        elif bpt=='SII':
+#            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
+#            axs.plot(xline,yline,'k-')
+#
+#            ylinel = obs.lines_BPT(xline,bpt,'Kewley2006')
+#            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
 
     # Output
     bptnom = io.get_plotfile(root,endf,'bpt')
@@ -1796,8 +1776,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
                             label='Dust-attenuated')
             
         # Set axis properties
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(left=xmin)
+        #ax.set_ylim(bottom=ymin)
         ax.minorticks_on()
         ax.set_xlabel(xtit); ax.set_ylabel(ytit)
         if (iline==0) and len(ind[0]) > 0:
@@ -2084,21 +2064,21 @@ def make_testplots(snap,ending,outpath=None,
     bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
                     metadata=metadata,verbose=verbose)
     
-    # Make line LFs
-    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-                        metadata=metadata,verbose=verbose)
-    
-    # Cumulative numbers with flux limits (if possible)
-    if (metadata['flux'] and metadata['redshift']>0):
-        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-                                     outpath=outpath,metadata=metadata,
-                                     verbose=verbose)
-    else:
-        if verbose:
-            if (metadata['flux']):
-                print(f'WARNING: Skipping cumulative flux plot at z=0.')
-            else:
-                print(f'WARNING: No flux data found in {filenom}.')
+#    # Make line LFs
+#    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+#                        metadata=metadata,verbose=verbose)
+#    
+#    # Cumulative numbers with flux limits (if possible)
+#    if (metadata['flux'] and metadata['redshift']>0):
+#        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
+#                                     outpath=outpath,metadata=metadata,
+#                                     verbose=verbose)
+#    else:
+#        if verbose:
+#            if (metadata['flux']):
+#                print(f'WARNING: Skipping cumulative flux plot at z=0.')
+#            else:
+#                print(f'WARNING: No flux data found in {filenom}.')
 
     print(f'SUCCESS: plots in {plots_dir}')
     return

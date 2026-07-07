@@ -5,6 +5,56 @@ import gne.gne_stats as st
 import gne.gne_const as c
 import gne.gne_io as io
 
+def lines_BPT(x, BPT, line):
+    '''
+    
+    Boundary lines for the distinction of ELG types in BPT diagrams.
+    It assummes OIII/Hb on the y axis.
+ 
+    Parameters
+    ----------
+    
+    x : floats
+       Array of points on the x axis to define the lines. 
+       It should correspond to the wanted BPT.
+    BPT : string
+       Key corresponding to the wanted x axis for the BPT.
+    line : string
+       Key corresponding to the wanted boundary line for the BPT.
+    
+    Returns
+    -------
+    boundary : floats
+    Values of the boundary line in the desired range.
+    '''
+
+    boundary = np.zeros(len(x)); boundary.fill(-999.)
+    
+    if BPT=='NII':
+        if line=='Kauffmann2003':
+            x0 = 0.05
+            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.3
+        elif line=='Kewley2001':
+            x0 = 0.47
+            boundary[x<x0] = 0.61/(x[x<x0] - x0) + 1.19
+        elif line=='LINER_NIIlim':
+            boundary = np.log10(0.6) # Kauffmann 2003
+        elif line=='LINER_OIIIlim':
+            boundary = np.log10(3) # Kauffmann 2003
+    elif BPT=='SII':
+        if line=='Kewley2001':
+            x0 = 0.32
+            boundary[x<x0] = 0.72/(x[x<x0] - x0) + 1.3
+        elif line=='Kewley2006':
+            boundary = 1.89*x + 0.76
+    else:
+        print('STOP (gne_plots.lines_BPT): ',
+              'BPT plot not recognized.')
+        return None
+            
+    return boundary
+
+
 def get_obs_bpt(redshift,bpt):
     '''
     Get observational data for BPT diagrams at a given redshift
