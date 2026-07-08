@@ -31,7 +31,7 @@ import gne.gne_style
 plt.style.use(gne.gne_style.style1)
 
 cmap = 'jet'
-n4contour = 1000
+n4contour = 3000
 min_Lbol = 42 # Based on Griffin+2020, fig 14
 max_Lbol = 50
 min_Ms = 8    # To be obtained from sim. res. ###here
@@ -55,8 +55,6 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
               for a in alphas]
 
     return levels,colors
-
-
 
 
 #def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
@@ -1232,8 +1230,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
     minZ, maxZ = get_limits(propname='Z', photmod=photmod_sfr)
 
     # Prep plots
-    fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15),
-                                   layout='constrained')
+    fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15))
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
     xmaxs = [0.8,0.9]
@@ -1400,79 +1397,97 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             N2Ha_tot = np.append(N2Ha_tot, N2Ha[sel])
             S2Ha_tot = np.append(S2Ha_tot, S2Ha[sel]) 
 
+    # Information on the selection
+    if verbose:
+        if ismagr and ismagk:
+            magmsg = '(R and K mag. used for selection)'
+        elif ismagr:
+            magmsg = '(R mag. used for selection)'
+        elif ismagk:
+            magmsg = '(K mag. used for selection)'
+        else:
+            magmsg = ''
+        print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
+
+    # BPT classification lines
+    for ii, bpt in enumerate(['NII','SII']):
+        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
+        if bpt=='NII':
+            yline = obs.lines_BPT(xline,bpt,'Kauffmann2003')
+            axn.plot(xline,yline,'k--')
+
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
+            axn.plot(xline,yline,'k-')
+            
+        elif bpt=='SII':
+            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
+            axs.plot(xline,yline,'k-')
+
+            ylinel = obs.lines_BPT(xline,bpt,'Kewley2006')
+            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
+
     # Contour plots for model galaxies
     if AGN:
         agn_bins = [
-            {'name':'low','sel': lambda x: x < 0.3,
-             'color': 'blue',
+            {'sel': lambda x: x < 0.3,'color':'blue',
              'label': r'$L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}<0.3$'},
-            {'name': 'mid','sel': lambda x: (x >= 0.3) & (x <= 0.7),
-             'color': 'green',
+            {'sel': lambda x: (x >= 0.3) & (x <= 0.7),'color':'lime',
              'label': r'$0.3\leq L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}\leq0.7$'},
-            {'name': 'high','sel': lambda x: x > 0.7,
-             'color': 'red',
+            {'sel': lambda x: x > 0.7,'color':'red',
              'label': r'$L_{\rm H\alpha,AGN}/L_{\rm H\alpha,tot}>0.7$'}]
     else:
         agn_bins = [
-            {'name': 'all', 'sel': lambda x: np.ones_like(x, dtype=bool),
-             'color': 'blue',  'label': r'$L_{\rm H\alpha}$'+f' (z={redshift:.1f})'}]
+            {'sel': lambda x: np.ones_like(x, dtype=bool),'color':'blue',
+             'label': r'$L_{\rm H\alpha}$'+f' (z={redshift:.1f})'}]
 
+    ntot = len(chatot)
+    proxies = []; labels = []
     for ib, agn_bin in enumerate(agn_bins):
-#        ind = agn_bin['sel'](chatot)
-#    nsel = np.sum(ind)
-#    if nsel == 0:
-#        continue
-#
-#    xx_b = xx[ind]
-#    yy_b = yy[ind]
-#
-#    if nsel > n4contour:
-#        xc, yc, zc = st.get_cumulative_2Ddensity(xx_b, yy_b, n_grid=100)
-#        levels, colors = contour2Dsigma(color=agn_bin['color'])
-#        axn.contourf(xc, yc, zc, levels=levels, colors=colors)
-#    else:
-#        axn.scatter(xx_b, yy_b, c=agn_bin['color'], s=50,
-#                    marker='o', label=agn_bin['label'])
-##################################
-#    
-#    sm = cm.ScalarMappable(cmap=cmap) # Create ScalarMappable
-#    sm.set_array(chatot)    
-#    cbar = plt.colorbar(sm, ax=axs, cmap=cmap, location='right')
-#    if AGN:
-#        collabel = (r'$L_{\rm H_{\alpha}, AGN}/L_{\rm H_{\alpha}, tot}$'+
-#                    f' (z={redshift:.1f})')
-#    else:
-#        collabel = r'$L_{\rm H_{\alpha}}$'+f' (z={redshift:.1f})'
-#    cbar.set_label(collabel,rotation=270,labelpad=60)        
-#
-#    if verbose:
-#        if ismagr and ismagk:
-#            magmsg = '(R and K mag. used for selection)'
-#        elif ismagr:
-#            magmsg = '(R mag. used for selection)'
-#        elif ismagk:
-#            magmsg = '(K mag. used for selection)'
-#        else:
-#            magmsg = ''
-#        print(f'    {seltot} gal. for BPT plots at z={redshift:.1f} {magmsg}\n')
-#
-#    for ii, bpt in enumerate(['NII','SII']):
-#        # Lines
-#        xline = np.arange(xmins[ii],xmaxs[ii]+0.1, 0.03)
-#        if bpt=='NII':
-#            yline = obs.lines_BPT(xline,bpt,'Kauffmann2003')
-#            axn.plot(xline,yline,'k--')
-#
-#            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
-#            axn.plot(xline,yline,'k-')
-#            
-#        elif bpt=='SII':
-#            yline = obs.lines_BPT(xline,bpt,'Kewley2001')
-#            axs.plot(xline,yline,'k-')
-#
-#            ylinel = obs.lines_BPT(xline,bpt,'Kewley2006')
-#            axs.plot(xline[ylinel>yline],ylinel[ylinel>yline],'k-.')
+        ind = agn_bin['sel'](chatot)
+        nsel = np.sum(ind)
 
+        leg = agn_bin['label']
+        col = agn_bin['color']
+        per = nsel*100/ntot
+        print(f'{per:.1f}% of {leg} ({nsel} out of {ntot})')
+        
+        if nsel == 0:
+            continue
+        
+        yy = O3Hb_tot[ind] 
+        for ii, bpt in enumerate(['NII','SII']):
+            if bpt=='NII':
+                xx = N2Ha_tot[ind]
+                if nsel > n4contour:
+                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
+                    levels, colors = contour2Dsigma(color=col)
+                    axn.contour(xc,yc,zc,levels=levels,colors=colors,label=leg)
+                else:
+                    axn.scatter(xx,yy,c=col, s=50,marker='o')
+                # For legend
+                proxy = mlines.Line2D([],[],color=col,marker='o',markersize=8)
+                proxies.append(proxy)
+                labels.append(leg+f' ({per:.1f}%)')
+            elif bpt=='SII':
+                xx = S2Ha_tot[ind]
+                if nsel > n4contour:
+                    xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
+                    levels, colors = contour2Dsigma(color=col)
+                    axs.contour(xc,yc,zc,levels=levels,colors=colors)
+                else:
+                    axs.scatter(xx,yy,c=col, s=50,marker='o')
+
+    # Single shared legend on top
+    if len(proxies) == 0:
+        print('WARNING plot_bpts: no proxies for legend, skipping legend.')
+    else:
+        fig.legend(proxies, labels,
+                   loc='lower center', bbox_to_anchor=(0.5, 1.0),
+                   ncol=len(proxies), frameon=True,
+                   title=f'z = {redshift:.2f}',
+                   fancybox=True, shadow=False)
+        fig.subplots_adjust(top=0.98)
+    
     # Output
     bptnom = io.get_plotfile(root,endf,'bpt')
     plt.savefig(bptnom)
