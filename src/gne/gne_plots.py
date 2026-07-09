@@ -1893,27 +1893,29 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         f.close()
 
         if AGN:
-            # Combine luminosities (SFR + AGN if available)
-            Ha = Ha_sfr + Ha_agn
-            HaN2 = Ha + NII_sfr + NII_agn
-            O3 = OIII_sfr + OIII_agn
-            O3Hb = O3 + Hb_sfr + Hb_agn 
+            # Combine without attenuation using safe_sum_arrays
+            Ha = st.safe_sum_arrays([Ha_sfr,Ha_agn])
+            HaN2 = st.safe_sum_arrays([Ha,NII_sfr,NII_agn])
+            O3 = st.safe_sum_arrays([OIII_sfr,OIII_agn])
+            O3Hb = st.safe_sum_arrays([O3,Hb_sfr,Hb_agn])
+            
             if att:
-                Ha_att = Ha_sfr_att + Ha_agn_att
-                HaN2_att = Ha_att + NII_sfr_att + NII_agn_att
-                O3_att = OIII_sfr_att + OIII_agn_att
-                O3Hb_att = O3_att + Hb_sfr_att + Hb_agn_att 
+                Ha_att = st.safe_sum_arrays([Ha_sfr_att,Ha_agn_att])
+                HaN2_att = st.safe_sum_arrays([Ha_att,NII_sfr_att,NII_agn_att])
+                O3_att = st.safe_sum_arrays([OIII_sfr_att,OIII_agn_att])
+                O3Hb_att = st.safe_sum_arrays([O3_att,Hb_sfr_att,Hb_agn_att])
         else:
             Ha = Ha_sfr
-            HaN2 = Ha + NII_sfr
+            HaN2 = st.safe_sum_arrays([Ha,NII_sfr])
             O3 = OIII_sfr
-            O3Hb = O3 + Hb_sfr
+            O3Hb = st.safe_sum_arrays([O3,Hb_sfr])
+            
             if att:
                 Ha_att = Ha_sfr_att
-                HaN2_att = Ha_att + NII_sfr_att
+                HaN2_att = st.safe_sum_arrays([Ha_att, NII_sfr_att])
                 O3_att = OIII_sfr_att
-                O3Hb_att = O3_att + Hb_sfr_att
-
+                O3Hb_att = st.safe_sum_arrays([O3_att, Hb_sfr_att])
+                
         flux_int = [Ha, HaN2, O3, O3Hb]
         if att:
             flux_att = [Ha_att, HaN2_att, O3_att, O3Hb_att]
