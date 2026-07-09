@@ -2079,21 +2079,21 @@ def make_testplots(snap,ending,outpath=None,
     bpt = plot_bpts(root,endf,subvols=subvols,outpath=outpath,
                     metadata=metadata,verbose=verbose)
     
-#    # Make line LFs
-#    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
-#                        metadata=metadata,verbose=verbose)
-#    
-#    # Cumulative numbers with flux limits (if possible)
-#    if (metadata['flux'] and metadata['redshift']>0):
-#        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-#                                     outpath=outpath,metadata=metadata,
-#                                     verbose=verbose)
-#    else:
-#        if verbose:
-#            if (metadata['flux']):
-#                print(f'WARNING: Skipping cumulative flux plot at z=0.')
-#            else:
-#                print(f'WARNING: No flux data found in {filenom}.')
+    # Make line LFs
+    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+                        metadata=metadata,verbose=verbose)
+    
+    # Cumulative numbers with flux limits (if possible)
+    if (metadata['flux'] and metadata['redshift']>0):
+        ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
+                                     outpath=outpath,metadata=metadata,
+                                     verbose=verbose)
+    else:
+        if verbose:
+            if (metadata['flux']):
+                print(f'WARNING: Skipping cumulative flux plot at z=0.')
+            else:
+                print(f'WARNING: No flux data found in {filenom}.')
 
     print(f'SUCCESS: plots in {plots_dir}')
     return
