@@ -1905,7 +1905,7 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
                 O3_att = st.safe_sum_arrays([OIII_sfr_att,OIII_agn_att])
                 O3Hb_att = st.safe_sum_arrays([O3_att,Hb_sfr_att,Hb_agn_att])
         else:
-            Ha = Ha_sfr
+            Ha =  Ha_sfr
             HaN2 = st.safe_sum_arrays([Ha,NII_sfr])
             O3 = OIII_sfr
             O3Hb = st.safe_sum_arrays([O3,Hb_sfr])
