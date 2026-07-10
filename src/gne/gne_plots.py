@@ -1461,7 +1461,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
                 if nsel > n4contour:
                     xc,yc,zc = st.get_cumulative_2Ddensity(xx,yy,n_grid=100)
                     levels, colors = contour2Dsigma(color=col)
-                    axn.contour(xc,yc,zc,levels=levels,colors=colors,label=leg)
+                    axn.contour(xc,yc,zc,levels=levels,colors=colors)
                 else:
                     axn.scatter(xx,yy,c=col, s=50,marker='o')
                 # For legend
@@ -1484,7 +1484,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         fig.legend(proxies, labels,
                    loc='lower center', bbox_to_anchor=(0.5, 1.0),
                    ncol=len(proxies), frameon=True,
-                   title=f'z = {redshift:.2f}',
+                   title=f'z = {redshift:.2f}, {ntot} model tracers',
                    fancybox=True, shadow=False)
         fig.subplots_adjust(top=0.98)
     
@@ -1774,7 +1774,7 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
             indy = np.where(y > 0)
             if len(indy[0]) > 0:
                 logy = np.log10(y[indy])
-                ax.plot(x[indy], logy, 'r:',
+                ax.plot(x[indy], logy, 'b:',
                         label=f'Intrinsic (z={redshift:.1f})')
 
         if att:
@@ -1787,7 +1787,7 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
                 indy = np.where(y > 0)
                 if len(indy[0]) > 0:
                     logy = np.log10(y[indy])
-                    ax.plot(x[indy], logy, 'b-',
+                    ax.plot(x[indy], logy, 'r-',
                             label='Dust-attenuated')
             
         # Set axis properties
