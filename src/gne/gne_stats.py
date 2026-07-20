@@ -205,9 +205,9 @@ def get_cumulative_2Ddensity(xin, yin, n_grid=100, smooth=True):
     # Calculate the 2D histogram and edges of the grid
     hist2D, xedges, yedges = np.histogram2d(xin,yin,bins=n_grid,range=xylims)
 
-    # Optional smoothing for sparse data
-    if smooth:
-        hist2D = smooth_histogram_2d(hist2D)
+    # Optional smoothing for sparse data ####here
+    #if smooth:
+    #    hist2D = smooth_histogram_2d(hist2D)
     
     # Create mesh grid from bin centers
     xx = (xedges[:-1] + xedges[1:])/2.

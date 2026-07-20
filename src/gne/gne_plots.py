@@ -30,7 +30,7 @@ from gne.gne_flux import flux2L
 import gne.gne_style
 plt.style.use(gne.gne_style.style1)
 
-cmap = 'jet'
+cmap = 'magma'
 n4contour = 3000
 min_Lbol = 42 # Based on Griffin+2020, fig 14
 max_Lbol = 50
@@ -38,6 +38,12 @@ min_Ms = 8    # To be obtained from sim. res. ###here
 max_Ms = 12   # To be obtained from sim. res. ###here
 
 markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '_']
+
+def get_ngrid_nlev(nobj):
+    ngrid = 100 if nobj > n4contour*3 else 50
+    nlev  = None if nobj > n4contour*3 else 4
+    return ngrid, nlev
+
 
 def contour2Dsigma(n_levels=None,color='darkgrey'):
     '''
@@ -48,11 +54,6 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
         levels=c.sigma_2Dprobs[0:n_levels]
     else:
         levels=c.sigma_2Dprobs.copy()
-
-    # Maximum number of levels set to 6 for clarity # remove?
-    nl = min(len(levels),6)                         # remove?
-    levels = levels[0:nl]                           # remove?
-    print(len(levels))
     
     nl = len(levels)
     levels.insert(0,0)
@@ -1048,6 +1049,7 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
     # Prep plots
     fig, (axn, axs) = plt.subplots(1, 2, figsize=(32, 17),
                                    layout='constrained')
+    col = 'darkgrey'
     #plt.subplots_adjust(right=0.85, top=0.9) 
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
@@ -1065,14 +1067,22 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
             axs.set_xlim(xmins[ii], xmaxs[ii])
             axs.set_ylim(ymins[ii], ymaxs[ii])
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
-
+            
         xobs, yobs, obsdata = obs.get_obs_bpt(0.,bpt)
-        x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
-        levels,colors= contour2Dsigma()
-        if obsdata and bpt=='NII':
-            contour = axn.contourf(x, y, z, levels=levels,colors=colors)
-        elif obsdata and bpt=='SII':
-            contour = axs.contourf(x, y, z, levels=levels,colors=colors)
+        nobs = len(xobs)
+        if nobs > n4contour:
+            ngrid, nlev = get_ngrid_nlev(nobs)
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
+            levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+            if obsdata and bpt=='NII':
+                contour = axn.contourf(x,y,z,levels=levels,colors=colors)
+            elif obsdata and bpt=='SII':
+                contour = axs.contourf(x,y,z,levels=levels,colors=color)
+        else:
+            if obsdata and bpt=='NII':
+                axn.scatter(xobs,yobs,colors=col)
+            elif obsdata and bpt=='SII':
+                axs.scatter(xobs,yobs,colors=col)
             
     for ii, bpt in enumerate(['NII','SII']):
         # Lines
@@ -1237,6 +1247,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
     # Prep plots
     fig, (axn, axs) = plt.subplots(1, 2, figsize=(30, 15))
+    col = 'darkgrey'
     ytit = 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)'
     xmins = [-1.9,-1.9]
     xmaxs = [0.8,0.9]
@@ -1255,12 +1266,20 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             axs.set_xlabel(xtit); axs.set_ylabel(ytit)
 
         xobs, yobs, obsdata = obs.get_obs_bpt(redshift,bpt)
-        x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=100)
-        levels,colors= contour2Dsigma()
-        if obsdata and bpt=='NII':
-            contour = axn.contourf(x, y, z, levels=levels,colors=colors)
-        elif obsdata and bpt=='SII':
-            contour = axs.contourf(x, y, z, levels=levels,colors=colors)
+        nobs = len(xobs)
+        if nobs > n4contour:
+            ngrid, nlev = get_ngrid_nlev(nobs)
+            x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
+            levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+            if obsdata and bpt=='NII':
+                contour = axn.contourf(x,y,z,levels=levels,colors=colors)
+            elif obsdata and bpt=='SII':
+                contour = axs.contourf(x,y,z,levels=levels,colors=colors)
+        else:
+            if obsdata and bpt=='NII':
+                axn.scatter(xobs,yobs,colors=col)
+            elif obsdata and bpt=='SII':
+                axs.scatter(xobs,yobs,colors=col)
 
     # Read data in each subvolume and add data to plots
     seltot = 0
@@ -1449,7 +1468,8 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
     for ib, agn_bin in enumerate(agn_bins):
         ind = agn_bin['sel'](chatot)
         nsel = np.sum(ind)
-
+        ngrid, nlev = get_ngrid_nlev(nsel)
+        
         leg = agn_bin['label']
         col = agn_bin['color']
         per = nsel*100/ntot
@@ -1458,11 +1478,8 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         if nsel == 0:
             continue
         
-        yy = O3Hb_tot[ind] 
+        yy = O3Hb_tot[ind]
         for ii, bpt in enumerate(['NII','SII']):
-            if nsel > n4contour:
-                ngrid = 100 if nsel > n4contour*3 else 50
-                nlev = None if nsel > n4contour*3 else 4
             if bpt=='NII':
                 xx = N2Ha_tot[ind]
                 if nsel > n4contour:
@@ -1483,7 +1500,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
                     levels, colors = contour2Dsigma(n_levels=nlev,color=col)
                     axs.contour(xc,yc,zc,levels=levels,colors=colors,zorder=1)
                 else:
-                    axs.scatter(xx,yy,c=col, s=40,marker='o',,zorder=2)
+                    axs.scatter(xx,yy,c=col, s=40,marker='o',zorder=2)
 
     # Single shared legend on top
     if len(proxies) == 0:
