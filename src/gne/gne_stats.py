@@ -157,10 +157,11 @@ def smooth_histogram_2d(hist, n_neighbors=1.5):
     """
     nx, ny = hist.shape
     smoothed = np.zeros_like(hist, dtype=float)
-    
+
+    n_int = int(n_neighbors) 
     weight = 1.0
-    for dx in range(-n_neighbors, n_neighbors + 1):
-        for dy in range(-n_neighbors, n_neighbors + 1):
+    for dx in range(-n_int, n_int + 1):
+        for dy in range(-n_int, n_int + 1):
             dist = np.sqrt(dx*dx + dy*dy)
             gw = np.exp(-dist**2 / (2 * n_neighbors**2))  # Gaussian weight
             
@@ -206,8 +207,8 @@ def get_cumulative_2Ddensity(xin, yin, n_grid=100, smooth=True):
     hist2D, xedges, yedges = np.histogram2d(xin,yin,bins=n_grid,range=xylims)
 
     # Optional smoothing for sparse data ####here
-    #if smooth:
-    #    hist2D = smooth_histogram_2d(hist2D)
+    if smooth:
+        hist2D = smooth_histogram_2d(hist2D)
     
     # Create mesh grid from bin centers
     xx = (xedges[:-1] + xedges[1:])/2.

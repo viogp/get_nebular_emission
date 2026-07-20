@@ -41,7 +41,7 @@ markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '
 
 def get_ngrid_nlev(nobj):
     ngrid = 100 if nobj > n4contour*3 else 50
-    nlev  = None if nobj > n4contour*3 else 4
+    nlev  = None if nobj > n4contour*3 else 3
     return ngrid, nlev
 
 
