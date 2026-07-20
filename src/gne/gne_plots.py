@@ -712,14 +712,16 @@ def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
     n_comp = np.shape(xx)[1]
     for i in range(n_comp):
         ind = np.where((xx[:, i] > c.notnum) & (yy[:, i] > c.notnum))[0]
-        if len(ind) > 0:
+        nsel = len(ind)
+        if nsel > 0:
             x = xx[ind, i]
             y = yy[ind, i]
             col = np.array([cm(float(i) / n_comp)])
             
-            if len(ind) > n4contour:
+            if nsel > n4contour:
                 xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=100)
-                levels, colors = contour2Dsigma(color=col)
+                nlev = 2 if nsel < 10000 else None
+                levels, colors = contour2Dsigma(n_levels=nlev, color=col)
                 contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
                 proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
             else:
