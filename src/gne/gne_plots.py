@@ -719,8 +719,9 @@ def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
             col = np.array([cm(float(i) / n_comp)])
             
             if nsel > n4contour:
-                xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=100)
-                nlev = 2 if nsel < 10000 else None
+                ngrid = 50 if nsel < n4contour*3 else 100
+                xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=ngrid)
+                nlev = 2 if nsel < n4contour*3 else None
                 levels, colors = contour2Dsigma(n_levels=nlev, color=col)
                 contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
                 proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
