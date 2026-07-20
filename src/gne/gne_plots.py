@@ -52,6 +52,7 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
     # Maximum number of levels set to 6 for clarity # remove?
     nl = min(len(levels),6)                         # remove?
     levels = levels[0:nl]                           # remove?
+    print(len(levels))
     
     nl = len(levels)
     levels.insert(0,0)

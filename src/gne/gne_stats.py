@@ -139,7 +139,7 @@ def av_2arrays(xbins, xarray, yarray, weights, nmin):
     return av_2arrays
 
 
-def smooth_histogram_2d(hist, n_neighbors=1):
+def smooth_histogram_2d(hist, n_neighbors=1.5):
     """
     Smooth a 2D histogram by averaging with neighboring cells.
     
