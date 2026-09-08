@@ -230,8 +230,7 @@ def check_job_status(err_file, success_string='SUCCESS',verbose=True):
             error_content = f.read().strip()
         if error_content:
             has_errors = True
-            if verbose:
-                print(f' ERROR message in {err_file}')
+            print(f' ERROR message in {err_file}')
     
     # Check .out file for success string
     has_success = False
@@ -299,12 +298,11 @@ def check_all_jobs(model, snap, logdir, job_suffix=None,
         results[status].append(iname)
     
     # Print summary
-    if verbose:
-        print('\n--- Summary ---')
-        print(f'  Success:    {len(results["success"])}')
-        print(f'  Error:      {len(results["error"])}')
-        print(f'  Incomplete: {len(results["incomplete"])}')
-        print(f'  Not found:  {len(results["not_found"])}')
+    print('\n--- Summary ---')
+    print(f'  Success:    {len(results["success"])}')
+    print(f'  Error:      {len(results["error"])}')
+    print(f'  Incomplete: {len(results["incomplete"])}')
+    print(f'  Not found:  {len(results["not_found"])}')
     
     return results
 
