@@ -349,16 +349,16 @@ def clean_all_jobs(model, snap, logdir, job_suffix=None,
                 os.remove(iname)
 
     # Print summary
-    if verbose:
-        action = 'Would delete' if only_show else 'Deleted'
-        if all_deleted:
-            print(f'{action} {len(all_deleted)} file(s):')
+    action = 'Would delete' if only_show else 'Deleted'
+    if all_deleted:
+        print(f'{action} {len(all_deleted)} file(s)')
+        if verbose:
             for f in all_deleted:
                 print(f'  {f}')
-        else:
-            print('No files to delete')
+    else:
+        print('No files to delete')
         
-        if only_show and all_deleted:
-            print('\n(Set only_show=False to delete.)')
+    if only_show and all_deleted:
+        print('\n(Set only_show=False to delete.)')
     
     return all_deleted
