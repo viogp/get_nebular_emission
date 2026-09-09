@@ -1525,7 +1525,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
 
 def plot_lf(root, endf, subvols=[0], outpath=None,
-            outnom = 'masses',
+            outnom = 'masses',vol=None,
             props=['data/mh','data/lm_s','data/lm_gas'],
             prop_labels=[r'M$_{\rm h}(M_{\odot})$',
                          r'M$_{\rm *}(M_{\odot})$',
@@ -1547,6 +1547,8 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
        Path to output, default is output/
     outnom : string
        Root name for output plot
+    vol : float
+       Volume for normalisations (Mpc³)
     props : array of strings
        Dataset names to be plotted
     prop_labels : array of strings
@@ -1563,7 +1565,9 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
        If True print out messages.
     '''
     # Get metadata
-    vol_eff = metadata['vol_eff']
+    vol_eff = vol
+    if vol is None:
+        vol_eff = metadata['vol_eff']
     redshift = metadata['redshift']    
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
@@ -1629,8 +1633,9 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
 
 
 
-def plot_line_lfs(root, endf, subvols=[0], outpath=None,
-             metadata=None,verbose=True):
+def plot_line_lfs(root, endf, subvols=[0],
+                  outpath=None,vol=None,
+                  metadata=None,verbose=True):
     '''
     Make line luminosity function plots
     
@@ -1644,6 +1649,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
         Number of subvolumes to be considered
     outpath : string
         Path to output, default is output/
+    vol : float
+       Volume for normalisations (Mpc³)
     metadata : dictionary
         Cosmology and other metadata information
     verbose : boolean
@@ -1651,7 +1658,9 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
     '''
 
     # Get metadata
-    vol_eff = metadata['vol_eff']
+    vol_eff = vol
+    if vol is None:
+        vol_eff = metadata['vol_eff']
     redshift = metadata['redshift']    
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
@@ -1836,7 +1845,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
     return nom
 
 
-def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
+def plot_ncumu_flux(root, endf, subvols=[0],
+                    outpath=None,vol=None,
                     metadata=None,verbose=True):
     '''
     Make plots with the cumulative numbers as a function of flux
@@ -1851,14 +1861,17 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         Number of subvolumes to be considered
     outpath : string
         Path to output, default is output/
+    vol : float
+       Volume for normalisations (Mpc³)
     metadata : dictionary
         Cosmology and other metadata information
     verbose : boolean
        If True print out messages.
     '''
-
     # Get metadata
-    vol_eff = metadata['vol_eff']
+    vol_eff = vol
+    if vol is None:
+        vol_eff = metadata['vol_eff']    
     redshift = metadata['redshift']
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
@@ -2055,7 +2068,8 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
 
 
 def make_testplots(snap,ending,outpath=None,
-                   subvols=[0],gridplots=False,verbose=True):
+                   subvols=[0],vol=None,
+                   gridplots=False,verbose=True):
     '''
     Make test plots
     
@@ -2068,9 +2082,11 @@ def make_testplots(snap,ending,outpath=None,
     outpath : string
        Path to input files
     subvols: list of integers
-        List of subvolumes to be considered
-    outpath : string
-        Path to output, default is output/ 
+       List of subvolumes to be considered
+    vol : float
+       Volume for normalisations (Mpc³)
+    gridplots : boolean
+       True for plotting input tables 
     verbose : boolean
        If True print out messages.
     '''
@@ -2088,7 +2104,6 @@ def make_testplots(snap,ending,outpath=None,
                   omegab = metadata['omegab'],
                   lambda0 = metadata['lambda0'],
                   h0 = metadata['h0'])  
-    
 
     ### Photoionisation plots
     #if gridplots:
@@ -2109,13 +2124,15 @@ def make_testplots(snap,ending,outpath=None,
                     metadata=metadata,verbose=verbose)
     
     # Make line LFs
-    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+    lfs = plot_line_lfs(root,endf,subvols=subvols,
+                        outpath=outpath,vol=vol,
                         metadata=metadata,verbose=verbose)
     
     # Cumulative numbers with flux limits (if possible)
     if (metadata['flux'] and metadata['redshift']>0):
         ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-                                     outpath=outpath,metadata=metadata,
+                                     outpath=outpath,vol=vol,
+                                     metadata=metadata,
                                      verbose=verbose)
     else:
         if verbose:
