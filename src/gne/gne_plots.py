@@ -40,8 +40,9 @@ max_Ms = 12   # To be obtained from sim. res. ###here
 markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '_']
 
 def get_ngrid_nlev(nobj):
-    ngrid = 100 if nobj > n4contour*3 else 50
-    nlev  = None if nobj > n4contour*3 else 3
+    fac = 5
+    ngrid = 100 if nobj > n4contour*fac else 50
+    nlev  = None if nobj > n4contour*fac else 3
     return ngrid, nlev
 
 
@@ -61,685 +62,6 @@ def contour2Dsigma(n_levels=None,color='darkgrey'):
     colors = [(*mcol.to_rgba(color, alpha=a),)for a in alphas]
 
     return levels,colors
-
-
-#def test_sfrf(inputdata, outplot, obsSFR=None, obsGSM=None, colsSFR=[0,1,2,3],
-#              colsGSM=[0,1,2,3], labelObs=None, specific=False, h0=c.h, volume=c.vol_pm, verbose=False):
-#
-#    '''
-#    
-#    Given log10(Mstar) and log10(sSFR) get the plots to compare log10(SFR) vs log10(Mstar).
-#    Get the GSMF and the SFRF plots. 
-#    Given the observations, compare the plots with the observations too.
-# 
-#    Parameters
-#    ----------
-# 
-#    obsSFR : string
-#      - Name of the input file for the SFR data observed.
-#      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-#      - In csv files (*.csv), columns separated by ','.
-#      - Expected histogram mode:
-#       - A column with the low value of the bin,
-#       - A column with the high value of the bin,
-#       - A column with the frequency in the bin,
-#       - A column with the error. 
-# 
-#    obsGSM : string
-#      - Name of the input file for the GSM data observed.
-#      - In text files (*.dat, *txt, *.cat), columns separated by ' '.
-#      - In csv files (*.csv), columns separated by ','.
-#      - Expected histogram mode:
-#       - A column with the low value of the bin,
-#       - A column with the high value of the bin,
-#       - A column with the frequency in the bin,
-#       - A column with the error.
-# 
-#    colsSFR : list
-#      - Columns with the data required to do the observational histogram of the SFR.
-#      - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
-#       - column1 is the column with the low values of the bins, in Msun/yr,
-#       - column2 with the high values of the bins, in Msun/yr,
-#       - column3 with the frequency, in Mpc^-3 dex^-1
-#       - column4 with the error, in Mpc^-3 dex^-1
-#       
-#    colsGSM : list
-#      - Columns with the data required to do the observational histogram of the GSM.
-#      - Expected: [ind_column1, ind_column2, ind_column3, ind_column4]
-#       - column1 is the column with the low values of the bins, in h^-2Msun,
-#       - column2 with the high values of the bins, in h^-2Msun,
-#       - column3 with the frequency, in h^-3 Mpc^-3,
-#       - column4 with the error, in h^-3 Mpc^-3.
-# 
-#    labelObs : list of strings
-#      - For the legend, add the name to cite the observational data source.
-#      - ['GSM observed', 'SFR observed']
-# 
-#    outplot : string
-#      - Name of the output file.
-#      - Image-type files (*.pdf, *.jpg, ...)
-#      
-#    specific : boolean
-#      If True it makes the plots with the sSFR. Otherwise, it makes the plots with the SFR.
-# 
-#    h0 : float
-#      If not None: value of h, H0=100h km/s/Mpc.
-#      
-#    volume : float
-#      - Carlton model default value = 542.16^3 Mpc^3/h^3.
-#      - table 1: https://ui.adsabs.harvard.edu/abs/2019MNRAS.483.4922B/abstract
-#      - If not 542.16**3. : valume of the simulation volume in Mpc^3/h^3
-#    verbose : boolean
-#      If True print out messages
-# 
-#    Notes
-#    -------
-#    It makes plot(log10(SFR),log10(Mstar)), plot GSMF and plot SFRF,
-#    all three in one grid and saves it in the outplot path.
-#    '''
-#
-#
-#
-#    # Define a class that forces representation of float to look a certain way
-#    # This remove trailing zero so '1.0' becomes '1'
-#    class nf(float):
-#        def __repr__(self):
-#            str = '%.1f' % (self.__float__(),)
-#            if str[-1] == '0':
-#                return '%.0f' % self.__float__()
-#            else:
-#                return '%.1f' % self.__float__()
-#    # -----------------------------------------------------
-#
-#
-#    # Correct the units of the simulation volume to Mpc^3:
-#    if h0:
-#        volume=volume/(h0**3)
-#
-#    #Prepare the plot
-#    lsty = ['-',(0,(2,3))] # Line form
-#
-#    nds = np.array([-2., -3., -4., -5.]) # Contours values
-#    al = np.sort(nds)
-#
-#    cm = plt.get_cmap('tab10')  # Colour map to draw colours from
-#    color = []
-#    for ii in range(0, 10):
-#        col = cm(ii)
-#        color.append(col)  # col change for each iteration
-#
-#
-#    # Initialize GSMF (Galaxy Cosmological Mass Function)
-#    mmin = 8 #10.3 # mass resolution 2.12 * 10**9 h0 M_sun (Baugh 2019)
-#    mmax = 15 
-#    dm = 0.2
-#    mbins = np.arange(mmin, mmax, dm)
-#    mhist = mbins + dm * 0.5
-#    gsmf = np.zeros((len(mhist)))
-#
-#    # Initialize SSFRF
-#    smin = -4.4
-#    smax = 3
-#    ds = 0.2
-#    sbins = np.arange(smin, smax, ds)
-#    shist = sbins + ds * 0.5
-#    ssfrf = np.zeros((len(shist)))
-#
-#    # Initialize SFR vs M function
-#    lenm = len(mhist)
-#    lens = len(shist)
-#    smf = np.zeros((lens,lenm))
-#
-#    # Plots limits and style
-#    fig = plt.figure(figsize=(8.5, 9.))
-#    gs = gridspec.GridSpec(3, 3)
-#    gs.update(wspace=0., hspace=0.)
-#    ax = plt.subplot(gs[1:, :-1])
-#
-#    # Fig. sSFR vs M
-#    xtit = "log$_{10}(\\rm M_{*}$ [M$_\odot$])"
-#    if specific:
-#        ytit = "log$_{10}(\\rm sSFR/Gyr^{-1})$"
-#    else:
-#        ytit = "log$_{10}(\\rm SFR$ [M$_\odot$ yr$^{-1}$])"
-#    xmin = 8.5; xmax = 12.25; ymin = smin;  ymax = smax
-#    ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
-#    ax.set_xlabel(xtit); ax.set_ylabel(ytit)
-#
-#    # GSMF
-#    axm = plt.subplot(gs[0, :-1],sharex=ax)
-#    ytit="log$_{10}(\Phi(M_*))$" ; axm.set_ylabel(ytit)
-#    axm.set_autoscale_on(False) ;  axm.minorticks_on()
-#    axm.set_ylim(-5.5,-1)
-#    plt.setp(axm.get_xticklabels(), visible=False)
-#
-#    # SSFRF
-#    axs = plt.subplot(gs[1:, 2], sharey=ax)
-#    if specific:
-#        xtit = "log$_{10}(\Phi(sSFR))$"; axs.set_xlabel(xtit)
-#    else:
-#        xtit = "log$_{10}(\Phi(SFR))$"; axs.set_xlabel(xtit)
-#    axs.set_autoscale_on(False); axs.minorticks_on()
-#    axs.set_xlim(-5.5, 0.0)
-#    start, end = axs.get_xlim()
-#    axs.xaxis.set_ticks(np.arange(-4., end, 1.))
-#    plt.setp(axs.get_yticklabels(), visible=False)
-#
-#    # Data Observations
-#
-#    # SFR observed
-#
-#    if obsSFR:
-#        ih = get_nheader(obsSFR)
-#
-#        dataSFR = [0]*len(colsSFR)
-#
-#        for ii, col in enumerate(colsSFR):
-#            #print(ii,col,colsSFR[ii])
-#            data = np.loadtxt(obsSFR,skiprows=ih, usecols=col, unpack=True)
-#            dataSFR[ii] = np.array(data)
-#
-#        dex = dataSFR[1]-dataSFR[0]
-#        histSFR = dataSFR[1]-0.5*dex
-#        errorSFR = dataSFR[3]
-#
-#    # GSM observed
-#    if obsGSM:
-#        ih = get_nheader(obsGSM)
-#
-#        dataGSM = [0]*len(colsGSM)
-#
-#        for ii, col in enumerate(colsGSM):
-#            data = np.loadtxt(obsGSM,skiprows=ih, usecols=col, unpack=True)
-#            dataGSM[ii] = np.array(data)
-#
-#        dex = dataGSM[1] - dataGSM[0]
-#
-#        # Change the units from h^-2 Msun to Msun.
-#        histGSM = dataGSM[1] - 2*np.log10(h0) - 0.5*dex
-#
-#        # Change the units from h^3 Mpc^-3 to Mpc^-3
-#        freqGSM = np.log10((dataGSM[2])) + 3 * np.log10(h0)
-#        
-#        lowGSM = np.log10(dataGSM[2]-dataGSM[3]) + 3 * np.log10(h0)
-#        
-#        lowGSM = abs(lowGSM - freqGSM)
-#
-#    for ii in range(len(inputdata)):
-#
-#        with h5py.File(inputdata[ii],'r') as file:
-#            data = file['data']          
-#            lms = np.log10((10**data['lms'][:,0])/c.IMF_M['Chabrier']+10**data['lms'][:,1]*c.IMF_M['Top-heavy']/c.IMF_M['Chabrier']) #+ np.log10(h0)
-#            if specific:
-#                lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + 9
-#            else: 
-#                lsfr = np.log10(10**data['lssfr'][:,0]+10**data['lssfr'][:,1]) + lms
-#                lsfr = lsfr/c.IMF_SFR['Chabrier']
-#            # lms = lms + np.log10(h0)     
-#            del data
-#
-#
-#        # Make the histograms
-#
-#        H, bins_edges = np.histogram(lms, bins=np.append(mbins, mmax))
-#        gsmf = H / volume / dm  # In Mpc^3/h^3
-#
-#        H, bins_edges = np.histogram(lsfr, bins=np.append(sbins, smax))
-#        sfrf = H / volume / ds # / c.h**-3
-#
-#        H, xedges, yedges = np.histogram2d(lsfr, lms,
-#                                           bins=([np.append(sbins, smax),
-#                                                  np.append(mbins, mmax)]))
-#        smf = H / volume / dm / ds
-#
-#
-#        # Plot SMF vs SFR
-#
-#        matplotlib.rcParams['contour.negative_linestyle'] = lsty[ii]
-#        zz = np.zeros(shape=(len(shist), len(mhist))); zz.fill(c.notnum)
-#        ind = np.where(smf > 0.)
-#        zz[ind] = np.log10(smf[ind])
-#        
-#        # print(zz[ind])
-#
-#        ind = np.where(zz > c.notnum)
-#
-#        if (np.shape(ind)[1] > 1):
-#
-#            # Contours
-#            xx, yy = np.meshgrid(mbins, sbins)
-#            # Here: How to find the levels of the data?
-#            cs = ax.contour(xx, yy, zz, levels=al, colors=color[ii])
-#            ax.clabel(cs, inline=1, fontsize=10)
-#
-#        # Plot GSMF
-#        py = gsmf; ind = np.where(py > 0.)
-#        x = mhist[ind]; y = np.log10(py[ind])
-#        ind = np.where(y < 0.)
-#        axm.plot(x[ind], y[ind], color=color[ii])
-#
-#        # Plot observations GSMF
-#        if obsGSM and ii==0:
-#            axm.errorbar(histGSM, freqGSM, yerr=lowGSM, marker='o', color=color[ii + 2],
-#                             label=''+ labelObs[0] +'')
-#                
-#            leg2 = axm.legend(bbox_to_anchor=(0.025, -0.87, 1.5, 1.5), fontsize='small',
-#                              handlelength=1.2, handletextpad=0.4)
-#            leg2.get_texts()
-#            leg2.draw_frame(False)
-#        
-#        # Plot SFRF
-#        px = sfrf; ind = np.where(px > 0.)
-#        y = shist[ind]; x = np.log10(px[ind])
-#        ind = np.where(x < 0.)
-#        axs.plot(x[ind], y[ind], color=color[ii], label='Model')
-#            
-#        # Plot observations SFRF
-#        if obsSFR and ii==0:
-#            axs.errorbar(dataSFR[2], histSFR, xerr=errorSFR, marker='o', color=color[ii + 3],
-#                          label=''+ labelObs[1] +'')
-#
-#        leg = axs.legend(bbox_to_anchor=(-0.47, 0.1, 1.5, 1.38), fontsize='small',
-#                          handlelength=1.2, handletextpad=0.4)
-#        leg.get_texts()
-#        leg.draw_frame(False)
-#
-#    plotf = outplot
-#
-#    # Save figures
-#    print('Plot: {}'.format(plotf))
-#    fig.savefig(plotf)
-
-
-#def test_interpolation(infile, zz, verbose=True):
-#    '''
-#    Run a test of the interpolations done in gne_photio.
-#    Two plots, one to verify the U interpolation and the other one to verify the Z interpolation
-#    
-#    Parameters
-#    ----------
-#    infile : string
-#     Name of the input file. 
-#    outplot : string
-#     Path to the folder plot.
-#    photmod : string
-#      Photoionisation model to be used for look up tables.
-#    plot_phot : boolean
-#     If True it plots points from the photoionization tables.
-#    create_file : boolean
-#     If True it creates textfiles to read the photoionization tables.
-#    file_folder : string
-#     Folder where the textfiles to read the tables will be/are stored.
-#    verbose : boolean
-#     If True print out messages.
-#
-#    Notes
-#    -------
-#    Plot of several BPT diagrams.
-#    '''
-#    
-#    set_cosmology(omega0=c.omega0, omegab=c.omegab,lambda0=c.lambda0,h0=c.h)
-#    
-#    for num in range(len(infile)):
-#    
-#        check_file(infile[num], verbose=True)
-#        f = h5py.File(infile[num], 'r')
-#        data = f['data']
-#    
-#        lu_disk = data['lu'][:,0]
-#        lne_disk = data['lne'][:,0]
-#        lzgas_disk = data['lz'][:,0]
-#        
-#        minU, maxU = get_limits(propname='logUs', photmod=photmod)
-#        minnH, maxnH = get_limits(propname='nH', photmod=photmod)
-#        minZ, maxZ = get_limits(propname='Z', photmod=photmod)
-#        
-#        ignore = True
-#        if ignore:
-#            ind = np.where((lu_disk!=minU)&(lu_disk!=maxU)&(lzgas_disk!=np.log10(minZ))&(lzgas_disk!=np.log10(maxZ))&
-#                       (lne_disk!=np.log10(minnH))&(lne_disk!=np.log10(maxnH)))[0]
-#        else:
-#            ind = np.arange(len(lu_disk))
-#
-#        Hbeta = np.sum(data['Hbeta'],axis=0)[ind]
-#        OIII5007 = np.sum(data['OIII5007'],axis=0)[ind]
-#        NII6548 = np.sum(data['NII6583'],axis=0)[ind]
-#        Halpha = np.sum(data['Halpha'],axis=0)[ind]
-#        SII6717_6731 = np.sum(data['SII6731'],axis=0)[ind]
-#        OII3727 = np.sum(data['OII3727'],axis=0)[ind]
-#        
-#        lz = data['lz'][:,0]
-#        lz = lz[ind]
-#        
-#        lssfr = data['lssfr'][:,0]
-#        lssfr = lssfr[ind]
-#        
-#        lms = np.log10(10**data['lms'][:,0] + 10**data['lms'][:,1])
-#        lms = lms[ind]
-#        
-#        ind2 = np.where((Hbeta>0)&(OIII5007>0)&(NII6548>0)&(Halpha>0)&(SII6717_6731>0)&(OII3727>0))[0]
-#        
-#        print(len(ind),len(ind2))
-#        
-#        Hbeta = Hbeta[ind2]
-#        OIII5007 = OIII5007[ind2]
-#        NII6548 = NII6548[ind2]
-#        Halpha = Halpha[ind2]
-#        SII6717_6731 = SII6717_6731[ind2]
-#        OII3727 = OII3727[ind2]
-#        
-#        lz = lz[ind2]
-#        lssfr = lssfr[ind2]
-#        lms = lms[ind2]
-#        
-#        bpt_x = ['log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)',
-#                 'log$_{10}$([SII]$\\lambda$6731/H$\\alpha$)',
-#                 'log$_{10}$([NII]$\\lambda$6584/[OII]$\\lambda$3727)',
-#                 'log$_{10}$([NII]$\\lambda$6584/H$\\alpha$)']
-#        my_x = [np.log10(NII6548 / Halpha),np.log10(SII6717_6731 / Halpha),np.log10(NII6548 / OII3727)]#,np.log10(NII6548 / Halpha)]
-#        
-#        bpt_y = ['log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
-#                 'log$_{10}$([OIII]$\\lambda$5007/H$\\beta$)',
-#                 'log$_{10}$([OIII]$\\lambda$5007/[OII]$\\lambda$3727)',
-#                 'log$_{10}$(EW(H$\\alpha$)/$\dot{A}$)']
-#        my_y = [np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / Hbeta),np.log10(OIII5007 / OII3727)]#,np.log10(EW_Halpha)]
-#        
-#        if not plot_phot:
-#            for i in range(4):
-#                plt.figure(figsize=(15,15))
-#                
-#                # X1, Y1 = np.mgrid[xmin:xmax:68j, ymin:ymax:68j]
-#                # positions = np.vstack([X1.ravel(), Y1.ravel()])
-#                # values = np.vstack([my_x[i], my_y[i]])
-#                # kernel = stats.gaussian_kde(values,0.75)
-#                # BPT = np.reshape(kernel(positions).T, X1.shape)
-#                # plt.imshow(BPT, cmap=plt.cm.gist_earth_r,extent=[xmin, xmax, ymin, ymax],aspect=(xmax-xmin)/(ymax-ymin))#,vmin=0,vmax=1)
-#                
-#                if i==0:
-#                    xmin=-2.2
-#                    xmax=1
-#                    ymin=-2
-#                    ymax=2
-#                    
-#                    x = np.arange(xmin, xmax+0.1, 0.03)
-#                    
-#                    SFR_Composite = obs.lines_BPT(x,'NII','SFR_Composite')
-#                    Composite_AGN = obs.lines_BPT(x,'NII','Composite_AGN')
-#                    LINER_NIIlim = obs.lines_BPT(x,'NII','LINER_NIIlim')
-#                    LINER_OIIIlim = obs.lines_BPT(x,'NII','LINER_OIIIlim')
-#                    
-#                    plt.plot(x[x<0.05],SFR_Composite[x<0.05],'k--',markersize=3)
-#                    plt.plot(x[x<0.47],Composite_AGN[x<0.47],'k.',markersize=3)
-#                    plt.vlines(LINER_NIIlim,ymin,LINER_OIIIlim,'k',linestyles='dashdot')
-#                    plt.hlines(LINER_OIIIlim,LINER_NIIlim,xmax,'k',linestyles='dashdot')
-#                elif i==1:
-#                    xmin=-2.6 #-1.6
-#                    xmax=0.2
-#                    ymin=-1.9
-#                    ymax=1.5
-#                    
-#                    x = np.arange(xmin, xmax+0.1, 0.03)
-#                    
-#                    SFR_AGN = obs.lines_BPT(x,'SII','SFR_AGN')
-#                    Seyfert_LINER = obs.lines_BPT(x,'SII','Seyfert_LINER')
-#                    
-#                    plt.plot(x[x<0.32], SFR_AGN[x<0.32], 'k.', markersize=3)
-#                    
-#                    plt.plot(x[(Seyfert_LINER>SFR_AGN)|(x>=0.32)], Seyfert_LINER[(Seyfert_LINER>SFR_AGN)|(x>=0.32)], 'k.', markersize=3)
-#                elif i==2:
-#                    xmin=-1.9
-#                    xmax=0.9
-#                    ymin=-2.1
-#                    ymax=1.6
-#                elif i==3:
-#                    xmin=-2.2
-#                    xmax=1.2
-#                    ymin=-1
-#                    ymax=3
-#                    
-#                    # x = np.arange(xmin, xmax+0.1, 0.03)
-#            
-#                # xy = np.vstack([my_x[i], my_y[i]])
-#                # z = gaussian_kde(xy)(xy)
-#                # z = z/np.amax(z)
-#                # np.save('density_galform_o_g1.3_ratios_' + str(i),z)
-#                
-#                # z = np.load('density_galform_kashino_ratios_' + str(i) + '.npy')
-#                # z = np.log10(z)
-#                
-#                # Ha_flux = np.zeros(Halpha.shape)
-#                # for j in range(len(Halpha)):
-#                #     Ha_flux[j] = logL2flux(Halpha[j],0.131)
-#                    
-#                # ind = np.where((Ha_flux>2e-15))
-#                
-#                z = Halpha
-#                
-#                vmin = 40.5
-#                vmax = 43
-#
-#                plt.scatter(my_x[i][ind], my_y[i][ind], c=z[ind], s=1, marker='o',cmap='jet',vmin=vmin, vmax=vmax)
-#                cbar = plt.colorbar()
-#                cbar.set_label(r'$\log H_\alpha \ [\rm erg/s]$', rotation=270, labelpad =40, size=30)
-#                cbar.ax.tick_params(labelsize=30)
-#                
-#                #'$\log \bar{n}_p$'
-#                #'$\log M_* \ [M_\odot]$'
-#                #'$\log Z$'
-#                #'$\log SFR \ [M_\odot/yr]$'
-#                #'$\log H_\alpha \ [\rm erg/s]$'
-#                
-#                plt.xlabel(bpt_x[i],size=30)
-#                plt.ylabel(bpt_y[i],size=30)
-#                plt.xticks(fontsize=30)
-#                plt.yticks(fontsize=30)
-#                
-#                plt.xlim((xmin,xmax))
-#                plt.ylim((ymin,ymax))
-#                plt.grid()
-#                
-#                plotnom = outplot + '/BPTplot_' + str(i) + '_' + str(num) + '_k.png'
-#                
-#                # np.save(outplot + '/BPTplot_' + str(i) + '_' + str(num), np.array([my_x,my_y]))
-#            
-#                plt.savefig(plotnom)
-#                # plt.close()
-#                
-#                print(str(i+1) + ' de 4.')     
-#        
-#        if plot_phot:       
-#            if photmod not in c.photmods:
-#                if verbose:
-#                    print('STOP (gne_photio.test_bpt): Unrecognised model to get emission lines.')
-#                    print('                Possible photmod= {}'.format(c.photmods))
-#                sys.exit()
-#            elif (photmod == 'gutkin16'):
-#                
-#                Z = ['0001', '0002', '0005', '001', '002', '004', '006', '008', '010', '014', '017', '020', '030', '040']
-#            
-#                zz = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.004, 0.006, 0.008, 0.01, 0.014, 0.017, 0.02, 0.03, 0.04]
-#            
-#                uu = [-1., -1.5, -2., -2.5, -3., -3.5, -4.]
-#            
-#                ne = ['100']  # ['10', '100', '1000','10000']
-#            
-#                cm = plt.get_cmap('tab20') # Colour map to draw colours from
-#            
-#                if create_file:
-#                    for iz, zname in enumerate(Z):
-#                        infile = r"nebular_data/gutkin16_tables/nebular_emission_Z" + zname + ".txt"
-#                
-#                        ih = get_nheader(infile)
-#                
-#                        datane = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
-#                        datalu = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
-#                
-#                        OIII5007_model = np.loadtxt(infile, skiprows=ih, usecols=(8), unpack=True)
-#                        Hb_model = np.loadtxt(infile, skiprows=ih, usecols=(6), unpack=True)
-#                        NII6548_model = np.loadtxt(infile, skiprows=ih, usecols=(9), unpack=True)
-#                        Ha_model = np.loadtxt(infile, skiprows=ih, usecols=(10), unpack=True)
-#                        SII6717_6731_model = np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True) + np.loadtxt(infile, skiprows=ih, usecols=(12), unpack=True)
-#                
-#                        for ii, nh in enumerate(ne):
-#                            outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-#                            if iz==0 and os.path.exists(outfile):
-#                                os.remove(outfile)
-#                
-#                            header1 = 'Z, U, NII6584/Ha  OIII5007/Hb, SII(6717+6731)/Ha'
-#                
-#                            ind = np.where(datane == float(nh))
-#                            x = np.log10(NII6548_model[ind] / Ha_model[ind])
-#                            y = np.log10(OIII5007_model[ind] / Hb_model[ind])
-#                            p = np.log10(SII6717_6731_model[ind] / Ha_model[ind])
-#                            u = datalu[ind]
-#                            z = np.full(np.shape(u), zz[iz])
-#                
-#                            tofile = np.column_stack((z, u, x, y, p))
-#                
-#                            with open(outfile, 'a') as outf:
-#                                if iz == 0:
-#                                    np.savetxt(outf, tofile, delimiter=' ', header=header1)
-#                                else:
-#                                    np.savetxt(outf, tofile, delimiter=' ')
-#                                outf.closed
-#                else:
-#                    for ii, nh in enumerate(ne):
-#                        outfile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-#                        if not os.path.exists(outfile):
-#                            print('STOP (gne_photio.test_bpt): Textfiles for table reading dont exist.')
-#                            print('Create them with create_file = True.')
-#            
-#                cols = []
-#                for iz, lz in enumerate(zz):
-#                    col = cm(iz)
-#                    cols.append(col)
-#            
-#                for ii, nh in enumerate(ne):
-#                    infile = r"output_data/Gutkinfile_n_" + nh + ".txt"
-#            
-#                    ih = get_nheader(infile)
-#            
-#                    z = np.loadtxt(infile, skiprows=ih, usecols=(0), unpack=True)
-#                    u = np.loadtxt(infile, skiprows=ih, usecols=(1), unpack=True)
-#                    x = np.loadtxt(infile, skiprows=ih, usecols=(2), unpack=True)
-#                    y = np.loadtxt(infile, skiprows=ih, usecols=(3), unpack=True)
-#                    p = np.loadtxt(infile, skiprows=ih, usecols=(4), unpack=True)
-#                    
-#                    comp_x = [x,p]
-#                    comp_y = [y,y]
-#            
-#                    # DIFERENTS COLORS FOR U:
-#                        
-#                    for i in range(2):
-#                        plt.figure(figsize=(15,15))
-#            
-#                        for iu, lu in enumerate(uu):
-#                            ind2 = np.where(u == uu[iu])
-#                            plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iu], label='U = ' + str(lu) + '')
-#                
-#                        labelsU = []
-#                        for elem in lu_disk: labelsU.append('U = {}'.format(np.round(elem,2)))
-#                        
-#                        plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
-#                        
-#                        plt.xlabel(bpt_x[i],size=30)
-#                        plt.ylabel(bpt_y[i],size=30)
-#                        plt.xticks(fontsize=30)
-#                        plt.yticks(fontsize=30)
-#                        plt.grid()
-#                        plt.legend()
-#                        
-#                        plotnom = outplot + '/BPTplot_U_' + str(i) + '_' + str(num) + '.png'
-#                        
-#                        print('U', str(i))
-#                    
-#                        plt.savefig(plotnom)
-#                        plt.close()
-#            
-#                    # DIFFERENTS COLORS FOR Z:
-#                        
-#                    for i in range(2):
-#                        plt.figure(figsize=(15,15))
-#            
-#                        for iz, lz in enumerate(zz):
-#                            ind2 = np.where(z == zz[iz])
-#                            plt.plot(comp_x[i][ind2], comp_y[i][ind2], marker='.', linewidth=0, color=cols[iz], label='Z = ' + str(lz) + '')
-#                
-#                        labelsZ = []
-#                        for elem in lzgas_disk: labelsZ.append('Z = {:.4f}'.format(10 ** (elem)))
-#                        
-#                        plt.plot(my_x[i], my_y[i], marker='o', markersize=2, linewidth=0, color='black')
-#                        
-#                        plt.xlabel(bpt_x[i],size=30)
-#                        plt.ylabel(bpt_y[i],size=30)
-#                        plt.xticks(fontsize=30)
-#                        plt.yticks(fontsize=30)
-#                        plt.grid()
-#                        plt.legend()
-#                        
-#                        plotnom = outplot + '/BPTplot_Z_' + str(i) + '_' + str(num) + '.png'
-#                        
-#                        print('Z', str(i))
-#                    
-#                        plt.savefig(plotnom)
-#                        plt.close()
-#
-
-
-#def plot_comp_contour(ax, xx, yy, tots, ins, cm=plt.cm.tab20):
-#    """
-#    Plot components as a contour or scatter plot,
-#    on given axis and return legend elements.
-#    
-#    Parameters:
-#    -----------
-#    ax : matplotlib axis
-#        Axis to plot on
-#    xx : ndarray
-#        X vayyes for each component
-#    yy : ndarray
-#        Y vayyes for each component
-#    tots : ndarray
-#        Total number of elements for each component
-#    ins : ndarray
-#        Number within limits for each component
-#    cm : matplotlib colormap, optional
-#        Colormap to use
-#        
-#    Returns:
-#    --------
-#    proxies : list
-#        List of proxy artists for legend
-#    labels : list
-#        List of labels for legend
-#    """
-#    proxies = []; labels = []
-#
-#    n_comp = np.shape(xx)[1]
-#    for i in range(n_comp):
-#        ind = np.where((xx[:, i] > c.notnum) & (yy[:, i] > c.notnum))[0]
-#        nsel = len(ind)
-#        if nsel > 0:
-#            x = xx[ind, i]
-#            y = yy[ind, i]
-#            col = np.array([cm(float(i) / n_comp)])
-#            
-#            if nsel > n4contour:
-#                ngrid = 50 if nsel < n4contour*3 else 100
-#                xc, yc, zc = st.get_cumulative_2Ddensity(x, y, n_grid=ngrid)
-#                nlev = 2 if nsel < n4contour*3 else None
-#                levels, colors = contour2Dsigma(n_levels=nlev, color=col)
-#                contour = ax.contourf(xc, yc, zc, levels=levels, colors=colors)
-#                proxies.append(plt.Rectangle((0, 0), 1, 1, fc=col[0]))
-#            else:
-#                scatter = ax.scatter(x, y, c=col)
-#                proxies.append(scatter)
-#            
-#            leg = "{} component {} ({:.1f}% in)".format(
-#                int(tots[i]), i, ins[i]*100./tots[i])
-#            labels.append(leg)
-#    
-#    return proxies, labels
 
 
 def plot_comp_quartiles(ax, xx, yy, xmin, xmax, tots, ins, cm=plt.cm.tab20):
@@ -804,228 +126,180 @@ def plot_comp_quartiles(ax, xx, yy, xmin, xmax, tots, ins, cm=plt.cm.tab20):
     return proxies, labels
 
 
-def plot_uzn(root, endf, subvols=1, outpath=None, verbose=True):
+def plot_unh(root, endf, subvols=[0], outpath=None,
+             metadata=None,verbose=True):
     '''
-    Make plots of the ionizing parameter versus Zgas,
-    and electron density as a function of stellar mass,
-    for SF regions and NLR AGNs, if calculated.
-    
+    Make contour plots of the properties of the ionised regions:
+    U_SF, nH_SF and Zcold_SF against M*, sSFR and among themselves,
+    and U_AGN, Zcold_AGN against M* and Lbol, if calculated.
+
+    Figures numbered from the top-left, moving right and then down:
+    0) M* vs nH_SF        1) sSFR vs nH_SF       2) nH_SF vs U_SF
+    3) M* vs U_SF         4) sSFR vs U_SF         5) Zcold_SF vs U_SF
+    6) M* vs U_AGN        7) Lbol vs U_AGN       8) Zcold_AGN vs U_AGN
+
     Parameters
     ----------
     root : string
-       Path to files with calculated data (lines, etc)
+       Path to input files.
     endf : string
-       Ending of input files. 
-    subvols: integer or list of integers
-        Number of subvolumes to be considered
+       Ending of input files.
+    subvols: list of integers
+        List of subvolumes to be considered
     outpath : string
-        Path to output, default is output/ 
+        Path to output, default is output/
+    metadata : dictionary
+        Cosmology and other metadata information
     verbose : boolean
        If True print out messages.
     '''
-    # Get redshift and model information from data
-    filenom = os.path.join(root+'0',endf)
-    f = h5py.File(filenom, 'r') 
-    header = f['header']
-    redshift = header.attrs['redshift']
-    photmod_sfr = header.attrs['photmod_sfr']
-    mp = header.attrs['mp_Msun']
-    lu = f['sfr_data/lu_sfr'][:]
-    # Read AGN information if it exists
-    if 'agn_data' not in f.keys():
-        AGN = False
-    else:
-        AGN = True
-        photmod_agn = header.attrs['photmod_NLR']
-        lua = f['agn_data/lu_agn'][:]
-
-    # Get number of components
-    ncomp = np.shape(lu)[1]
-
-    # Prep plots
-    side = 15
+    # Get metadata
+    photmod_sfr = metadata['photmod_sfr']
+    AGN = metadata['AGN']
     if AGN:
-        fig, ((axu,axn),(axua,axna)) = plt.subplots(2, 2,
-                                                    figsize=(2*side, 2*side),
-                                                    layout='constrained')
-    else:
-        fig, (axu,axn) = plt.subplots(1, 2, figsize=(2*side, side),
-                                 layout='constrained')
+        photmod_agn = metadata['photmod_agn']
+    redshift = metadata['redshift']
 
-    axu.set_ylabel('log$_{10}U_{\\rm SF}$')
-    axu.set_xlabel('log$_{10}(Z_{\\rm gas})$')
-    axn.set_ylabel('log$_{10}(n_{H, \\rm SFR})$')
-    axn.set_xlabel('log$_{10}(M_{*})$')    
+    # Read limits of the photoionisation models
+    minU_sf, maxU_sf = get_limits(propname='logUs', photmod=photmod_sfr)
+    minZ_sf, maxZ_sf = np.log10(get_limits(propname='Z', photmod=photmod_sfr))
     if AGN:
-        axua.set_ylabel('log$_{10}U_{\\rm AGN}$')
-        axua.set_xlabel('log$_{10}(Z_{\\rm gas})$')
-        axna.set_ylabel('log$_{10}(n_{H, \\rm AGN})$')
-        axna.set_xlabel('log$_{10}(L_{\\rm AGN}/{\\rm erg/s})$')    
+        minU_ag, maxU_ag = get_limits(propname='logUs', photmod=photmod_agn)
+        minZ_ag, maxZ_ag = np.log10(get_limits(propname='Z', photmod=photmod_agn))
 
-    # Read limits for photoionisation models
-    pad = 0.5
-    umin, umax = get_limits(propname='logUs', photmod=photmod_sfr)
-    axu.set_ylim(umin-pad, umax+pad)
-    
-    zmin, zmax = np.log10(get_limits(propname='Z', photmod=photmod_sfr))
-    axu.set_xlim(zmin-pad, zmax+pad)
-
-    axu.add_patch(plt.Rectangle((zmin, umin), zmax-zmin,umax-umin,
-                                ec="gray",ls='--',lw=10,fc="none"))
-
-    nmin, nmax = np.log10(get_limits(propname='nH', photmod=photmod_sfr))
-    axn.set_ylim(nmin-pad, nmax+pad)
-
-    mmin = min_Ms-pad; mmax = max_Ms+pad 
-    axn.plot([mmin, mmax], [nmin, nmin], 'gray', ls='--', lw=10)
-    axn.plot([mmin, mmax], [nmax, nmax], 'gray', ls='--', lw=10)
-
-    if AGN:
-        uamin, uamax = get_limits(propname='logUs', photmod=photmod_agn)
-        axua.set_ylim(uamin-pad, uamax+pad)
-    
-        zamin, zamax = np.log10(get_limits(propname='Z', photmod=photmod_agn))
-        axua.set_xlim(zamin-pad, zamax+pad)
-
-        axua.add_patch(plt.Rectangle((zamin, uamin), zamax-zamin,uamax-uamin,
-                                     ec="gray",ls='--',lw=10,fc="none"))
-
-        namin, namax = np.log10(get_limits(propname='nH', photmod=photmod_agn))
-        axna.set_ylim(namin-pad, namax+pad)
-
-        mmin = min_Lbol-pad; mmax = max_Lbol+pad 
-        axna.plot([mmin, mmax], [namin, namin], 'gray', ls='--', lw=10)
-        axna.plot([mmin, mmax], [namax, namax], 'gray', ls='--', lw=10)
-
-    # Initialise counters per component
-    tots, ins, inns = [np.zeros(ncomp) for i in range(3)]
-    if AGN:
-        tota, ina, inna = [np.zeros(1) for i in range(3)]
-
-    # Read data in each subvolume
-    list_subvols = subvols
-    if isinstance(subvols, int):
-        list_subvols = list(range(subvols))
-
+    # Read data from each subvolume
     first_vol = True
+    for ivol in subvols:
+        filenom = os.path.join(root + str(ivol), endf)
+        f = h5py.File(filenom, 'r')
 
-    for ivol in list_subvols:
-        filenom = os.path.join(root+ivol,endf) #; print(filenom); exit()
-        f = h5py.File(filenom, 'r'); header = f['header']
+        # SF properties, summed over components (stored as log10)
+        dd = {'lm_s': st.components2tot(f['data/lm_s']),
+              'lssfr': st.components2tot(f['data/lssfr']),
+              'lnH_sfr': st.components2tot(f['sfr_data/lnH_sfr']),
+              'lu_sfr': st.components2tot(f['sfr_data/lu_sfr']),
+              'lz_sfr': st.components2tot(f['sfr_data/lz_sfr'])}
 
-        # Read information from file
-        lms1 = f['data/lms'][:]
-        lzsfr1 = f['sfr_data/lz_sfr'][:]
-        lusfr1 = f['sfr_data/lu_sfr'][:]
-        lnsfr1 = f['sfr_data/lnH_sfr'][:]
         if AGN:
-            Lagn1  = f['agn_data/Lagn'][:]
-            lzagn1 = f['agn_data/lz_agn'][:]
-            luagn1 = f['agn_data/lu_agn'][:]
-            if 'epsilon_NLR' in header.attrs:
-                epsilon_is_constant = True
-                epsilon1 = header.attrs['epsilon_NLR']
-            else:
-                epsilon_is_constant = False
-                epsilon1 = f['agn_data/epsilon_NLR'][:]
+            dd['lu_agn'] = f['agn_data/lu_agn'][:]
+            dd['lz_agn'] = f['agn_data/lz_agn'][:]
+            Lagn = f['agn_data/Lagn'][:]
+            dd['lLagn'] = np.where(Lagn>0,
+                                   np.log10(np.maximum(Lagn,1)),c.notnum)
         f.close()
 
         if first_vol:
-            lusfr = lusfr1; lzsfr = lzsfr1
-            lnsfr = lnsfr1; lms = lms1
-            if AGN:
-                luagn = luagn1; lzagn = lzagn1
-                Lagn = Lagn1
-                if not epsilon_is_constant:
-                    epsilon = epsilon1    
+            data = dd
             first_vol = False
         else:
-            lusfr = np.append(lusfr,lusfr1,axis=0)
-            lzsfr = np.append(lzsfr,lzsfr1,axis=0)
-            lnsfr = np.append(lnsfr,lnsfr1,axis=0)
-            lms = np.append(lms,lms1,axis=0)
-            if AGN:
-                luagn = np.append(luagn,luagn1,axis=0)
-                lzagn = np.append(lzagn,lzagn1,axis=0)
-                Lagn = np.append(Lagn,Lagn1,axis=0)
-                if not epsilon_is_constant:
-                    epsilon = np.append(epsilon,epsilon1,axis=0)
-                else:
-                    epsilon = np.zeros(Lagn.shape); epsilon.fill(epsilon1)
+            for key in dd:
+                data[key] = np.append(data[key], dd[key], axis=0)
 
-        # Check number of galaxies within model limits
-        if (len(lusfr) != len(lzsfr)):
-            print('WARNING plots.uzn, SFR: different length arrays U and Z')
-        if AGN:
-            if (len(luagn) != len(lzagn)):
-                print('WARNING plots.uzn, AGN: different length arrays U and Z')
-    
-        # Count parameters within the limits of photoionising models
-        for i in range(ncomp):
-            mask = (lusfr[:,i] > c.notnum) & (lzsfr[:,i] > c.notnum)
-            u = lusfr[mask,i]
-            z = lzsfr[mask,i]
-            tots[i] = tots[i] + len(u)
-            ind = np.where((u>=umin) & (u<=umax) &
-                           (z>=zmin) & (z<=zmax))
-            ins[i] = ins[i] + np.shape(ind)[1]        
+    # Axis labels
+    xtit_ms = 'log$_{10}(M_{*}/M_{\\odot})$'
+    xtit_ssfr = 'log$_{10}$(sSFR/yr$^{-1}$)'
+    xtit_nh = 'log$_{10}(n_{H,\\rm SF}$/cm$^{-3}$)'
+    xtit_zsf = 'log$_{10}(Z_{\\rm cold,SF})$'
+    xtit_zag = 'log$_{10}(Z_{\\rm cold,AGN})$'
+    xtit_lb = 'log$_{10}(L_{\\rm bol}$/erg s$^{-1}$)'
+    ytit_nhsf = 'log$_{10}(n_{H,\\rm SF}/cm^{-3})$'
+    ytit_usf = 'log$_{10}(U_{\\rm SF})$'
+    ytit_uagn = 'log$_{10}(U_{\\rm AGN})$'
 
-            mask = (lnsfr[:,i] > c.notnum)
-            nn = lnsfr[mask,i]            
-            ind = np.where((nn>=nmin) & (nn<=nmax))
-            inns[i] = inns[i] + np.shape(ind)[1]        
+    pad = 0.5
+    npanel = 9 if AGN else 6
+    nrows = npanel//3
 
-        if AGN:
-            mask = (luagn[:] > c.notnum) & (lzagn[:] > c.notnum)
-            u = luagn[mask]
-            z = lzagn[mask]
-            tota = tota + len(u)
-            ind = np.where((u>=uamin) & (u<=uamax) &
-                           (z>=zamin) & (z<=zamax))
-            ina = ina + np.shape(ind)[1]
+    # Panel definition: x-data, x-title, y-data, y-title,
+    #                   x-limits, model limits tag ('sfr'/'agn'/None)
+    panels = [
+        dict(x=data['lm_s'], xtit=xtit_ms, y=data['lnH_sfr'],
+             ytit=ytit_nhsf, xlim=(min_Ms-pad, max_Ms+pad), mod=None),
+        dict(x=data['lssfr'], xtit=xtit_ssfr, y=data['lnH_sfr'],
+             ytit=ytit_nhsf, xlim=None, mod=None),
+        dict(x=data['lnH_sfr'], xtit=xtit_nh, y=data['lu_sfr'],
+             ytit=ytit_usf, xlim=None, mod=None),
+        dict(x=data['lm_s'], xtit=xtit_ms, y=data['lu_sfr'],
+             ytit=ytit_usf, xlim=(min_Ms-pad, max_Ms+pad), mod=None),
+        dict(x=data['lssfr'], xtit=xtit_ssfr, y=data['lu_sfr'],
+             ytit=ytit_usf, xlim=None, mod=None),
+        dict(x=data['lz_sfr'], xtit=xtit_zsf, y=data['lu_sfr'],
+             ytit=ytit_usf, xlim=None, mod='sfr')]
+    if AGN:
+        panels.append(dict(x=data['lm_s'], xtit=xtit_ms, y=data['lu_agn'],
+                           ytit=ytit_uagn, xlim=(min_Ms-pad, max_Ms+pad),
+                           mod=None))
+        panels.append(dict(x=data['lLagn'], xtit=xtit_lb, y=data['lu_agn'],
+                           ytit=ytit_uagn, xlim=(min_Lbol-pad, max_Lbol+pad),
+                           mod=None))
+        panels.append(dict(x=data['lz_agn'], xtit=xtit_zag, y=data['lu_agn'],
+                           ytit=ytit_uagn, xlim=None, mod='agn'))
 
-    ###here to check as not working
-    ## Plot per component U versus Z
-    #proxies, labels = plot_comp_contour(axu, lzsfr, lusfr, tots, ins)
-    #if AGN:
-    #    aproxies, alabels = plot_comp_contour(axua, lzagn, luagn, tota, ina)
-    #
-    ## Legend for U vs Z
-    #leg = axu.legend(proxies, labels, loc=0); leg.draw_frame(False)
-    #if AGN:
-    #    leg = axua.legend(aproxies, alabels, loc=0); leg.draw_frame(False)
-    #print(leg); exit()
-    ###here end
-    ## Plot per component nH versus M* (or Lagn)
-    #proxies, labels = plot_comp_quartiles(axn, lms, lnsfr,
-    #                                      min_Ms, max_Ms, tots, inns)
-    #if AGN:
-    #    col = np.zeros(Lagn[:,0].shape); col.fill(c.notnum)
-    #    mask = Lagn[:,0] > 0
-    #    col[mask] = np.log10(Lagn[mask,0])
-    #    lLagn = np.repeat(col[:, np.newaxis], nacomp, axis=1)
-    #
-    #    aproxies, alabels = plot_comp_quartiles(axna, lLagn, lnagn,
-    #                                            min_Lbol, max_Lbol, tota, inna)
+    # Prep plots
+    fig, axes = plt.subplots(nrows, 3, figsize=(30, 10*nrows),
+                             layout='constrained')
+    axes = axes.flatten()
+    fig.suptitle(f'z = {redshift:.2f}')
 
-    ## Legend for nH plots
-    #leg = axn.legend(proxies,labels, loc=0); leg.draw_frame(False)
-    ##if AGN:
-    ##    leg = axna.legend(aproxies,alabels, loc=0); leg.draw_frame(False)
-        
+    col = 'black'
+    for ipan, pan in enumerate(panels):
+        ax = axes[ipan]
+        xx, yy = pan['x'], pan['y']
+        ax.set_xlabel(pan['xtit']); ax.set_ylabel(pan['ytit'])
+        ax.minorticks_on()
+
+        # Contours in grey values as in plot_bpts
+        ind = np.where((xx > c.notnum) & (yy > c.notnum))[0]
+        nsel = len(ind)
+        if nsel == 0:
+            print('WARNING plots.unh: no valid data in one panel')
+            continue
+
+        if nsel > n4contour:
+            ngrid, nlev = get_ngrid_nlev(nsel)
+            xc, yc, zc = st.get_cumulative_2Ddensity(xx[ind], yy[ind],
+                                                     n_grid=ngrid)
+            levels, colors = contour2Dsigma(n_levels=nlev, color=col)
+            ax.contour(xc, yc, zc, levels=levels, colors=colors, zorder=1)
+        else:
+            ax.scatter(xx[ind], yy[ind], c=col, s=40, marker='o', zorder=2)
+
+        if pan['xlim'] is not None:
+            ax.set_xlim(pan['xlim'])
+
+        # Limits of the photoionisation models (Figs. 5 and 8)
+        if pan['mod'] is not None:
+            if pan['mod'] == 'sfr':
+                umin, umax, zmin, zmax = minU_sf, maxU_sf, minZ_sf, maxZ_sf
+                legm = 'SF'
+            else:
+                umin, umax, zmin, zmax = minU_ag, maxU_ag, minZ_ag, maxZ_ag
+                legm = 'AGN'
+
+            colr = 'limegreen'
+            ax.set_xlim(zmin-pad, zmax+pad)
+            ax.set_ylim(umin-pad, umax+pad)
+            ax.add_patch(plt.Rectangle((zmin, umin), zmax-zmin, umax-umin,
+                                       ec=colr, ls='-', lw=6,
+                                       fc='none', zorder=3))
+
+            # Percentage of galaxies within the model limits
+            inw = np.sum((xx[ind] >= zmin) & (xx[ind] <= zmax) &
+                         (yy[ind] >= umin) & (yy[ind] <= umax))
+            per = inw*100./nsel
+            ax.text(zmin+0.1, umax-0.4,
+                    f'{per:.1f}%', color=colr, fontsize='large',zorder=4)
+            if verbose:
+                print(f'    {per:.1f}% of galaxies '
+                      f'({inw} out of {nsel}) within model limits')
+
     # Output
-    plotnom = io.get_plotfile(root,endf,'uzn')
-    plt.savefig(plotnom)
+    nom = io.get_plotfile(root,endf,'unh')
+    plt.savefig(nom)
     if verbose:
-         print(f'* U plots: {plotnom}')
+        print(f'* U and nH plots: {nom}')
 
-#    pltpath = io.get_plotpath(root)
-#    plotnom = pltpath+'uzn.pdf'
-#    plt.savefig(plotnom)
-#    if verbose:
-#         print(f'* U plots: {plotnom}')
-    
-    return plotnom
+    return nom
 
 
 
@@ -1293,13 +567,20 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         # Read SF information from file
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
-        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
-        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
-        NII6548_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
-        OII3727_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
-        OIII5007_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
-        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
-        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
+        Ha_sfr = st.components2tot(f['sfr_data/Halpha_sfr'],
+                                   log10input=False,icomps=0)
+        Hb_sfr = st.components2tot(f['sfr_data/Hbeta_sfr'],
+                                   log10input=False,icomps=0)
+        NII6548_sfr = st.components2tot(f['sfr_data/NII6584_sfr'],
+                                        log10input=False,icomps=0)
+        OII3727_sfr = st.components2tot(f['sfr_data/OII3727_sfr'],
+                                        log10input=False,icomps=0)
+        OIII5007_sfr = st.components2tot(f['sfr_data/OIII5007_sfr'],
+                                         log10input=False,icomps=0)
+        SII6731_sfr = st.components2tot(f['sfr_data/SII6731_sfr'],
+                                        log10input=False,icomps=0)
+        SII6717_sfr = st.components2tot(f['sfr_data/SII6717_sfr'],
+                                        log10input=False,icomps=0)
         
         # Read AGN information if it exists
         if AGN:
@@ -1525,7 +806,7 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
 
 
 def plot_lf(root, endf, subvols=[0], outpath=None,
-            outnom = 'masses',
+            outnom = 'masses',vol=None,
             props=['data/mh','data/lm_s','data/lm_gas'],
             prop_labels=[r'M$_{\rm h}(M_{\odot})$',
                          r'M$_{\rm *}(M_{\odot})$',
@@ -1547,6 +828,8 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
        Path to output, default is output/
     outnom : string
        Root name for output plot
+    vol : float
+       Volume for normalisations (Mpc³)
     props : array of strings
        Dataset names to be plotted
     prop_labels : array of strings
@@ -1563,7 +846,9 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
        If True print out messages.
     '''
     # Get metadata
-    vol_eff = metadata['vol_eff']
+    vol_eff = vol
+    if vol is None:
+        vol_eff = metadata['vol_eff']
     redshift = metadata['redshift']    
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
@@ -1629,8 +914,9 @@ def plot_lf(root, endf, subvols=[0], outpath=None,
 
 
 
-def plot_line_lfs(root, endf, subvols=[0], outpath=None,
-             metadata=None,verbose=True):
+def plot_line_lfs(root, endf, subvols=[0],
+                  outpath=None,vol=None,
+                  metadata=None,verbose=True):
     '''
     Make line luminosity function plots
     
@@ -1644,6 +930,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
         Number of subvolumes to be considered
     outpath : string
         Path to output, default is output/
+    vol : float
+       Volume for normalisations (Mpc³)
     metadata : dictionary
         Cosmology and other metadata information
     verbose : boolean
@@ -1651,7 +939,9 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
     '''
 
     # Get metadata
-    vol_eff = metadata['vol_eff']
+    vol_eff = vol
+    if vol is None:
+        vol_eff = metadata['vol_eff']
     redshift = metadata['redshift']    
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
@@ -1696,17 +986,30 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
 
-        ldims = f['sfr_data/Halpha_sfr'][:].ndim
-        if ldims > 1:
-            sfr_data = {line: np.sum(f[f'sfr_data/{line}_sfr'], axis=0)
-                        for line in line_names}
-        else:
-            sfr_data = {line: f[f'sfr_data/{line}_sfr'][:]
-                        for line in line_names}
+        # Set the dimensions of the array
+        ngal = None
+        for line in line_names:
+            key = 'sfr_data/'+line+'_sfr'
+            if key in f:
+                ngal = f[key][0].shape[0]
+                break
+        if ngal is None:
+            print('WARNING: no lines found; skipping LFs plots.')
+            return None
+                
+        # Read intrinsic luminosities
+        sfr_data = {line: np.full(ngal, c.notnum) for line in line_names}
+        for line in line_names:
+            key = f'sfr_data/{line}_sfr'
+            if key in f:
+                ldims = f[key].ndim
+                if ldims > 1:
+                    sfr_data[line] = st.components2tot(f[key],
+                                                       log10input=False,icomps=0)
+                else:
+                    sfr_data[line] = f[key][:]
 
         if att:
-            # Initialize 
-            ngal = sfr_data[line_names[0]].shape[0]
             sfr_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
 
             for line in line_names: # Fill in available data
@@ -1714,7 +1017,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
                 if key in f:
                     ldims = f[key].ndim
                     if ldims > 1:
-                        sfr_data_att[line] = np.sum(f[key], axis=0)
+                        sfr_data_att[line] = st.components2tot(f[key],
+                                                               log10input=False,icomps=0)
                     else:
                         sfr_data_att[line] = f[key][:]
         if AGN:
@@ -1836,7 +1140,8 @@ def plot_line_lfs(root, endf, subvols=[0], outpath=None,
     return nom
 
 
-def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
+def plot_ncumu_flux(root, endf, subvols=[0],
+                    outpath=None,vol=None,
                     metadata=None,verbose=True):
     '''
     Make plots with the cumulative numbers as a function of flux
@@ -1851,14 +1156,17 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         Number of subvolumes to be considered
     outpath : string
         Path to output, default is output/
+    vol : float
+       Volume for normalisations (Mpc³)
     metadata : dictionary
         Cosmology and other metadata information
     verbose : boolean
        If True print out messages.
     '''
-
     # Get metadata
-    vol_eff = metadata['vol_eff']
+    vol_eff = vol
+    if vol is None:
+        vol_eff = metadata['vol_eff']    
     redshift = metadata['redshift']
     photmod_sfr = metadata['photmod_sfr']
     AGN = metadata['AGN']
@@ -1894,16 +1202,24 @@ def plot_ncumu_flux(root, endf, subvols=[0], outpath=None,
         # Read SF information from file
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
-        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr_flux'],axis=0)
-        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr_flux'],axis=0)
-        NII_sfr = np.sum(f['sfr_data/NII6584_sfr_flux'],axis=0)
-        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
+        Ha_sfr = st.components2tot(f['sfr_data/Halpha_sfr_flux'],
+                                   log10input=False,icomps=0)
+        Hb_sfr = st.components2tot(f['sfr_data/Hbeta_sfr_flux'],
+                                   log10input=False,icomps=0)
+        NII_sfr = st.components2tot(f['sfr_data/NII6584_sfr_flux'],
+                                    log10input=False,icomps=0)
+        OIII_sfr = st.components2tot(f['sfr_data/OIII5007_sfr_flux'],
+                                     log10input=False,icomps=0)
 
         if att:
-            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att_flux'],axis=0)
-            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att_flux'],axis=0)
-            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att_flux'],axis=0)
-            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att_flux'],axis=0)
+            Ha_sfr_att = st.components2tot(f['sfr_data/Halpha_sfr_att_flux'],
+                                           log10input=False,icomps=0)
+            Hb_sfr_att = st.components2tot(f['sfr_data/Hbeta_sfr_att_flux'],
+                                           log10input=False,icomps=0)
+            NII_sfr_att = st.components2tot(f['sfr_data/NII6584_sfr_att_flux'],
+                                            log10input=False,icomps=0)
+            OIII_sfr_att = st.components2tot(f['sfr_data/OIII5007_sfr_att_flux'],
+                                             log10input=False,icomps=0)
 
         if AGN:
             # Read AGN information if it exists
@@ -2055,7 +1371,8 @@ def make_gridplots(xid_sfr=0.3,co_sfr=1,imf_cut_sfr=100,
 
 
 def make_testplots(snap,ending,outpath=None,
-                   subvols=[0],gridplots=False,verbose=True):
+                   subvols=[0],vol=None,
+                   gridplots=False,verbose=True):
     '''
     Make test plots
     
@@ -2068,9 +1385,11 @@ def make_testplots(snap,ending,outpath=None,
     outpath : string
        Path to input files
     subvols: list of integers
-        List of subvolumes to be considered
-    outpath : string
-        Path to output, default is output/ 
+       List of subvolumes to be considered
+    vol : float
+       Volume for normalisations (Mpc³)
+    gridplots : boolean
+       True for plotting input tables 
     verbose : boolean
        If True print out messages.
     '''
@@ -2088,7 +1407,6 @@ def make_testplots(snap,ending,outpath=None,
                   omegab = metadata['omegab'],
                   lambda0 = metadata['lambda0'],
                   h0 = metadata['h0'])  
-    
 
     ### Photoionisation plots
     #if gridplots:
@@ -2099,9 +1417,9 @@ def make_testplots(snap,ending,outpath=None,
     #    lbol_lf = plot_lf(root,endf,subvols=subvols,outpath=outpath,
     #                      metadata=metadata,verbose=verbose)
         
-    ### Characterisation of properties of ionising regions
-    # U vs Z
-    #uzn = plot_uzn(root,endf,subvols=subvols,verbose=verbose) 
+    # Characterisation of properties of ionising regions
+    unh = plot_unh(root,endf,subvols=subvols,outpath=outpath,
+                   metadata=metadata,verbose=verbose) 
         
     # Line plots
     # Make NII and SII bpt plots
@@ -2109,13 +1427,15 @@ def make_testplots(snap,ending,outpath=None,
                     metadata=metadata,verbose=verbose)
     
     # Make line LFs
-    lfs = plot_line_lfs(root,endf,subvols=subvols,outpath=outpath,
+    lfs = plot_line_lfs(root,endf,subvols=subvols,
+                        outpath=outpath,vol=vol,
                         metadata=metadata,verbose=verbose)
     
     # Cumulative numbers with flux limits (if possible)
     if (metadata['flux'] and metadata['redshift']>0):
         ncumu_flux = plot_ncumu_flux(root,endf,subvols=subvols,
-                                     outpath=outpath,metadata=metadata,
+                                     outpath=outpath,vol=vol,
+                                     metadata=metadata,
                                      verbose=verbose)
     else:
         if verbose:

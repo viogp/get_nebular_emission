@@ -492,7 +492,7 @@ def safe_sum_arrays(arrays, notnum=c.notnum):
     return result
 
 
-def components2tot(comps, log10input=True):
+def components2tot(comps, log10input=True, icomps=1):
     '''
     Calculate the total property as log10(sum(comps)),
     from provided information on components,
@@ -501,34 +501,39 @@ def components2tot(comps, log10input=True):
     Parameters
     ----------
     comps : array of floats
-        Array with properties
-    log10input: boolean
+        Array with properties, shape (N, ncomp)
+    log10input : boolean
         True if input components as log10(prop)
+    icomps : integer (0,1)
+        Index for components
     
     Returns
     -------
     log_tot : array of floats
-        Total log10(sum(comps))
+        log10(sum(comps)) if log10input, else sum(comps)
     '''
-    ncomp = comps.shape[1]
-    if ncomp > 1:
-        log_tot = np.zeros(comps.shape[0]); log_tot.fill(c.notnum)
-        ptot = np.zeros(log_tot.shape)
-        for ii in range(ncomp):
-            props = np.copy(comps[:,ii])
-            mask = props>c.notnum
-            if log10input:
-                ptot[mask] = ptot[mask] + 10**props[mask]
-            else:
-                ptot[mask] = ptot[mask] + props[mask]
+    ncomp = comps.shape[icomps]
 
-        if log10input:
-            mask = ptot>0
-            log_tot[mask] = np.log10(ptot[mask])
-        else:
-            log_tot = ptot
+    # Extract components as arrays
+    comps = np.asarray(comps, dtype=float)
+    if icomps == 0:
+        cols = [comps[i, :] for i in range(ncomp)]
     else:
-        log_tot = np.copy(comps)
+        cols = [comps[:, i] for i in range(ncomp)]
+        
+    if ncomp > 1:
+        if log10input:
+            ptot = np.zeros(len(cols[0]))
+            for col in cols:
+                props = np.where(col>c.notnum,col,-np.inf)
+                with np.errstate(over='ignore'):
+                    ptot += 10**props
+            log_tot = np.where(ptot>0,
+                               np.log10(np.maximum(ptot,1)),c.notnum)
+        else:
+            log_tot = safe_sum_arrays(cols)
+    else:
+        log_tot = np.copy(cols[0])
         
     return log_tot
 
