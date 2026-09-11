@@ -104,7 +104,7 @@ class TestPredict(unittest.TestCase):
         ncomp = 1; xx = np.zeros((3,ncomp))
         xx[0,0]=10;  xx[1,0]=11.2; xx[2,0]=12
         vals = st.components2tot(xx)
-        np.testing.assert_allclose(vals,xx, atol=1e-5)
+        np.testing.assert_allclose(vals,xx.ravel(), atol=1e-5)
 
         # Generate data with several components
         ncomp = 2; xx = np.zeros((3,ncomp))
@@ -120,6 +120,24 @@ class TestPredict(unittest.TestCase):
         vals = st.components2tot(xx, log10input=False)
         np.testing.assert_allclose(vals,expected, atol=1e-5)
 
+        # Test transpose
+        ncomp = 1; xx = np.zeros((ncomp,3))
+        xx[0,0]=10;  xx[0,1]=11.2; xx[0,2]=12
+        vals = st.components2tot(xx,icomps=0)
+        np.testing.assert_allclose(vals,xx.ravel(),atol=1e-5)
+        
+        ncomp = 2; xx = np.zeros((ncomp,3))
+        xx[0,0]=10;  xx[0,1]=11.2; xx[0,2]=12
+        xx[1,0]=10.5;xx[1,1]=11.8; xx[1,2]=c.notnum
+        expected = np.array([10.619331,11.897323,12.])
+        vals = st.components2tot(xx,icomps=0)
+        np.testing.assert_allclose(vals,expected,atol=1e-5)
+        
+        expected = np.array([20.5,23.,12.])
+        vals = st.components2tot(xx,log10input=False,icomps=0)
+        np.testing.assert_allclose(vals,expected,atol=1e-5)
+        
+        
     def test_n_gt_x(self):
         # Simple 1D array
         xedges = np.array([0, 1, 2, 3])

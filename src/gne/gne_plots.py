@@ -614,13 +614,20 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
         # Read SF information from file
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
-        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr'],axis=0)
-        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr'],axis=0)
-        NII6548_sfr = np.sum(f['sfr_data/NII6584_sfr'],axis=0)
-        OII3727_sfr = np.sum(f['sfr_data/OII3727_sfr'],axis=0)
-        OIII5007_sfr = np.sum(f['sfr_data/OIII5007_sfr'],axis=0)
-        SII6731_sfr = np.sum(f['sfr_data/SII6731_sfr'],axis=0)
-        SII6717_sfr = np.sum(f['sfr_data/SII6717_sfr'],axis=0)
+        Ha_sfr = st.components2tot(f['sfr_data/Halpha_sfr'],
+                                   log10input=False,icomps=0)
+        Hb_sfr = st.components2tot(f['sfr_data/Hbeta_sfr'],
+                                   log10input=False,icomps=0)
+        NII6548_sfr = st.components2tot(f['sfr_data/NII6584_sfr'],
+                                        log10input=False,icomps=0)
+        OII3727_sfr = st.components2tot(f['sfr_data/OII3727_sfr'],
+                                        log10input=False,icomps=0)
+        OIII5007_sfr = st.components2tot(f['sfr_data/OIII5007_sfr'],
+                                         log10input=False,icomps=0)
+        SII6731_sfr = st.components2tot(f['sfr_data/SII6731_sfr'],
+                                        log10input=False,icomps=0)
+        SII6717_sfr = st.components2tot(f['sfr_data/SII6717_sfr'],
+                                        log10input=False,icomps=0)
         
         # Read AGN information if it exists
         if AGN:
@@ -1026,17 +1033,25 @@ def plot_line_lfs(root, endf, subvols=[0],
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
 
-        ldims = f['sfr_data/Halpha_sfr'][:].ndim
-        if ldims > 1:
-            sfr_data = {line: np.sum(f[f'sfr_data/{line}_sfr'], axis=0)
-                        for line in line_names}
-        else:
-            sfr_data = {line: f[f'sfr_data/{line}_sfr'][:]
-                        for line in line_names}
+        # Set the dimensions of the array
+        key = 'sfr_data/'+line_names[0]+'_sfr'
+        if key in f:
+            ngal = f[key][0].shape[0]
+            print(key,ngal)
+
+        # Read intrinsic luminosities
+        sfr_data = {line: np.full(ngal, c.notnum) for line in line_names}
+        for line in line_names:
+            key = f'sfr_data/{line}_sfr'
+            if key in f:
+                ldims = f[key].ndim
+                if ldims > 1:
+                    sfr_data[line] = st.components2tot(f[key],
+                                                       log10input=False,icomps=0)
+                else:
+                    sfr_data[line] = f[key][:]
 
         if att:
-            # Initialize 
-            ngal = sfr_data[line_names[0]].shape[0]
             sfr_data_att = {line: np.full(ngal, c.notnum) for line in line_names}
 
             for line in line_names: # Fill in available data
@@ -1044,7 +1059,8 @@ def plot_line_lfs(root, endf, subvols=[0],
                 if key in f:
                     ldims = f[key].ndim
                     if ldims > 1:
-                        sfr_data_att[line] = np.sum(f[key], axis=0)
+                        sfr_data_att[line] = st.components2tot(f[key],
+                                                               log10input=False,icomps=0)
                     else:
                         sfr_data_att[line] = f[key][:]
         if AGN:
@@ -1228,16 +1244,24 @@ def plot_ncumu_flux(root, endf, subvols=[0],
         # Read SF information from file
         lu_sfr = f['sfr_data/lu_sfr'][:,0]
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
-        Ha_sfr = np.sum(f['sfr_data/Halpha_sfr_flux'],axis=0)
-        Hb_sfr = np.sum(f['sfr_data/Hbeta_sfr_flux'],axis=0)
-        NII_sfr = np.sum(f['sfr_data/NII6584_sfr_flux'],axis=0)
-        OIII_sfr = np.sum(f['sfr_data/OIII5007_sfr_flux'],axis=0)
+        Ha_sfr = st.components2tot(f['sfr_data/Halpha_sfr_flux'],
+                                   log10input=False,icomps=0)
+        Hb_sfr = st.components2tot(f['sfr_data/Hbeta_sfr_flux'],
+                                   log10input=False,icomps=0)
+        NII_sfr = st.components2tot(f['sfr_data/NII6584_sfr_flux'],
+                                    log10input=False,icomps=0)
+        OIII_sfr = st.components2tot(f['sfr_data/OIII5007_sfr_flux'],
+                                     log10input=False,icomps=0)
 
         if att:
-            Ha_sfr_att = np.sum(f['sfr_data/Halpha_sfr_att_flux'],axis=0)
-            Hb_sfr_att = np.sum(f['sfr_data/Hbeta_sfr_att_flux'],axis=0)
-            NII_sfr_att = np.sum(f['sfr_data/NII6584_sfr_att_flux'],axis=0)
-            OIII_sfr_att = np.sum(f['sfr_data/OIII5007_sfr_att_flux'],axis=0)
+            Ha_sfr_att = st.components2tot(f['sfr_data/Halpha_sfr_att_flux'],
+                                           log10input=False,icomps=0)
+            Hb_sfr_att = st.components2tot(f['sfr_data/Hbeta_sfr_att_flux'],
+                                           log10input=False,icomps=0)
+            NII_sfr_att = st.components2tot(f['sfr_data/NII6584_sfr_att_flux'],
+                                            log10input=False,icomps=0)
+            OIII_sfr_att = st.components2tot(f['sfr_data/OIII5007_sfr_att_flux'],
+                                             log10input=False,icomps=0)
 
         if AGN:
             # Read AGN information if it exists
