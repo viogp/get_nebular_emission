@@ -528,7 +528,8 @@ def components2tot(comps, log10input=True, icomps=1):
                 props = np.where(col>c.notnum,col,-np.inf)
                 with np.errstate(over='ignore'):
                     ptot += 10**props
-            log_tot = np.where(ptot>0,np.log10(ptot),c.notnum)
+            log_tot = np.where(ptot>0,
+                               np.log10(np.maximum(ptot,1)),c.notnum)
         else:
             log_tot = safe_sum_arrays(cols)
     else:

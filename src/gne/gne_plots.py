@@ -40,8 +40,9 @@ max_Ms = 12   # To be obtained from sim. res. ###here
 markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '_']
 
 def get_ngrid_nlev(nobj):
-    ngrid = 100 if nobj > n4contour*4 else 50
-    nlev  = None if nobj > n4contour*4 else 3
+    fac = 5
+    ngrid = 100 if nobj > n4contour*fac else 50
+    nlev  = None if nobj > n4contour*fac else 3
     return ngrid, nlev
 
 
@@ -986,11 +987,16 @@ def plot_line_lfs(root, endf, subvols=[0],
         lz_sfr = f['sfr_data/lz_sfr'][:,0]
 
         # Set the dimensions of the array
-        key = 'sfr_data/'+line_names[0]+'_sfr'
-        if key in f:
-            ngal = f[key][0].shape[0]
-            print(key,ngal)
-
+        ngal = None
+        for line in line_names:
+            key = 'sfr_data/'+line+'_sfr'
+            if key in f:
+                ngal = f[key][0].shape[0]
+                break
+        if ngal is None:
+            print('WARNING: no lines found; skipping LFs plots.')
+            return None
+                
         # Read intrinsic luminosities
         sfr_data = {line: np.full(ngal, c.notnum) for line in line_names}
         for line in line_names:
