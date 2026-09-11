@@ -183,7 +183,8 @@ def plot_unh(root, endf, subvols=[0], outpath=None,
             dd['lu_agn'] = f['agn_data/lu_agn'][:]
             dd['lz_agn'] = f['agn_data/lz_agn'][:]
             Lagn = f['agn_data/Lagn'][:]
-            dd['lLagn'] = np.where(Lagn > 0, np.log10(Lagn), c.notnum)
+            dd['lLagn'] = np.where(Lagn>0,
+                                   np.log10(np.maximum(Lagn,1)),c.notnum)
         f.close()
 
         if first_vol:
