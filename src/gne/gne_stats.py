@@ -501,32 +501,29 @@ def components2tot(comps, log10input=True):
     Parameters
     ----------
     comps : array of floats
-        Array with properties
+        Array with properties, shape (N, ncomp)
     log10input: boolean
         True if input components as log10(prop)
     
     Returns
     -------
     log_tot : array of floats
-        Total log10(sum(comps))
+        log10(sum(comps)) if log10input, else sum(comps)
     '''
     ncomp = comps.shape[1]
     if ncomp > 1:
-        log_tot = np.zeros(comps.shape[0]); log_tot.fill(c.notnum)
-        ptot = np.zeros(log_tot.shape)
-        for ii in range(ncomp):
-            props = np.copy(comps[:,ii])
-            mask = props>c.notnum
-            if log10input:
-                ptot[mask] = ptot[mask] + 10**props[mask]
-            else:
-                ptot[mask] = ptot[mask] + props[mask]
-
         if log10input:
-            mask = ptot>0
-            log_tot[mask] = np.log10(ptot[mask])
+            n = comps.shape[0]
+            log_tot = np.zeros(n); log_tot.fill(c.notnum)
+            ptot = np.zeros(n)
+            for ii in range(ncomp):
+                vals = comps[:, ii]
+                props = np.where(vals>c.notnum,vals,-np.inf)
+                with np.errstate(over='ignore'):
+                    ptot += 10**props
+            log_tot = np.where(ptot > 0, np.log10(ptot), c.notnum)
         else:
-            log_tot = ptot
+            log_tot = safe_sum_arrays([comps[:,i] for i in range(ncomp)])
     else:
         log_tot = np.copy(comps)
         
