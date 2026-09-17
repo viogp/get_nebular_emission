@@ -39,27 +39,51 @@ max_Ms = 12   # To be obtained from sim. res. ###here
 
 markers = ['o','^', 's', '*','D', 'p', 'h', 'H', '+', 'x', 'v', '<', '>', '|', '_']
 
+
 def get_ngrid_nlev(nobj):
-    fac = 5
-    ngrid = 100 if nobj > n4contour*fac else 50
-    nlev  = None if nobj > n4contour*fac else 3
+    '''
+    Adapt grid resolution and level count to the sample size,
+    keeping the mean number of points per cell large enough
+    that contours trace structure, not sampling noise.
+    '''
+    # Scott-like scaling for 2D densities:
+    # Optimal number of bins per axis scales as ~ n^(1/4)
+    ngrid = int(np.clip(round(nobj**0.25), 30, 100))
+    
+    if nobj >= 1e5:
+        nlev = None      # all 10 levels: dense, well-populated
+    elif nobj >= 1e4:
+        nlev = 3         # sparse: 1, 5, 10 sigma levels
+    else:
+        nlev = 2
+        
     return ngrid, nlev
 
 
-def contour2Dsigma(n_levels=None,color='darkgrey'):
+def contour2Dsigma(n_levels=None,color='darkgrey',contourf=False):
     '''
     Get levels following the standard deviation numbers expected for
     a 2D-Gaussian distribution. Generate colours varying in intensity.
     '''
-    if n_levels is not None:
-        levels=c.sigma_2Dprobs[0:n_levels]
+    all_levels=c.sigma_2Dprobs.copy()
+    nl = len(all_levels)
+
+    if n_levels is None or n_levels >= nl:
+        idx = np.arange(nl)        # keep everything
+    elif n_levels == 1:
+        idx = np.array([nl - 1])   # outermost level
     else:
-        levels=c.sigma_2Dprobs.copy()
+        # Evenly spaced indices, endpoints included
+        idx = np.unique(np.round(
+            np.linspace(0, nl - 1, n_levels)).astype(int))
+
+    levels = [all_levels[i] for i in idx]
+
+    if contourf: # Expecting interval boundaries
+        levels.insert(0, 0)            
     
-    nl = len(levels)
-    levels.insert(0,0)
-    alphas = np.linspace(0.2, 1, nl)[::-1].tolist()
-    colors = [(*mcol.to_rgba(color, alpha=a),)for a in alphas]
+    alphas = np.linspace(1.0, 0.4, len(levels))
+    colors = [(*mcol.to_rgba(color, alpha=a),) for a in alphas]
 
     return levels,colors
 
@@ -348,7 +372,8 @@ def plot_model_bpt_grids(photmod='gutkin16',xid=0.3,co=1,imf_cut=100,
             if nobs > n4contour:
                 ngrid, nlev = get_ngrid_nlev(nobs)
                 x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
-                levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+                levels, colors = contour2Dsigma(n_levels=nlev,
+                                                color=col,contourf=True)
                 if bpt=='NII':
                     contour = axn.contourf(x,y,z,levels=levels,colors=colors)
                 elif bpt=='SII':
@@ -546,7 +571,8 @@ def plot_bpts(root, endf, subvols=[0], outpath=None,
             if nobs > n4contour:
                 ngrid, nlev = get_ngrid_nlev(nobs)
                 x,y,z = st.get_cumulative_2Ddensity(xobs,yobs,n_grid=ngrid)
-                levels, colors = contour2Dsigma(n_levels=nlev,color=col)
+                levels, colors = contour2Dsigma(n_levels=nlev,
+                                                color=col,contourf=True)
                 if bpt=='NII':
                     contour = axn.contourf(x,y,z,levels=levels,colors=colors)
                 elif bpt=='SII':
